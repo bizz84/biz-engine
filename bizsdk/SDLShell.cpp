@@ -100,7 +100,6 @@ int main(int argc, char *argv[])
 		Exit(EXIT_NO_FONT, shell);
 	}
 #endif
-	shell->SetScreen(screen);
 
 	shell->InitGL();
 
@@ -121,7 +120,6 @@ int main(int argc, char *argv[])
 								shell->Flags());
 					if (screen)
 					{
-						shell->SetScreen(screen);
 						shell->Reshape(screen->w, screen->h);
 					}
 					else
@@ -155,7 +153,7 @@ int main(int argc, char *argv[])
 	return 0;             /* ANSI C requires main to return int. */
 }
 
-SDLShell::SDLShell() : pScreen(NULL)
+SDLShell::SDLShell()
 {
 	ShellSet(SHELL_WIDTH, 640);
 	ShellSet(SHELL_HEIGHT, 480);
@@ -180,6 +178,7 @@ unsigned int SDLShell::Flags()
 
 bool SDLShell::Reshape(unsigned int width, unsigned int height)
 {
+	glViewport(0, 0, width, height);
 	ShellSet(SHELL_WIDTH, width);
 	ShellSet(SHELL_HEIGHT, height);
 
@@ -237,7 +236,7 @@ void SDLShell::ProcessCommandLine(int argc, char *argv[])
 			if ((value = atoi(aCmdLineParams[i].sValue.c_str())) > 0)
 				ShellSet(SHELL_HEIGHT, value);
 		}
-		else if (aCmdLineParams[i].sName.compare("fullpScreen") == 0)
+		else if (aCmdLineParams[i].sName.compare("fullscreen") == 0)
 		{
 			if ((value = atoi(aCmdLineParams[i].sValue.c_str())) > 0)
 				ShellSet(SHELL_FULLSCREEN, value);

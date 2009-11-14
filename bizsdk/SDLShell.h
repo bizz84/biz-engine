@@ -55,16 +55,12 @@ public:
 	bool Reshape(unsigned int width, unsigned int height);
 
 	unsigned int Flags();
-	//
-	//static int VerboseLevel;
-	SDL_Surface *GetScreen() { return pScreen; }
-	void SetScreen(SDL_Surface *screen) { pScreen = screen; }
+
 
 private:
 	vector<CmdLineParameter> aCmdLineParams;
 	char szTitle[50];
 	unsigned int auiShellParams[SHELL_NUM_PARAMETERS];
-	SDL_Surface *pScreen;
 };
 
 #endif

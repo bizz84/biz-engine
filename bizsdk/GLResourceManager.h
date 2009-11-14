@@ -81,11 +81,12 @@ class GLResourceManager
 
 		Lib3dsFile *f;
 	public:
-		File3DS(char *file, Lib3dsFile *obj);
+		File3DS(const char *file, Lib3dsFile *obj);
 		~File3DS();
 
 		bool SameAs(const char *file);
 
+		Lib3dsFile *GetFile() { return f; }
 	};
 
 	vector<File3DS *> ap3DS;
@@ -116,7 +117,9 @@ public:
 	/* Texture related members */
 	bool LoadTextureFromFile(const char *textureFile, GLuint &program, GLint minFilter, GLint magFilter);
 
-	bool Load3DSFile(const char *file);
+	bool Load3DSFile(const char *file, unsigned int &index);
+
+	bool LoadMeshVBO(unsigned int index3DS, const char *name, IndexedVBO *&vbo);
 };
 
 #endif

@@ -27,13 +27,13 @@
 
 using namespace std;
 
-enum Shaders { E_LOOKUP, E_COLOR };
+enum Shaders { E_LOOKUP, E_COLOR, E_UNIFORM };
 
 class Shadows : public SDLShell
 {
 
 protected:
-	GLuint uiProgram[2];
+	GLuint uiProgram[3];
 
 	float x, t;
 	Timer timer;
@@ -42,10 +42,9 @@ protected:
 
 	GLuint uiCheckerTexture;
 
-	VBO *pVBO;
+	VBO *pTriangleVBO;
+	IndexedVBO *pMonkeyVBO;
 
-	//VBO *pVertexVBO;
-	//VBO *pColorVBO;
 
 public:
 	Shadows();
@@ -59,7 +58,7 @@ public:
 };
 
 Shadows::Shadows()
-	: pVBO(NULL)//pVertexVBO(NULL), pColorVBO(NULL)
+	: pTriangleVBO(NULL), pMonkeyVBO(NULL)
 {
 	x = t = 0.0f;
 }
@@ -88,6 +87,11 @@ bool Shadows::InitGL()
 		return false;
     }
 
+	if (!loader.LoadShaderFromFile("data/shaders/uniform.vert", "data/shaders/uniform.frag", uiProgram[E_UNIFORM]))
+    {
+		return false;
+    }
+
 	if (!ttFont.LoadFont("data/fonts/LucidaBrightDemiBold.ttf", 20))
 		return false;
 	
@@ -101,11 +105,19 @@ bool Shadows::InitGL()
 	  0.0f, 0.0f, 6.0f, 0.0f, 0.0f, 1.0f
 	};
 
-	pVBO = new VBO(afAttribs, 6 * sizeof(float), 3);
+	pTriangleVBO = new VBO(afAttribs, 6 * sizeof(float), 3);
 
 	// Add all the arrays that need to be rendered
-	pVBO->AddEntry(glVertexPointer, 3, GL_FLOAT, 0);
-	pVBO->AddEntry(glColorPointer, 3, GL_FLOAT, sizeof(float) * 3);
+	pTriangleVBO->AddEntry(glVertexPointer, 3, GL_FLOAT, 0);
+	pTriangleVBO->AddEntry(glColorPointer, 3, GL_FLOAT, sizeof(float) * 3);
+	
+	unsigned int index;
+	if (!loader.Load3DSFile("data/scenes/monkey.3ds", index))
+		return false;
+
+	if (!loader.LoadMeshVBO(index, "Suzanne", pMonkeyVBO))
+		return false;
+	
 
 	Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 
@@ -156,39 +168,45 @@ bool Shadows::Render()
 	TTFont::glDisable2D();
 
 
+	glEnable(GL_DEPTH_TEST);
 
 	glDisable(GL_TEXTURE_2D);
 
+	const float mult = 1.0f;
 	// Select and setup the modelview matrix
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();
 	gluLookAt( 0.0f, 1.0f, 0.0f,    // Eye-position
-		       0.0f, 20.0f, 0.0f,   // View-point
+		       0.0f, mult * 20.0f, 0.0f,   // View-point
 		       0.0f, 0.0f, 1.0f );  // Up-vector
 
 	// Draw a rotating colorful triangle
-	glTranslatef( 0.0f, 14.0f, 0.0f );
+	glTranslatef( 0.0f, mult * 14.0f, 0.0f );
 	glRotatef( 0.3*(GLfloat)x + (GLfloat)t*100.0f, 0.0f, 0.0f, 1.0f );
 	
-
+	/* Draw triangle */
 	glUseProgram(uiProgram[E_COLOR]);
 
 	glEnableClientState(GL_VERTEX_ARRAY);	
 	glEnableClientState(GL_COLOR_ARRAY);
-
-	pVBO->Bind();
-
-	glDrawArrays(GL_TRIANGLES, 0, 3);
-
+	pTriangleVBO->Render();
 	glDisableClientState(GL_VERTEX_ARRAY);	
 	glDisableClientState(GL_COLOR_ARRAY);
 
 
+	/* Draw mesh */
+	glUseProgram(uiProgram[E_UNIFORM]);
+
+	glEnableClientState(GL_VERTEX_ARRAY);	
+	pMonkeyVBO->Render();
+	glDisableClientState(GL_VERTEX_ARRAY);	
+
+	/* Draw font */
+	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	//glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
 	glEnable(GL_TEXTURE_2D);
-
 
 
 
@@ -209,7 +227,7 @@ bool Shadows::Render()
 	position.y = ShellGet(SHELL_HEIGHT) - 40;
 
 	char fps[20];
-	sprintf(fps, "%.3f",  1.0f / timer.GetDeltaTime());
+	sprintf(fps, "%.1f",  1.0f / timer.GetDeltaTime());
 	ttFont.SDL_GL_RenderText(fps, color, &position);
 	position.y -= position.h;
 
@@ -220,7 +238,7 @@ bool Shadows::Render()
 
 bool Shadows::ReleaseGL()
 {
-	delete pVBO;
+	delete pTriangleVBO;
 	//delete pVertexVBO;
 	//delete pColorVBO;
 

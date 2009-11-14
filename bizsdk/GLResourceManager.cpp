@@ -74,7 +74,7 @@ bool GLResourceManager::Texture::SameAs(const char *textureFile)
  *****************************************************************************/
 
 
-GLResourceManager::File3DS::File3DS(char *file, Lib3dsFile *obj)
+GLResourceManager::File3DS::File3DS(const char *file, Lib3dsFile *obj)
 	: f(obj)
 {
 	strcpy(sz3DSFile, file);
@@ -313,7 +313,7 @@ bool GLResourceManager::ReleaseTextures()
  *****************************************************************************/
 
 
-bool GLResourceManager::Load3DSFile(const char *file)
+bool GLResourceManager::Load3DSFile(const char *file, unsigned int &index)
 {
 	for (unsigned int i = 0; i < ap3DS.size(); i++)
 	{
@@ -321,17 +321,73 @@ bool GLResourceManager::Load3DSFile(const char *file)
 		{
 			if (Verbose(VerboseAll))
 				printf("3DS file %s already loaded\n", file);
-			//texture = apFile[i]->GetTexture();
+			index = i;
 			return true;
 		}
 	}
 
+	Lib3dsFile *f = lib3ds_file_load(file);
+	if (f == NULL)
+	{
+		printf("Unable to load %s\n", file);
+		return false;
+	}
 
-	Lib3dsFile *f;
-	f = lib3ds_file_load(file);
+	ap3DS.push_back(new File3DS(file, f));
+	index = ap3DS.size() - 1;
 
-	
+	return true;
+}
 
+bool GLResourceManager::LoadMeshVBO(unsigned int index3DS, const char *name, IndexedVBO *&vbo)
+{
+	Lib3dsFile *f = ap3DS[index3DS]->GetFile();
+	//int index = lib3ds_file_mesh_by_name(f, name);
+	//if (index < 0)
+	//	return false;
+
+	Lib3dsMesh *mesh;
+
+	if (Verbose(VerboseAll))
+	{
+		printf("Listing meshes:\n");
+		mesh = f->meshes;
+		while (mesh)
+		{
+			printf(" %s\n", mesh->name);
+			mesh = mesh->next;
+		}
+	}
+
+	mesh = f->meshes;
+	while (mesh)
+	{
+		if (!strcmp(mesh->name, name))
+			break;
+		mesh = mesh->next;
+	}
+	if (!mesh)
+		return false;
+
+	if (Verbose(VerboseAll))
+	{
+		printf("Mesh has %d faces\n", mesh->faces);
+	}
+
+	int *indices = new int[mesh->faces * 3];
+	for (unsigned int i = 0; i < mesh->faces; i++)
+	{
+		indices[3 * i + 0] = mesh->faceL[i].points[0];
+		indices[3 * i + 1] = mesh->faceL[i].points[1];
+		indices[3 * i + 2] = mesh->faceL[i].points[2];
+	}
+
+	vbo = new IndexedVBO(mesh->pointL, sizeof(Lib3dsPoint), mesh->points, indices, mesh->faces * 3);
+	vbo->AddEntry(glVertexPointer, 3, GL_FLOAT, 0);
+
+	delete [] indices;
+
+	return true;
 }
 
 bool GLResourceManager::Release3DSFiles()
