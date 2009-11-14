@@ -17,6 +17,9 @@
 #include <vector>
 #include <GL/glu.h>
 #include "Misc.h"
+#include "VBO.h"
+
+#include <lib3ds/file.h>
 
 using namespace std;
 
@@ -69,6 +72,24 @@ class GLResourceManager
 
 	vector<Texture *> apTexture;
 
+	/*************************************************************************
+	 * 3DS files definition
+	 *************************************************************************/
+	class File3DS
+	{
+		char sz3DSFile[MAX_PATH_LENGTH];
+
+		Lib3dsFile *f;
+	public:
+		File3DS(char *file, Lib3dsFile *obj);
+		~File3DS();
+
+		bool SameAs(const char *file);
+
+	};
+
+	vector<File3DS *> ap3DS;
+
 protected:
 	GLResourceManager() { }
 
@@ -78,6 +99,9 @@ protected:
 
 	/* Texture related members */
 	bool ReleaseTextures();
+
+	/* 3DS files related members */
+	bool Release3DSFiles();
 
 
 public:
@@ -91,6 +115,8 @@ public:
 
 	/* Texture related members */
 	bool LoadTextureFromFile(const char *textureFile, GLuint &program, GLint minFilter, GLint magFilter);
+
+	bool Load3DSFile(const char *file);
 };
 
 #endif

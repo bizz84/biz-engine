@@ -21,6 +21,10 @@
 #include <SDL/SDL.h>
 #include <string>
 
+#include <lib3ds/file.h>
+#include <lib3ds/mesh.h>
+#include <lib3ds/vector.h>
+
 /*****************************************************************************
  * GLResourceManager::Shader implementation
  *****************************************************************************/
@@ -64,6 +68,29 @@ bool GLResourceManager::Texture::SameAs(const char *textureFile)
 {
 	return !strcmp(szTextureFile, textureFile);
 }
+
+/*****************************************************************************
+ * GLResourceManager::File3DS implementation
+ *****************************************************************************/
+
+
+GLResourceManager::File3DS::File3DS(char *file, Lib3dsFile *obj)
+	: f(obj)
+{
+	strcpy(sz3DSFile, file);
+}
+
+GLResourceManager::File3DS::~File3DS()
+{
+	lib3ds_file_free(f);
+}
+
+bool GLResourceManager::File3DS::SameAs(const char *file)
+{
+	return !strcmp(sz3DSFile, file);
+}
+
+
 
 /*****************************************************************************
  * GLResourceManager implementation
@@ -281,5 +308,40 @@ bool GLResourceManager::ReleaseTextures()
 	return true;
 }
 
+/*****************************************************************************
+ * 3DS files methods
+ *****************************************************************************/
+
+
+bool GLResourceManager::Load3DSFile(const char *file)
+{
+	for (unsigned int i = 0; i < ap3DS.size(); i++)
+	{
+		if (ap3DS[i]->SameAs(file))
+		{
+			if (Verbose(VerboseAll))
+				printf("3DS file %s already loaded\n", file);
+			//texture = apFile[i]->GetTexture();
+			return true;
+		}
+	}
+
+
+	Lib3dsFile *f;
+	f = lib3ds_file_load(file);
+
+	
+
+}
+
+bool GLResourceManager::Release3DSFiles()
+{
+	for (unsigned int i = 0; i < ap3DS.size(); i++)
+	{
+		delete ap3DS[i];
+	}
+	ap3DS.clear();
+	return true;
+}
 
 

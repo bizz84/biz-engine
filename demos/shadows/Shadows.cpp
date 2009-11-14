@@ -21,6 +21,11 @@
 #include <stdio.h>
 
 #include "GLResourceManager.h"
+#include "VBO.h"
+
+#include <vector>
+
+using namespace std;
 
 enum Shaders { E_LOOKUP, E_COLOR };
 
@@ -37,6 +42,11 @@ protected:
 
 	GLuint uiCheckerTexture;
 
+	VBO *pVBO;
+
+	//VBO *pVertexVBO;
+	//VBO *pColorVBO;
+
 public:
 	Shadows();
 	virtual ~Shadows();
@@ -49,6 +59,7 @@ public:
 };
 
 Shadows::Shadows()
+	: pVBO(NULL)//pVertexVBO(NULL), pColorVBO(NULL)
 {
 	x = t = 0.0f;
 }
@@ -84,6 +95,17 @@ bool Shadows::InitGL()
 	if (!loader.LoadTextureFromFile("data/textures/perspec_warp_input_tex.bmp", uiCheckerTexture, GL_LINEAR, GL_LINEAR))
 		return false;
 
+	float afAttribs[] = {
+	  -5.0f, 0.0f, -4.0f, 1.0f, 0.0f, 0.0f,
+	  5.0f, 0.0f, -4.0f, 0.0f, 1.0f, 0.0f,
+	  0.0f, 0.0f, 6.0f, 0.0f, 0.0f, 1.0f
+	};
+
+	pVBO = new VBO(afAttribs, 6 * sizeof(float), 3);
+
+	// Add all the arrays that need to be rendered
+	pVBO->AddEntry(glVertexPointer, 3, GL_FLOAT, 0);
+	pVBO->AddEntry(glColorPointer, 3, GL_FLOAT, sizeof(float) * 3);
 
 	Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 
@@ -153,13 +175,8 @@ bool Shadows::Render()
 
 	glEnableClientState(GL_VERTEX_ARRAY);	
 	glEnableClientState(GL_COLOR_ARRAY);
-	float afAttribs[] = {
-	  -5.0f, 0.0f, -4.0f, 1.0f, 0.0f, 0.0f,
-	  5.0f, 0.0f, -4.0f, 0.0f, 1.0f, 0.0f,
-	  0.0f, 0.0f, 6.0f, 0.0f, 0.0f, 1.0f
-	};
-	glVertexPointer(3, GL_FLOAT, sizeof(float) * 6, afAttribs);
-	glColorPointer(3, GL_FLOAT, sizeof(float) * 6, afAttribs + 3);
+
+	pVBO->Bind();
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -188,18 +205,13 @@ bool Shadows::Render()
 	color.g = 255;
 	color.b = 255;
 
-	position.x = ShellGet(SHELL_WIDTH) / 3;
-	position.y = ShellGet(SHELL_HEIGHT) / 2;
-	ttFont.SDL_GL_RenderText("Hello, World!", color, &position);
-	position.y -= position.h;
-	ttFont.SDL_GL_RenderText("A line right underneath", color, &position);
-	position.y -= position.h;
-	ttFont.SDL_GL_RenderText("Yay text rendering.", color, &position);
+	position.x = 0;
+	position.y = ShellGet(SHELL_HEIGHT) - 40;
 
 	char fps[20];
 	sprintf(fps, "%.3f",  1.0f / timer.GetDeltaTime());
-	position.y -= position.h;
 	ttFont.SDL_GL_RenderText(fps, color, &position);
+	position.y -= position.h;
 
 	TTFont::glDisable2D();
 	
@@ -208,6 +220,10 @@ bool Shadows::Render()
 
 bool Shadows::ReleaseGL()
 {
+	delete pVBO;
+	//delete pVertexVBO;
+	//delete pColorVBO;
+
 	return GLResourceManager::Instance().Release();
 }
 

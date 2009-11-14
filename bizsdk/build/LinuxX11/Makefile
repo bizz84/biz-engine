@@ -25,7 +25,7 @@ OBJS    := $(patsubst %.$(SRCEXT),$(OBJDIR)/%.o,$(SRCS))
 INCLUDES = -I../../
 
 CFLAGS = -c -O3 -ffast-math -Wall -DGL_GLEXT_PROTOTYPES $(INCLUDES)
-LFLAGS = -lSDL -lGLU -lGL -lX11 -lm
+LFLAGS = -lSDL -lGLU -lGL -lX11 -lm -l3ds
 
 .PHONY: all clean distclean
 
