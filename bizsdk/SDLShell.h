@@ -18,6 +18,8 @@
 #include "GL/glu.h"
 #include "SDL/SDL.h"
 
+#include "Pointer.h"
+
 #include <vector>
 #include <string>
 
@@ -34,8 +36,12 @@ public:
 
 class SDLShell : public Shell
 {
-protected:
+	SDL_MouseMotionEvent sMouseMotion;
+	SDL_MouseButtonEvent sMouseButton;
 
+protected:
+	Pointer *pPointer;
+	
 public:
 	SDLShell();
 	virtual ~SDLShell();
@@ -56,7 +62,18 @@ public:
 
 	unsigned int Flags();
 
+	void CreatePointer();
 
+	/* Mouse related functions */
+	void UpdateMouseMotion(SDL_MouseMotionEvent &event);
+	void UpdateMouseButton(SDL_MouseButtonEvent &event);
+	void ResetMouse();
+	void InitMouse();
+
+	SDL_MouseMotionEvent &GetMouseMotion() { return sMouseMotion; }
+	SDL_MouseButtonEvent &GetMouseButton() { return sMouseButton; }
+
+	Pointer *GetPointer() { return pPointer; }
 private:
 	vector<CmdLineParameter> aCmdLineParams;
 	char szTitle[50];

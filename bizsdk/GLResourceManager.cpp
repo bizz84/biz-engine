@@ -29,7 +29,8 @@
  * GLResourceManager::Shader implementation
  *****************************************************************************/
 
-GLResourceManager::Shader::Shader(const char *vertexShader, const char *fragmentShader, GLuint vs, GLuint fs, GLuint program)
+GLResourceManager::Shader::Shader(const char *vertexShader,
+	const char *fragmentShader, GLuint vs, GLuint fs, GLuint program)
 	: uiVS(vs), uiFS(fs), uiProgram(program)
 {
 	strcpy(szVertShader, vertexShader);
@@ -44,9 +45,11 @@ GLResourceManager::Shader::~Shader()
 	glDeleteShader(uiProgram);
 }
 
-bool GLResourceManager::Shader::SameAs(const char *vertexShader, const char *fragmentShader)
+bool GLResourceManager::Shader::SameAs(const char *vertexShader,
+	const char *fragmentShader)
 {
-	return !strcmp(szVertShader, vertexShader) && !strcmp(szFragShader, fragmentShader);
+	return !strcmp(szVertShader, vertexShader) &&
+	       !strcmp(szFragShader, fragmentShader);
 }
 
 /*****************************************************************************
@@ -112,16 +115,18 @@ bool GLResourceManager::Release()
 	bool retShaders = ReleaseShaders();
 
 	bool retTextures = ReleaseTextures();
-	// TODO: Insert disposal code for other resources and AND them in the return clause
 
-	return retShaders && retTextures;
+	bool ret3DS = Release3DSFiles();
+
+	return retShaders && retTextures && ret3DS;
 }
 
 /*****************************************************************************
  * Shader methods
  *****************************************************************************/
 
-GLenum GLResourceManager::PrintShaderError(GLuint obj, const char *szShader, const char *szFunction)
+GLenum GLResourceManager::PrintShaderError(GLuint obj, const char *szShader,
+	const char *szFunction)
 {
 
     int infologLength = 0;
@@ -148,7 +153,8 @@ GLenum GLResourceManager::PrintShaderError(GLuint obj, const char *szShader, con
 
 
 
-bool GLResourceManager::LoadShaderFromFile(const char *vertexShader, const char *fragmentShader, GLuint &program)
+bool GLResourceManager::LoadShaderFromFile(const char *vertexShader,
+	const char *fragmentShader, GLuint &program)
 {
 	for (unsigned int i = 0; i < apShader.size(); i++)
 	{
@@ -185,45 +191,46 @@ bool GLResourceManager::LoadShaderFromFile(const char *vertexShader, const char 
     uiFS = glCreateShader(GL_FRAGMENT_SHADER);
     
     glShaderSource(uiVS, 1, (const GLchar **)&pszVertShader, NULL);
-    if (PrintShaderError(uiVS, vertexShader, "glShaderSource") != GL_NO_ERROR)
+    if (PrintShaderError(uiVS, vertexShader, "glShaderSource")
+		!= GL_NO_ERROR)
 		return false;
 
     glShaderSource(uiFS, 1, (const GLchar **)&pszFragShader, NULL);
-    if (PrintShaderError(uiFS, fragmentShader, "glShaderSource") != GL_NO_ERROR)
+    if (PrintShaderError(uiFS, fragmentShader, "glShaderSource")
+		!= GL_NO_ERROR)
 		return false;
 
 	FreeFileMemory(&pszVertShader);
 	FreeFileMemory(&pszFragShader);
 
 	glCompileShader(uiVS);
-    if (PrintShaderError(uiVS, vertexShader, "glCompileShader") != GL_NO_ERROR)
+    if (PrintShaderError(uiVS, vertexShader, "glCompileShader")
+		!= GL_NO_ERROR)
 		return false;
 
     glCompileShader(uiFS);
-    if (PrintShaderError(uiFS, fragmentShader, "glCompileShader") != GL_NO_ERROR)
+    if (PrintShaderError(uiFS, fragmentShader, "glCompileShader")
+		!= GL_NO_ERROR)
 		return false;
 
     uiProgram = glCreateProgram();
 
     glAttachShader(uiProgram, uiVS);
     glAttachShader(uiProgram, uiFS);
-	// Clear errors
-	glGetError();
 
 	if (Verbose(VerboseInfo))
 		printf("linking... ");
 
     glLinkProgram(uiProgram);
 
-	//glGetError();
-
-    //if (PrintShaderError(uiProgram, "", "glLinkProgram") != GL_NO_ERROR)
-	//	return false;
+	// Clear errors
+	glGetError();
 
 	if (Verbose(VerboseInfo))
 		printf("Done\n");
 	
-	apShader.push_back(new Shader(vertexShader, fragmentShader, uiVS, uiFS, uiProgram));
+	apShader.push_back(new Shader(vertexShader, fragmentShader, uiVS, uiFS,
+		uiProgram));
 
     return true;		
 }
@@ -245,7 +252,8 @@ bool GLResourceManager::ReleaseShaders()
  * Texture methods
  *****************************************************************************/
 
-bool GLResourceManager::LoadTextureFromFile(const char *textureFile, GLuint &texture, GLint minFilter, GLint magFilter)
+bool GLResourceManager::LoadTextureFromFile(const char *textureFile,
+	GLuint &texture, GLint minFilter, GLint magFilter)
 {
 	for (unsigned int i = 0; i < apTexture.size(); i++)
 	{
@@ -262,15 +270,18 @@ bool GLResourceManager::LoadTextureFromFile(const char *textureFile, GLuint &tex
     GLenum texture_format;
 	GLint  nOfColors;
 
-	if (LoadImage(textureFile, surface, texture_format, nOfColors))	{
+	if (LoadImage(textureFile, surface, texture_format, nOfColors))
+	{
  
 		// Check that the image's width is a power of 2
-		if ( (surface->w & (surface->w - 1)) != 0 ) {
+		if ( (surface->w & (surface->w - 1)) != 0 )
+		{
 			printf("warning: %s's width is not a power of 2\n", textureFile);
 		}
 	
 		// Also check if the height is a power of 2
-		if ( (surface->h & (surface->h - 1)) != 0 ) {
+		if ( (surface->h & (surface->h - 1)) != 0 )
+		{
 			printf("warning: %s's height is not a power of 2\n", textureFile);
 		}
 	 
@@ -284,7 +295,8 @@ bool GLResourceManager::LoadTextureFromFile(const char *textureFile, GLuint &tex
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter );
 	 
-		// Edit the texture object's image data using the information SDL_Surface gives us
+		// Edit the texture object's image data using the information
+		// SDL_Surface gives us
 		glTexImage2D( GL_TEXTURE_2D, 0, nOfColors, surface->w, surface->h, 0,
 		                  texture_format, GL_UNSIGNED_BYTE, surface->pixels );
 
@@ -339,12 +351,10 @@ bool GLResourceManager::Load3DSFile(const char *file, unsigned int &index)
 	return true;
 }
 
-bool GLResourceManager::LoadMeshVBO(unsigned int index3DS, const char *name, IndexedVBO *&vbo)
+bool GLResourceManager::LoadMeshVBO(unsigned int index3DS, const char *name,
+	IndexedVBO *&vbo)
 {
 	Lib3dsFile *f = ap3DS[index3DS]->GetFile();
-	//int index = lib3ds_file_mesh_by_name(f, name);
-	//if (index < 0)
-	//	return false;
 
 	Lib3dsMesh *mesh;
 
@@ -369,11 +379,6 @@ bool GLResourceManager::LoadMeshVBO(unsigned int index3DS, const char *name, Ind
 	if (!mesh)
 		return false;
 
-	if (Verbose(VerboseAll))
-	{
-		printf("Mesh has %d faces\n", mesh->faces);
-	}
-
 	int *indices = new int[mesh->faces * 3];
 	for (unsigned int i = 0; i < mesh->faces; i++)
 	{
@@ -382,7 +387,8 @@ bool GLResourceManager::LoadMeshVBO(unsigned int index3DS, const char *name, Ind
 		indices[3 * i + 2] = mesh->faceL[i].points[2];
 	}
 
-	vbo = new IndexedVBO(mesh->pointL, sizeof(Lib3dsPoint), mesh->points, indices, mesh->faces * 3);
+	vbo = new IndexedVBO(mesh->pointL, sizeof(Lib3dsPoint), mesh->points,
+		indices, mesh->faces * 3);
 	vbo->AddEntry(glVertexPointer, 3, GL_FLOAT, 0);
 
 	delete [] indices;

@@ -40,7 +40,8 @@ float Timer::Update()
 	Set(tv);
 	
 	fTimePrev = fTimeCur;
-	fTimeCur = (float)(tv.tv_sec - start.tv_sec) + 0.000001f * (float)(tv.tv_usec - start.tv_usec);
+	fTimeCur = (float)(tv.tv_sec - start.tv_sec) +
+		0.000001f * (float)(tv.tv_usec - start.tv_usec);
 	return fTimeCur;
 }
 

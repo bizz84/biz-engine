@@ -19,7 +19,6 @@
 #include <SDL/SDL_ttf.h>
 #include <GL/glu.h>
 
-enum textquality {solid, shaded, blended};
 
 class TTFont
 {

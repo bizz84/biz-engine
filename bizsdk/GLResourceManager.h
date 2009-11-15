@@ -23,8 +23,6 @@
 
 using namespace std;
 
-#define SHADER_MAX_LENGTH 1000
-
 class GLResourceManager
 {
 
@@ -41,7 +39,8 @@ class GLResourceManager
 		GLuint uiFS;
 		GLuint uiProgram;
 	public:
-		Shader(const char *vertexShader, const char *fragmentShader, GLuint vs, GLuint fs, GLuint program);
+		Shader(const char *vertexShader, const char *fragmentShader, GLuint vs,
+			GLuint fs, GLuint program);
 		~Shader();
 
 		bool SameAs(const char *vertexShader, const char *fragmentShader);
@@ -95,7 +94,8 @@ protected:
 	GLResourceManager() { }
 
 	/* Shader related members */
-	static GLenum PrintShaderError(GLuint obj, const char *szShader, const char *szFunction);
+	static GLenum PrintShaderError(GLuint obj, const char *szShader,
+		const char *szFunction);
 	bool ReleaseShaders();
 
 	/* Texture related members */
@@ -112,14 +112,18 @@ public:
 	bool Release();
 
 	/* Shader related members */
-	bool LoadShaderFromFile(const char *vertexShader, const char *fragmentShader, GLuint &program);
+	bool LoadShaderFromFile(const char *vertexShader,
+		const char *fragmentShader, GLuint &program);
 
 	/* Texture related members */
-	bool LoadTextureFromFile(const char *textureFile, GLuint &program, GLint minFilter, GLint magFilter);
+	bool LoadTextureFromFile(const char *textureFile, GLuint &program,
+		GLint minFilter, GLint magFilter);
 
+	/* Geometry related members */
 	bool Load3DSFile(const char *file, unsigned int &index);
 
-	bool LoadMeshVBO(unsigned int index3DS, const char *name, IndexedVBO *&vbo);
+	bool LoadMeshVBO(unsigned int index3DS, const char *name,
+		IndexedVBO *&vbo);
 };
 
 #endif

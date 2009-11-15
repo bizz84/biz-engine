@@ -19,7 +19,8 @@
 
 using namespace std;
 
-typedef void (*ArrayFuncPointer)(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+typedef void (*ArrayFuncPointer)(GLint size, GLenum type, GLsizei stride,
+	const GLvoid *pointer);
 
 class VBO
 {
@@ -32,8 +33,10 @@ protected:
 		GLenum eType;
 		void *pOffset;
 
-		VBOEntry(ArrayFuncPointer pointer, GLint size, GLenum type, unsigned int offset)
-			: fnPointer(pointer), iSize(size), eType(type), pOffset((void *)offset) { }
+		VBOEntry(ArrayFuncPointer pointer, GLint size, GLenum type,
+			unsigned int offset)
+			: fnPointer(pointer), iSize(size), eType(type),
+			pOffset((void *)offset) { }
 	};
 	vector<VBOEntry *> aEntry;
 
@@ -44,10 +47,12 @@ public:
 	VBO(void *data, GLsizei stride, unsigned int count);
 	~VBO();
 
-	void AddEntry(ArrayFuncPointer pointer, GLint size, GLenum type, unsigned int offset);
+	void AddEntry(ArrayFuncPointer pointer, GLint size, GLenum type,
+		unsigned int offset);
 
 	virtual void Bind();
-	virtual void Bind(ArrayFuncPointer funcPointer, GLint size, GLenum type, unsigned int offset);
+	virtual void Bind(ArrayFuncPointer funcPointer, GLint size, GLenum type,
+		unsigned int offset);
 
 	virtual void Render();
 
@@ -60,7 +65,8 @@ protected:
 	GLuint uiIndexVBO;
 	unsigned int uiElements;
 public:
-	IndexedVBO(void *data, GLsizei stride, unsigned int count, void *indices, unsigned int elements);
+	IndexedVBO(void *data, GLsizei stride, unsigned int count, void *indices,
+		unsigned int elements);
 
 	virtual void Bind();
 	virtual void Unbind();

@@ -39,5 +39,7 @@ int IntRound(double x);
 
 int NextPowerOfTwo(int x);
 
+float Inertia(float t, float tau);
+
 
 #endif

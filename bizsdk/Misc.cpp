@@ -59,7 +59,8 @@ void FreeFileMemory(char **memory)
 
 
 
-bool LoadImage(const char *filename, SDL_Surface *&surface, GLenum &textureFormat, GLint &nOfColors)
+bool LoadImage(const char *filename, SDL_Surface *&surface,
+	GLenum &textureFormat, GLint &nOfColors)
 {
     //Temporary storage for the image that's loaded
     SDL_Surface* loadedImage = NULL;
@@ -82,19 +83,23 @@ bool LoadImage(const char *filename, SDL_Surface *&surface, GLenum &textureForma
 			nOfColors = surface->format->BytesPerPixel;
 			if (nOfColors == 4)     // contains an alpha channel
 			{
-			        if (surface->format->Rmask == 0x000000ff)
-			                textureFormat = GL_RGBA;
-			        else
-			                textureFormat = GL_BGRA;
-			} else if (nOfColors == 3)     // no alpha channel
+		        if (surface->format->Rmask == 0x000000ff)
+		                textureFormat = GL_RGBA;
+		        else
+		                textureFormat = GL_BGRA;
+			}
+			else if (nOfColors == 3)     // no alpha channel
 			{
-			        if (surface->format->Rmask == 0x000000ff)
-			                textureFormat = GL_RGB;
-			        else
-			                textureFormat = GL_BGR;
-			} else {
-			        printf("warning: the image is not truecolor..  this will probably break\n");
-			        // this error should not go unhandled
+		        if (surface->format->Rmask == 0x000000ff)
+		                textureFormat = GL_RGB;
+		        else
+		                textureFormat = GL_BGR;
+			}
+			else
+			{
+		        printf("warning: the image is not truecolor..  "
+					"this will probably break\n");
+		        // this error should not go unhandled
 			}
 			return true;
 		}
@@ -108,7 +113,8 @@ bool LoadImage(const char *filename, SDL_Surface *&surface, GLenum &textureForma
 }
 
 
-void RenderQuad(float x, float y, float w, float h, float u0, float v0, float u1, float v1)
+void RenderQuad(float x, float y, float w, float h,
+	float u0, float v0, float u1, float v1)
 {
 	glEnableClientState(GL_VERTEX_ARRAY);	
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -142,4 +148,11 @@ int NextPowerOfTwo(int x)
 }
 
 
+float Inertia(float t, float tau)
+{
+	if (t <= 0.001f)
+		return 0.0f;
+
+	return exp(-tau * t);
+}
 

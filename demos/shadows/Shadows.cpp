@@ -16,6 +16,7 @@
 #include "Misc.h"
 #include "Timer.h"
 #include "TTFont.h"
+#include "Pointer.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -35,7 +36,8 @@ class Shadows : public SDLShell
 protected:
 	GLuint uiProgram[3];
 
-	float x, t;
+	float tRelease;
+	float y, x, t;
 	Timer timer;
 
 	TTFont ttFont;
@@ -44,6 +46,8 @@ protected:
 
 	VBO *pTriangleVBO;
 	IndexedVBO *pMonkeyVBO;
+
+	Pointer pointer;
 
 
 public:
@@ -58,9 +62,10 @@ public:
 };
 
 Shadows::Shadows()
-	: pTriangleVBO(NULL), pMonkeyVBO(NULL)
+	: pTriangleVBO(NULL), pMonkeyVBO(NULL), pointer(this)
 {
-	x = t = 0.0f;
+	t = x = y = 0.0f;
+	tRelease = 0.0f;
 }
 
 Shadows::~Shadows()
@@ -142,10 +147,18 @@ bool Shadows::Resize(unsigned int width, unsigned int height)
 
 bool Shadows::Render()
 {
+	pointer.Input();
 	timer.Update();
 
-	x += timer.GetDeltaTime();
-	t += timer.GetDeltaTime();
+	if (GetPointer()->Released())
+	{
+		tRelease = timer.GetTime();
+	}
+
+	x += 0.002f * (GetPointer()->GetMotionX() + GetPointer()->GetInertiaX());
+	y += 0.002f * (GetPointer()->GetMotionY() + GetPointer()->GetInertiaY());
+	if (GetPointer()->TimeSinceLastInput() > 5.0f)
+		t += timer.GetDeltaTime();
 
 
 	// Clear color buffer
@@ -153,36 +166,32 @@ bool Shadows::Render()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
+	/* Render background quad */
 	glDisable(GL_BLEND);
-
 	glEnable(GL_TEXTURE_2D);
 
 	glUseProgram(uiProgram[E_LOOKUP]);
-
 	glBindTexture(GL_TEXTURE_2D, uiCheckerTexture);
 
 	TTFont::glEnable2D();
-
 	RenderQuad(0, 0, ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT), 0,0,1,1);
-
 	TTFont::glDisable2D();
 
 
 	glEnable(GL_DEPTH_TEST);
-
 	glDisable(GL_TEXTURE_2D);
 
-	const float mult = 1.0f;
 	// Select and setup the modelview matrix
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();
 	gluLookAt( 0.0f, 1.0f, 0.0f,    // Eye-position
-		       0.0f, mult * 20.0f, 0.0f,   // View-point
+		       0.0f, 20.0f, 0.0f,   // View-point
 		       0.0f, 0.0f, 1.0f );  // Up-vector
 
 	// Draw a rotating colorful triangle
-	glTranslatef( 0.0f, mult * 14.0f, 0.0f );
-	glRotatef( 0.3*(GLfloat)x + (GLfloat)t*100.0f, 0.0f, 0.0f, 1.0f );
+	glTranslatef( 0.0f, 14.0f, 0.0f );
+	glRotatef( x + (GLfloat)t*30.0f, 0.0f, 0.0f, 1.0f );
+	glRotatef( y, 0.0f, 1.0f, 0.0f );
 	
 	/* Draw triangle */
 	glUseProgram(uiProgram[E_COLOR]);
@@ -208,13 +217,9 @@ bool Shadows::Render()
 	//glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
 	glEnable(GL_TEXTURE_2D);
 
-
-
 	glUseProgram(uiProgram[E_LOOKUP]);
 
 	TTFont::glEnable2D();
-
-	glDisable(GL_DEPTH_TEST);
 	
 	SDL_Color color;
 	SDL_Rect position;
@@ -226,9 +231,9 @@ bool Shadows::Render()
 	position.x = 0;
 	position.y = ShellGet(SHELL_HEIGHT) - 40;
 
-	char fps[20];
-	sprintf(fps, "%.1f",  1.0f / timer.GetDeltaTime());
-	ttFont.SDL_GL_RenderText(fps, color, &position);
+	char text[40];
+	sprintf(text, "%.1f",  1.0f / timer.GetDeltaTime());
+	ttFont.SDL_GL_RenderText(text, color, &position);
 	position.y -= position.h;
 
 	TTFont::glDisable2D();
@@ -239,8 +244,7 @@ bool Shadows::Render()
 bool Shadows::ReleaseGL()
 {
 	delete pTriangleVBO;
-	//delete pVertexVBO;
-	//delete pColorVBO;
+	delete pMonkeyVBO;
 
 	return GLResourceManager::Instance().Release();
 }

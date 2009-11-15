@@ -101,11 +101,14 @@ int main(int argc, char *argv[])
 	}
 #endif
 
+	shell->CreatePointer();
 	shell->InitGL();
 
 	done = 0;
 	while (!done)
 	{
+		shell->GetPointer()->Input();
+		//shell->ResetMouse();
 		SDL_Event event;
 
 		while ( SDL_PollEvent(&event) ) 
@@ -128,6 +131,31 @@ int main(int argc, char *argv[])
 					}
 				}
 				break;
+            case SDL_MOUSEMOTION:
+				shell->GetPointer()->UpdateMouseMotion(event.motion);
+				/*if (Verbose(VerboseAll))
+				{
+                	printf("Mouse moved by %d,%d to (%d,%d)\n", 
+                       event.motion.xrel, event.motion.yrel,
+                       event.motion.x, event.motion.y);
+				}*/
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+				shell->GetPointer()->UpdateMouseButton(event.button);
+				/*if (Verbose(VerboseAll))
+				{
+                	printf("Mouse button %d pressed at (%d,%d)\n",
+                       event.button.button, event.button.x, event.button.y);
+				}*/
+                break;
+            case SDL_MOUSEBUTTONUP:
+				shell->GetPointer()->UpdateMouseButton(event.button);
+				/*if (Verbose(VerboseAll))
+				{
+                	printf("Mouse button %d released at (%d,%d)\n",
+                       event.button.button, event.button.x, event.button.y);
+				}*/
+                break;
 			case SDL_QUIT:
 				done = 1;
 				break;
@@ -153,6 +181,8 @@ int main(int argc, char *argv[])
 	return 0;             /* ANSI C requires main to return int. */
 }
 
+
+
 SDLShell::SDLShell()
 {
 	ShellSet(SHELL_WIDTH, 640);
@@ -164,8 +194,7 @@ SDLShell::SDLShell()
 
 SDLShell::~SDLShell()
 {
-
-
+	delete pPointer;
 }
 
 unsigned int SDLShell::Flags()
@@ -184,7 +213,6 @@ bool SDLShell::Reshape(unsigned int width, unsigned int height)
 
 	return Resize(width, height);
 }
-
 unsigned int SDLShell::ShellGet(ShellParameter param)
 {
 	assert(param >= 0 && param < SHELL_NUM_PARAMETERS);
@@ -196,6 +224,46 @@ void SDLShell::ShellSet(ShellParameter param, unsigned int value)
 	assert(param >= 0 && param < SHELL_NUM_PARAMETERS);
 	auiShellParams[param] = value;
 }
+
+void SDLShell::CreatePointer()
+{
+	if (pPointer == NULL)
+	{
+		pPointer = new Pointer(this);
+	}
+}
+
+
+
+void SDLShell::InitMouse()
+{
+	sMouseButton.state = SDL_RELEASED;
+	sMouseMotion.x = 0;
+	sMouseMotion.y = 0;
+	sMouseButton.x = 0;
+	sMouseButton.y = 0;
+	ResetMouse();
+}
+
+void SDLShell::ResetMouse()
+{
+	sMouseMotion.xrel = 0;
+	sMouseMotion.yrel = 0;
+	sMouseButton.button = 0;
+}
+
+void SDLShell::UpdateMouseMotion(SDL_MouseMotionEvent &event)
+{
+	sMouseMotion = event;
+}
+
+void SDLShell::UpdateMouseButton(SDL_MouseButtonEvent &event)
+{
+	sMouseButton = event;
+}
+
+
+
 
 void SDLShell::ProcessCommandLine(int argc, char *argv[])
 {
