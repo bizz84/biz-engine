@@ -15,7 +15,7 @@
 #define _GL_RESOURCE_MANAGER_H_
 
 #include <vector>
-#include <GL/glu.h>
+#include "Extensions.h"
 #include "Misc.h"
 #include "VBO.h"
 
@@ -94,8 +94,8 @@ protected:
 	GLResourceManager() { }
 
 	/* Shader related members */
-	static GLenum PrintShaderError(GLuint obj, const char *szShader,
-		const char *szFunction);
+	static GLenum PrintShaderError(GLuint obj, bool bCompile);
+
 	bool ReleaseShaders();
 
 	/* Texture related members */
@@ -103,6 +103,7 @@ protected:
 
 	/* 3DS files related members */
 	bool Release3DSFiles();
+
 
 
 public:
@@ -124,6 +125,11 @@ public:
 
 	bool LoadMeshVBO(unsigned int index3DS, const char *name,
 		IndexedVBO *&vbo);
+
+	void ListMeshNames(unsigned int index3DS);
+
+	Lib3dsMesh *FindMesh(unsigned int index3DS, const char *name);
+	float MeshSize(unsigned int index3DS, const char *name);
 };
 
 #endif

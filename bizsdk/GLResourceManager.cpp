@@ -25,9 +25,12 @@
 #include <lib3ds/mesh.h>
 #include <lib3ds/vector.h>
 
+
 /*****************************************************************************
  * GLResourceManager::Shader implementation
  *****************************************************************************/
+
+
 
 GLResourceManager::Shader::Shader(const char *vertexShader,
 	const char *fragmentShader, GLuint vs, GLuint fs, GLuint program)
@@ -40,9 +43,11 @@ GLResourceManager::Shader::Shader(const char *vertexShader,
 
 GLResourceManager::Shader::~Shader()
 {
-	glDetachShader(uiProgram, uiVS);
-	glDetachShader(uiProgram, uiFS);
-	glDeleteShader(uiProgram);
+	//glDetachShader(uiProgram, uiVS);
+	//glDetachShader(uiProgram, uiFS);
+	glDeleteShader(uiVS);
+	glDeleteShader(uiFS);
+	glDeleteProgram(uiProgram);
 }
 
 bool GLResourceManager::Shader::SameAs(const char *vertexShader,
@@ -125,29 +130,38 @@ bool GLResourceManager::Release()
  * Shader methods
  *****************************************************************************/
 
-GLenum GLResourceManager::PrintShaderError(GLuint obj, const char *szShader,
-	const char *szFunction)
-{
 
-    int infologLength = 0;
+
+GLenum GLResourceManager::PrintShaderError(GLuint obj, bool bCompile)
+{
+	GLenum err = glGetError();
+	if (err != GL_NO_ERROR)
+	{
+		if (Verbose(VerboseAll))
+			printf ("%s GL error %d\n", bCompile ? "Compile" : "Link", err);
+	}
+	
+	int infologLength = 0;
     int charsWritten  = 0;
     char *infoLog;
 
-    glGetShaderiv(obj, GL_INFO_LOG_LENGTH,&infologLength);
+	if (bCompile)
+		glGetShaderiv(obj, GL_INFO_LOG_LENGTH,&infologLength);
+	else
+		glGetProgramiv(obj, GL_INFO_LOG_LENGTH,&infologLength);
 
     if (infologLength > 0)
     {
         infoLog = (char *)malloc(infologLength);
-        glGetShaderInfoLog(obj, infologLength, &charsWritten, infoLog);
-		if (Verbose(VerboseInfo))
-			printf(infoLog);
+        if (bCompile)
+			glGetShaderInfoLog(obj, infologLength, &charsWritten, infoLog);
+		else
+			glGetProgramInfoLog(obj, infologLength, &charsWritten, infoLog);
+		if (Verbose(VerboseAll))
+			printf ("%s", infoLog);
         free(infoLog);
     }
-	GLenum err = glGetError();
-	if (err != GL_NO_ERROR)
-	{
-		printf("%s %s: GL error %d\n", szShader, szFunction, err);
-	}
+
 	return err;
 }
 
@@ -167,17 +181,11 @@ bool GLResourceManager::LoadShaderFromFile(const char *vertexShader,
 	char *pszVertShader = NULL;
 	char *pszFragShader = NULL;
 
-	if (Verbose(VerboseInfo))
-		printf("Loading vertex shader %s... ", vertexShader);
-	
 	if (LoadFileIntoMemory(vertexShader, &pszVertShader) <= 0)
     {
 		printf("Unable to load shader %s!\n", vertexShader);
 		return false;
 	}
-
-	if (Verbose(VerboseInfo))
-		printf("and fragment shader %s... ", vertexShader);
 
 	if (LoadFileIntoMemory(fragmentShader, &pszFragShader) <= 0)
     {
@@ -185,43 +193,77 @@ bool GLResourceManager::LoadShaderFromFile(const char *vertexShader,
 		return false;
 	}
 
-	GLuint uiVS, uiFS, uiProgram;
+	GLint vertCompiled, fragCompiled;//, linked;
+	GLuint uiVS, uiFS;
 
     uiVS = glCreateShader(GL_VERTEX_SHADER);
     uiFS = glCreateShader(GL_FRAGMENT_SHADER);
+
+	const char *vs = pszVertShader;
+	const char *fs = pszFragShader;
     
-    glShaderSource(uiVS, 1, (const GLchar **)&pszVertShader, NULL);
-    if (PrintShaderError(uiVS, vertexShader, "glShaderSource")
+    glShaderSource(uiVS, 1, &vs, NULL);
+    if (PrintShaderError(uiVS, true)
 		!= GL_NO_ERROR)
 		return false;
 
-    glShaderSource(uiFS, 1, (const GLchar **)&pszFragShader, NULL);
-    if (PrintShaderError(uiFS, fragmentShader, "glShaderSource")
+
+    glShaderSource(uiFS, 1, &fs, NULL);
+    if (PrintShaderError(uiFS, true)
 		!= GL_NO_ERROR)
 		return false;
 
 	FreeFileMemory(&pszVertShader);
 	FreeFileMemory(&pszFragShader);
 
+	if (Verbose(VerboseInfo))
+		printf("Compiling vertex shader %s... ", vertexShader);
+
 	glCompileShader(uiVS);
-    if (PrintShaderError(uiVS, vertexShader, "glCompileShader")
+	glGetShaderiv(uiVS, GL_COMPILE_STATUS, &vertCompiled);
+	if (!vertCompiled)
+	{
+		printf("\nUnable to compile %s\n", vertexShader);
+		return false;
+	}
+   	if (PrintShaderError(uiVS, true)
 		!= GL_NO_ERROR)
 		return false;
+
+	if (Verbose(VerboseInfo))
+		printf("and fragment shader %s... ", fragmentShader);
 
     glCompileShader(uiFS);
-    if (PrintShaderError(uiFS, fragmentShader, "glCompileShader")
+	glGetShaderiv(uiVS, GL_COMPILE_STATUS, &fragCompiled);
+	if (!fragCompiled)
+	{
+		printf("\nUnable to compile %s\n", fragmentShader);
+		return false;
+	}
+    if (PrintShaderError(uiFS, true)
 		!= GL_NO_ERROR)
 		return false;
 
-    uiProgram = glCreateProgram();
+    program = glCreateProgram();
 
-    glAttachShader(uiProgram, uiVS);
-    glAttachShader(uiProgram, uiFS);
+    glAttachObjectARB(program, uiVS);
+	PrintShaderError(uiVS, true);
+    glAttachObjectARB(program, uiFS);
+	PrintShaderError(uiFS, true);
 
 	if (Verbose(VerboseInfo))
 		printf("linking... ");
 
-    glLinkProgram(uiProgram);
+    glLinkProgram(program);
+    if (PrintShaderError(program, false)
+		!= GL_NO_ERROR)
+		return false;
+	//glGetShaderiv(program, GL_LINK_STATUS, &linked);
+	//if (!linked)
+	//{
+	//	printf("\nUnable to link %s %s\n", vertexShader, fragmentShader);
+	//	return false;
+	//}
 
 	// Clear errors
 	glGetError();
@@ -230,7 +272,7 @@ bool GLResourceManager::LoadShaderFromFile(const char *vertexShader,
 		printf("Done\n");
 	
 	apShader.push_back(new Shader(vertexShader, fragmentShader, uiVS, uiFS,
-		uiProgram));
+		program));
 
     return true;		
 }
@@ -351,47 +393,143 @@ bool GLResourceManager::Load3DSFile(const char *file, unsigned int &index)
 	return true;
 }
 
-bool GLResourceManager::LoadMeshVBO(unsigned int index3DS, const char *name,
-	IndexedVBO *&vbo)
+void GLResourceManager::ListMeshNames(unsigned int index3DS)
 {
 	Lib3dsFile *f = ap3DS[index3DS]->GetFile();
-
-	Lib3dsMesh *mesh;
-
-	if (Verbose(VerboseAll))
+	Lib3dsMesh *mesh = f->meshes;
+	printf("Listing meshes:\n");
+	while (mesh)
 	{
-		printf("Listing meshes:\n");
-		mesh = f->meshes;
-		while (mesh)
-		{
-			printf(" %s\n", mesh->name);
-			mesh = mesh->next;
-		}
+		printf(" %s\n", mesh->name);
+		mesh = mesh->next;
 	}
+}
 
-	mesh = f->meshes;
+Lib3dsMesh *GLResourceManager::FindMesh(unsigned int index3DS, const char *name)
+{
+	Lib3dsFile *f = ap3DS[index3DS]->GetFile();
+	Lib3dsMesh *mesh = f->meshes;
+
 	while (mesh)
 	{
 		if (!strcmp(mesh->name, name))
 			break;
 		mesh = mesh->next;
 	}
+	return mesh;
+}
+
+
+float GLResourceManager::MeshSize(unsigned int index3DS, const char *name)
+{
+	Lib3dsMesh *mesh = FindMesh(index3DS, name);
+	if (!mesh)
+		return 0.0f;
+
+	// Bounding Box calculation
+	float
+		minX = mesh->pointL[0].pos[permutation[0]],
+		maxX = minX,
+		minY = mesh->pointL[0].pos[permutation[1]],
+		maxY = minY,
+		minZ = mesh->pointL[0].pos[permutation[2]],
+		maxZ = minZ;
+
+	unsigned int i;
+
+	for (i = 1; i < mesh->points; ++i)
+	{
+		if (mesh->pointL[i].pos[permutation[0]] < minX)
+		   minX = mesh->pointL[i].pos[permutation[0]];
+		if (mesh->pointL[i].pos[permutation[0]] > maxX)
+		   maxX = mesh->pointL[i].pos[permutation[0]];
+
+		if (mesh->pointL[i].pos[permutation[1]] < minY)
+		   minY = mesh->pointL[i].pos[permutation[1]];
+		if (mesh->pointL[i].pos[permutation[1]] > maxY)
+		   maxY = mesh->pointL[i].pos[permutation[1]];
+
+		if (mesh->pointL[i].pos[permutation[2]] < minZ)
+		   minZ = mesh->pointL[i].pos[permutation[2]];
+		if (mesh->pointL[i].pos[permutation[2]] > maxZ)
+		   maxZ = mesh->pointL[i].pos[permutation[2]];
+	}
+
+	// dimensions calculation: max is the maximum dimension
+	// dimX = max{dy, dz}
+	// dimY = max{dx, dz}
+	// dimZ = max{dy, dx}
+	float dimY = maxX - minX;
+	float dimZ = maxY - minY;
+	float dimX = maxZ - minZ;
+	float max = dimX;
+	if (dimY > max)
+	   max = dimY;
+	if (dimZ > max)
+	   max = dimZ;
+
+	return max;
+}
+
+
+bool GLResourceManager::LoadMeshVBO(unsigned int index3DS, const char *name,
+	IndexedVBO *&vbo)
+{
+	Lib3dsMesh *mesh = FindMesh(index3DS, name);
 	if (!mesh)
 		return false;
 
+	unsigned int i, j, p;
+
+	Lib3dsVector *normalL = new Lib3dsVector[3 * mesh->faces];
+	lib3ds_mesh_calculate_normals(mesh, normalL);
+
+	const int offset = 8;
+	// Bind all attributes in the same buffer
+	float *attribs = new float [offset * mesh->points];
 	int *indices = new int[mesh->faces * 3];
-	for (unsigned int i = 0; i < mesh->faces; i++)
+	for (i = 0; i < mesh->faces; i++)
 	{
 		indices[3 * i + 0] = mesh->faceL[i].points[0];
 		indices[3 * i + 1] = mesh->faceL[i].points[1];
 		indices[3 * i + 2] = mesh->faceL[i].points[2];
 	}
+	for (i = 0; i < mesh->faces; i++)
+	{
+		for (j = 0; j < 3; j++)
+		{
+			p = mesh->faceL[i].points[j];
+			attribs[offset * p + 0] = mesh->pointL[p].pos[permutation[0]];
+			attribs[offset * p + 1] = mesh->pointL[p].pos[permutation[1]];
+			attribs[offset * p + 2] = mesh->pointL[p].pos[permutation[2]];
 
-	vbo = new IndexedVBO(mesh->pointL, sizeof(Lib3dsPoint), mesh->points,
+			// one normal per face
+			//attribs[offset * p + 3] = mesh->faceL[i].normal[permutation[0]];
+			//attribs[offset * p + 4] = mesh->faceL[i].normal[permutation[1]];
+			//attribs[offset * p + 5] = mesh->faceL[i].normal[permutation[2]];
+			
+			// one normal per vertex
+			attribs[offset * p + 3] = normalL[3 * i + j][permutation[0]];
+			attribs[offset * p + 4] = normalL[3 * i + j][permutation[1]];
+			attribs[offset * p + 5] = normalL[3 * i + j][permutation[2]];
+
+			attribs[offset * p + 6] = mesh->texelL[p][0];
+			attribs[offset * p + 7] = mesh->texelL[p][1];
+			//printf("u=%.2f,v=%.2f\n", mesh->texelL[p][0], mesh->texelL[p][1]);
+		}
+	}
+
+
+	vbo = new IndexedVBO(attribs, sizeof(float) * offset, mesh->points,
 		indices, mesh->faces * 3);
-	vbo->AddEntry(glVertexPointer, 3, GL_FLOAT, 0);
+	vbo->SetVertexData(0, 3);
+	vbo->SetNormalData(sizeof(float) * 3);
+	vbo->SetTexCoordData(sizeof(float) * 6, 2);
+	//vbo->AddEntry(glVertexPointer, 3, GL_FLOAT, 0);
 
 	delete [] indices;
+	delete [] attribs;
+	delete [] normalL;
 
 	return true;
 }

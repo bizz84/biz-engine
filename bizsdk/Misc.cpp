@@ -17,10 +17,10 @@
 #include <math.h>
 
 #include <SDL/SDL.h>
-#include <SDL/SDL_opengl.h>
 
 #include <stdio.h>
 
+const int permutation[3] = { 1, 2, 0 };
 
 static VerboseLevel AppVerboseLevel = VerboseInfo;
 
@@ -143,7 +143,7 @@ int IntRound(double x)
 
 int NextPowerOfTwo(int x)
 {
-	double logbase2 = log(x) / log(2);
+	double logbase2 = log((float)x) / log(2.0f);
 	return IntRound(pow(2,ceil(logbase2)));
 }
 
@@ -156,3 +156,26 @@ float Inertia(float t, float tau)
 	return exp(-tau * t);
 }
 
+void PrintOpenGLError()
+{
+	GLenum err = glGetError();
+	if (Verbose(VerboseAll))
+	{
+		if (err != GL_NO_ERROR)
+		{
+			printf("GL error %d\n", err);
+		}
+	}
+}
+
+GLint GetUniLoc(GLuint program, const GLchar *name)
+{
+	GLint loc = glGetUniformLocation(program, name);
+	if (Verbose(VerboseAll))
+	{
+		if (loc == -1)
+			printf("No such uniform named \"%s\"\n", name);
+	}
+	PrintOpenGLError();	
+	return loc;
+}

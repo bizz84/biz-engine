@@ -14,9 +14,9 @@
 #ifndef MISC_H
 #define MISC_H
 
-#include <GL/gl.h>
-#include <SDL/SDL.h>
 
+#include <SDL/SDL.h>
+#include "Extensions.h"
 
 enum VerboseLevel { NoVerbose, VerboseInfo, VerboseAll };
 
@@ -41,5 +41,11 @@ int NextPowerOfTwo(int x);
 
 float Inertia(float t, float tau);
 
+void PrintOpenGLError();
+GLint GetUniLoc(GLuint program, const GLchar *name);
+
+//static int permutation[3] = { 1, 2, 0 };
+
+extern const int permutation[3];
 
 #endif

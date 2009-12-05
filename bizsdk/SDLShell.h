@@ -15,8 +15,7 @@
 #define _SDL_SHELL_H_
 
 #include "Shell.h"
-#include "GL/glu.h"
-#include "SDL/SDL.h"
+#include <SDL/SDL.h>
 
 #include "Pointer.h"
 
@@ -34,23 +33,22 @@ public:
 	string sValue;
 };
 
+enum ExitStage
+{
+	EXIT_INIT_APP,
+	EXIT_NO_SCREEN,
+	EXIT_NO_FONT,
+	EXIT_INIT_GL,
+};
+
 class SDLShell : public Shell
 {
-	SDL_MouseMotionEvent sMouseMotion;
-	SDL_MouseButtonEvent sMouseButton;
-
 protected:
 	Pointer *pPointer;
-	
-public:
-	SDLShell();
-	virtual ~SDLShell();
+	bool pressed[128];
+	bool pressing[128];
 
-	enum ShellParameter { SHELL_WIDTH = 0, SHELL_HEIGHT, SHELL_BPP,
-		SHELL_FULLSCREEN, SHELL_RESIZABLE, SHELL_NUM_PARAMETERS };
-
-	unsigned int ShellGet(ShellParameter param);	
-	void ShellSet(ShellParameter param, unsigned int value);
+	void Exit(ExitStage stage);
 
 	char *GetTitle() { return szTitle; }
 
@@ -64,20 +62,30 @@ public:
 
 	void CreatePointer();
 
-	/* Mouse related functions */
-	void UpdateMouseMotion(SDL_MouseMotionEvent &event);
-	void UpdateMouseButton(SDL_MouseButtonEvent &event);
-	void ResetMouse();
-	void InitMouse();
+	bool KeyPressed(Uint8 key) { return pressed[key]; }
+	bool KeyPressing(Uint8 key) { return pressing[key]; }
+	
+public:
+	SDLShell();
+	virtual ~SDLShell();
 
-	SDL_MouseMotionEvent &GetMouseMotion() { return sMouseMotion; }
-	SDL_MouseButtonEvent &GetMouseButton() { return sMouseButton; }
+	virtual int Run(int argc, char *argv[]);
+
+	enum ShellParameter { SHELL_WIDTH = 0, SHELL_HEIGHT, SHELL_BPP,
+		SHELL_FULLSCREEN, SHELL_RESIZABLE, SHELL_VSYNC, SHELL_NUM_PARAMETERS };
+
+	unsigned int ShellGet(ShellParameter param);	
+	void ShellSet(ShellParameter param, unsigned int value);
 
 	Pointer *GetPointer() { return pPointer; }
 private:
 	vector<CmdLineParameter> aCmdLineParams;
-	char szTitle[50];
+	char szTitle[500];
 	unsigned int auiShellParams[SHELL_NUM_PARAMETERS];
+
+	void SetPressed(Uint8 key, bool value) { pressed[key] = value; }
+	void SetPressing(Uint8 key, bool value) { pressing[key] = value; }
+	void ResetPressed();
 };
 
 #endif

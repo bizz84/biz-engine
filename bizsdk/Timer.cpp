@@ -16,10 +16,27 @@
 #include <assert.h>
 #include <stdlib.h>
 
+// If linux is not defined, define gettimeofday using Windows high resolution
+// timer
+#ifndef __linux__
+int gettimeofday(struct timeval *tp, void *tzp)
+{
+	LARGE_INTEGER frequency, time;
+	QueryPerformanceFrequency(&frequency);
+	QueryPerformanceCounter(&time);
+
+	double t = (double)time.QuadPart /(double)frequency.QuadPart;
+
+	tp->tv_sec = (time_t)t;
+	tp->tv_usec = (time_t)(1000000.0 * (t - tp->tv_sec));
+
+	return 0;
+}
+#endif
 
 Timer::Timer() : fTimeCur(0.0f), fTimePrev(0.0f)
 {
-
+	Start();
 }
 
 void Timer::Start()

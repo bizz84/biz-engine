@@ -14,7 +14,12 @@
 #ifndef _TIMER_H_
 #define _TIMER_H_
 
+// Include header file containing the timeval struct declaration
+#ifdef __linux__
 #include <sys/time.h>
+#else
+#include <windows.h>
+#endif
 
 class Timer
 {

@@ -24,11 +24,11 @@ SRCS    += $(shell find $(SDKDIR) -name '*.$(SRCEXT)')
 SRCDIRS := $(shell find . -name '*.$(SRCEXT)' -exec dirname {} \; | uniq)
 OBJS    := $(patsubst %.$(SRCEXT),$(OBJDIR)/%.o,$(SRCS))
 
-
 INCLUDES = -I../../ -I../../../../bizsdk/
 
-CFLAGS = -c -O3 -ffast-math -Wall -DGL_GLEXT_PROTOTYPES $(INCLUDES)
-LFLAGS = -lSDL -lGLU -lGL -lX11 -lm -l3ds
+CFLAGS = -c -O3 -ffast-math -Wall  $(INCLUDES)
+LFLAGS = -lSDL -lGLU -lGL -lX11 -lm -lGLEW -l3ds
+
 
 ifeq ($(DEBUG), 1)
 	CFLAGS += -g

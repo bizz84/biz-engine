@@ -13,7 +13,7 @@
 
 #include "TTFont.h"
 #include "Misc.h"
-#include <GL/gl.h>
+#include "Extensions.h"
 
 #include <math.h>
 

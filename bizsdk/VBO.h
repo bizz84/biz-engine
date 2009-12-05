@@ -14,13 +14,18 @@
 #ifndef _VBO_H_
 #define _VBO_H_
 
-#include <GL/glu.h>
+#include "Extensions.h"
 #include <vector>
 
 using namespace std;
 
 typedef void (*ArrayFuncPointer)(GLint size, GLenum type, GLsizei stride,
 	const GLvoid *pointer);
+
+#define VERTEX_POINTER_FLAG 0x01
+#define NORMAL_POINTER_FLAG 0x02
+#define COLOR_POINTER_FLAG 0x04
+#define TEXCOORD_POINTER_FLAG 0x08
 
 class VBO
 {
@@ -43,6 +48,12 @@ protected:
 	GLuint uiVBO;
 	GLsizei uiStride;
 	unsigned int uiCount;
+	unsigned short usFlags;
+
+	void *pVertexOffset, *pNormalOffset, *pColorOffset, *pTexCoordOffset;
+	unsigned int uiVertexSize, uiColorSize, uiTexCoordSize;
+
+
 public:
 	VBO(void *data, GLsizei stride, unsigned int count);
 	~VBO();
@@ -54,9 +65,14 @@ public:
 	virtual void Bind(ArrayFuncPointer funcPointer, GLint size, GLenum type,
 		unsigned int offset);
 
-	virtual void Render();
+	virtual void Render(GLenum mode);
 
 	unsigned int GetCount() { return uiCount; }
+
+	void SetVertexData(unsigned int offset = 0, unsigned int size = 3);
+	void SetNormalData(unsigned int offset);
+	void SetColorData(unsigned int offset, unsigned int size = 3);
+	void SetTexCoordData(unsigned int offset, unsigned int size = 2);
 };
 
 class IndexedVBO : public VBO
@@ -71,7 +87,7 @@ public:
 	virtual void Bind();
 	virtual void Unbind();
 
-	virtual void Render();
+	virtual void Render(GLenum mode);
 
 	unsigned int GetElements() { return uiElements; }
 };

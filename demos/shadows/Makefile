@@ -2,7 +2,8 @@
 # Shadows Makefile
 ##########################################################################
 CC     = g++
-CFLAGS = -c -O3 -ffast-math -Wall -DGL_GLEXT_PROTOTYPES
+CFLAGS = -c -O3 -ffast-math 
+#-Wall
 LFLAGS = -lSDL -lSDL_ttf -lGLU -lGL -lX11 -lm
  
 ifeq ($(DEBUG), 1)
