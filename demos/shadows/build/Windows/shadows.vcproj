@@ -183,11 +183,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\ShadowVolume.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ShadowVolume.h"
+				RelativePath="..\..\version.h"
 				>
 			</File>
 		</Filter>

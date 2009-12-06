@@ -123,9 +123,6 @@ public:
 	/* Geometry related members */
 	bool Load3DSFile(const char *file, unsigned int &index);
 
-	bool LoadMeshVBO(unsigned int index3DS, const char *name,
-		IndexedVBO *&vbo);
-
 	void ListMeshNames(unsigned int index3DS);
 
 	Lib3dsMesh *FindMesh(unsigned int index3DS, const char *name);

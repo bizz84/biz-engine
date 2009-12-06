@@ -50,8 +50,6 @@ protected:
 
 	void Exit(ExitStage stage);
 
-	char *GetTitle() { return szTitle; }
-
 	void ProcessCommandLine(int argc, char *argv[]);
 
 	vector<CmdLineParameter> &GetCommandLineParams() { return aCmdLineParams; }
@@ -80,7 +78,6 @@ public:
 	Pointer *GetPointer() { return pPointer; }
 private:
 	vector<CmdLineParameter> aCmdLineParams;
-	char szTitle[500];
 	unsigned int auiShellParams[SHELL_NUM_PARAMETERS];
 
 	void SetPressed(Uint8 key, bool value) { pressed[key] = value; }

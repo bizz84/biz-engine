@@ -187,6 +187,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Mesh.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Mesh.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Misc.cpp"
 				>
 			</File>
@@ -208,6 +216,14 @@
 			</File>
 			<File
 				RelativePath="..\..\SDLShell.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ShadowVolume.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ShadowVolume.h"
 				>
 			</File>
 			<File

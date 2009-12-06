@@ -44,8 +44,6 @@ float Inertia(float t, float tau);
 void PrintOpenGLError();
 GLint GetUniLoc(GLuint program, const GLchar *name);
 
-//static int permutation[3] = { 1, 2, 0 };
-
 extern const int permutation[3];
 
 #endif

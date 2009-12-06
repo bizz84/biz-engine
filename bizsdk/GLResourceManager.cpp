@@ -471,69 +471,6 @@ float GLResourceManager::MeshSize(unsigned int index3DS, const char *name)
 	return max;
 }
 
-
-bool GLResourceManager::LoadMeshVBO(unsigned int index3DS, const char *name,
-	IndexedVBO *&vbo)
-{
-	Lib3dsMesh *mesh = FindMesh(index3DS, name);
-	if (!mesh)
-		return false;
-
-	unsigned int i, j, p;
-
-	Lib3dsVector *normalL = new Lib3dsVector[3 * mesh->faces];
-	lib3ds_mesh_calculate_normals(mesh, normalL);
-
-	const int offset = 8;
-	// Bind all attributes in the same buffer
-	float *attribs = new float [offset * mesh->points];
-	int *indices = new int[mesh->faces * 3];
-	for (i = 0; i < mesh->faces; i++)
-	{
-		indices[3 * i + 0] = mesh->faceL[i].points[0];
-		indices[3 * i + 1] = mesh->faceL[i].points[1];
-		indices[3 * i + 2] = mesh->faceL[i].points[2];
-	}
-	for (i = 0; i < mesh->faces; i++)
-	{
-		for (j = 0; j < 3; j++)
-		{
-			p = mesh->faceL[i].points[j];
-			attribs[offset * p + 0] = mesh->pointL[p].pos[permutation[0]];
-			attribs[offset * p + 1] = mesh->pointL[p].pos[permutation[1]];
-			attribs[offset * p + 2] = mesh->pointL[p].pos[permutation[2]];
-
-			// one normal per face
-			//attribs[offset * p + 3] = mesh->faceL[i].normal[permutation[0]];
-			//attribs[offset * p + 4] = mesh->faceL[i].normal[permutation[1]];
-			//attribs[offset * p + 5] = mesh->faceL[i].normal[permutation[2]];
-			
-			// one normal per vertex
-			attribs[offset * p + 3] = normalL[3 * i + j][permutation[0]];
-			attribs[offset * p + 4] = normalL[3 * i + j][permutation[1]];
-			attribs[offset * p + 5] = normalL[3 * i + j][permutation[2]];
-
-			attribs[offset * p + 6] = mesh->texelL[p][0];
-			attribs[offset * p + 7] = mesh->texelL[p][1];
-			//printf("u=%.2f,v=%.2f\n", mesh->texelL[p][0], mesh->texelL[p][1]);
-		}
-	}
-
-
-	vbo = new IndexedVBO(attribs, sizeof(float) * offset, mesh->points,
-		indices, mesh->faces * 3);
-	vbo->SetVertexData(0, 3);
-	vbo->SetNormalData(sizeof(float) * 3);
-	vbo->SetTexCoordData(sizeof(float) * 6, 2);
-	//vbo->AddEntry(glVertexPointer, 3, GL_FLOAT, 0);
-
-	delete [] indices;
-	delete [] attribs;
-	delete [] normalL;
-
-	return true;
-}
-
 bool GLResourceManager::Release3DSFiles()
 {
 	for (unsigned int i = 0; i < ap3DS.size(); i++)

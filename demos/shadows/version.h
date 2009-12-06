@@ -14,8 +14,8 @@
 #ifndef _VERSION_H_
 #define _VERSION_H_
 
-const char szAppVersion[] = "1.1.0";
-const char szAppName[] = "shadows";
+const char szAppVersion[] = "1.1.1";
+const char szAppName[] = "Vertex Shader Depth-fail Shadow Volumes";
 
 
 #endif

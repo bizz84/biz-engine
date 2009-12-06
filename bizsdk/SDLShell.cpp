@@ -116,8 +116,6 @@ void SDLShell::ProcessCommandLine(int argc, char *argv[])
 	if (argc == 0)
 		return;
 
-	strcpy(szTitle, argv[0] + 2);
-
 	// Command line processing
 	int i, value;
 	for (i = 1; i < argc; i++)
@@ -176,7 +174,7 @@ void SDLShell::ProcessCommandLine(int argc, char *argv[])
 
 int SDLShell::Run(int argc, char *argv[])
 {
-	printf("Running %s version %s\n", GetAppName(), GetAppVersion());
+	printf("*** %s, V%s ***\n", GetAppName(), GetAppVersion());
 
 	int done;
 	Uint8 *keys;
@@ -215,7 +213,9 @@ int SDLShell::Run(int argc, char *argv[])
 		
 		Exit(EXIT_NO_SCREEN);
 	}
-	SDL_WM_SetCaption(GetTitle(), GetTitle());
+	char tempString[100];
+	sprintf(tempString, "%s V%s", GetAppName(), GetAppVersion());
+	SDL_WM_SetCaption(tempString, GetAppName());
 
 	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, ShellGet(SHELL_VSYNC));
 
