@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="bizsdk"
 	ProjectGUID="{0F9D4807-8E15-4861-BFF8-B3713753B0F8}"
 	RootNamespace="bizsdk"
@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Programmi\OpenGL\SDL-1.2.14&quot;;&quot;C:\Programmi\OpenGL\glew-1.4.0-win32\glew\include&quot;;&quot;C:\Programmi\OpenGL\lib3ds-1.3.0&quot;"
+				AdditionalIncludeDirectories="&quot;E:\lib\glew-1.5.3\include&quot;;&quot;E:\lib\lib3ds-1.3.0\lib3ds-1.3.0&quot;;&quot;E:\lib\SDL-devel-1.2.14-VC8\SDL-1.2.14\include&quot;;&quot;E:\lib\SDL_ttf-devel-2.0.9-VC8\SDL_ttf-2.0.9\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -104,6 +104,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="&quot;E:\lib\glew-1.5.3\include&quot;;&quot;E:\lib\lib3ds-1.3.0\lib3ds-1.3.0&quot;;&quot;E:\lib\SDL-devel-1.2.14-VC8\SDL-1.2.14\include&quot;;&quot;E:\lib\SDL_ttf-devel-2.0.9-VC8\SDL_ttf-2.0.9\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -163,6 +164,14 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\BaseGraph.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\BaseGraph.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\CoordinateFrame.cpp"
 				>
 			</File>
@@ -200,6 +209,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Misc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\PIDController.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\PIDController.h"
 				>
 			</File>
 			<File

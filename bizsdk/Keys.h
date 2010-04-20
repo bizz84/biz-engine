@@ -28,6 +28,18 @@
 #define KEY_8 17
 #define KEY_9 18
 #define KEY_0 19
+
+#define KEY_Q 24
+#define KEY_W 25
+#define KEY_E 26
+#define KEY_R 27
+
+#define KEY_A 38
+#define KEY_S 39
+#define KEY_D 40
+#define KEY_F 41
+
+
 #define KEY_ENTER 36
 
 #define KEY_UP 111
@@ -47,6 +59,17 @@
 #define KEY_8 9
 #define KEY_9 10
 #define KEY_0 11
+
+#define KEY_Q 16
+#define KEY_W 17
+#define KEY_E 18
+#define KEY_R 19
+
+#define KEY_A 30
+#define KEY_S 31
+#define KEY_D 32
+#define KEY_F 33
+
 #define KEY_ENTER 28
 
 #define KEY_UP 72

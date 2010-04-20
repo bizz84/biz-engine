@@ -16,8 +16,6 @@
 #include <malloc.h>
 #include <math.h>
 
-#include <SDL/SDL.h>
-
 #include <stdio.h>
 
 const int permutation[3] = { 1, 2, 0 };

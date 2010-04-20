@@ -93,7 +93,7 @@ void VBO::Bind()
 	}
 	if (usFlags & TEXCOORD_POINTER_FLAG)
 	{
-		glColorPointer(uiTexCoordSize, GL_FLOAT, uiStride, pTexCoordOffset);
+		glTexCoordPointer(uiTexCoordSize, GL_FLOAT, uiStride, pTexCoordOffset);
 	}
 	glBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
 }

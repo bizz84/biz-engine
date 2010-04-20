@@ -17,7 +17,11 @@
 
 #include "Timer.h"
 #include "Shell.h"
+#ifdef __linux__
 #include <SDL/SDL.h>
+#else
+#include <SDL.h>
+#endif
 #include <deque>
 
 using namespace std;

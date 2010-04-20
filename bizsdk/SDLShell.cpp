@@ -12,7 +12,6 @@
  *****************************************************************************/
 
 #include "SDLShell.h"
-#include "SDL/SDL.h"
 #include "assert.h"
 #include "Misc.h"
 #include "Keys.h"
@@ -39,6 +38,8 @@ SDLShell::SDLShell() : pPointer(NULL)
 		pressed[i] = false;
 		pressing[i] = false;
 	}
+	scrollUp = false;
+	scrollDown = false;
 }
 
 SDLShell::~SDLShell()
@@ -52,6 +53,11 @@ void SDLShell::ResetPressed()
 	{
 		pressed[i] = false;
 	}
+}
+void SDLShell::ResetScroll()
+{
+	scrollUp = false;
+	scrollDown = false;
 }
 
 void SDLShell::Exit(ExitStage stage)
@@ -264,6 +270,7 @@ int SDLShell::Run(int argc, char *argv[])
 	{
 		GetPointer()->Input();
 		ResetPressed();
+		ResetScroll();
 
 		SDL_Event event;
 
@@ -297,6 +304,10 @@ int SDLShell::Run(int argc, char *argv[])
 				}*/
                 break;
             case SDL_MOUSEBUTTONDOWN:
+				if (event.button.button == SDL_BUTTON_WHEELDOWN)
+				{
+					scrollDown = true;
+				}
 				GetPointer()->UpdateMouseButton(event.button);
 				/*if (Verbose(VerboseAll))
 				{
@@ -305,6 +316,10 @@ int SDLShell::Run(int argc, char *argv[])
 				}*/
                 break;
             case SDL_MOUSEBUTTONUP:
+				if (event.button.button == SDL_BUTTON_WHEELUP)
+				{
+					scrollUp = true;
+				}
 				GetPointer()->UpdateMouseButton(event.button);
 				/*if (Verbose(VerboseAll))
 				{
@@ -312,6 +327,7 @@ int SDLShell::Run(int argc, char *argv[])
                        event.button.button, event.button.x, event.button.y);
 				}*/
                 break;
+
 			case SDL_KEYUP:
 				SetPressed(event.key.keysym.scancode, false);
 				SetPressing(event.key.keysym.scancode, false);

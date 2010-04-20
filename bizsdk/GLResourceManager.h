@@ -113,6 +113,9 @@ public:
 	bool Release();
 
 	/* Shader related members */
+	bool LoadShaderFromMemory(const char *vertexShader,
+		const char *fragmentShader, GLuint &program);
+
 	bool LoadShaderFromFile(const char *vertexShader,
 		const char *fragmentShader, GLuint &program);
 

@@ -15,10 +15,16 @@
 #define _FONT_H_
 
 
+#ifdef __linux__
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
+#else
+#include <SDL.h>
+#include <SDL_ttf.h>
+#endif
 
-
+// TODO: The implementation of this class is highly inefficient but 
+// serves just as a method to print out text. Implement properly
 class TTFont
 {
 	TTF_Font *ttFont;

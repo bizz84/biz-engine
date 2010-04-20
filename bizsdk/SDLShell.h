@@ -15,7 +15,11 @@
 #define _SDL_SHELL_H_
 
 #include "Shell.h"
+#ifdef __linux__
 #include <SDL/SDL.h>
+#else
+#include <SDL.h>
+#endif
 
 #include "Pointer.h"
 
@@ -47,6 +51,8 @@ protected:
 	Pointer *pPointer;
 	bool pressed[128];
 	bool pressing[128];
+	bool scrollUp;
+	bool scrollDown;
 
 	void Exit(ExitStage stage);
 
@@ -62,6 +68,9 @@ protected:
 
 	bool KeyPressed(Uint8 key) { return pressed[key]; }
 	bool KeyPressing(Uint8 key) { return pressing[key]; }
+
+	bool ScrollUp() { return scrollUp; }
+	bool ScrollDown() { return scrollDown; }
 	
 public:
 	SDLShell();
@@ -83,6 +92,7 @@ private:
 	void SetPressed(Uint8 key, bool value) { pressed[key] = value; }
 	void SetPressing(Uint8 key, bool value) { pressing[key] = value; }
 	void ResetPressed();
+	void ResetScroll();
 };
 
 #endif

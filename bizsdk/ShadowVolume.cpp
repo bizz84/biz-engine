@@ -133,12 +133,12 @@ bool ShadowVolumeMesh::ProcessEdge(vector<Edge> &pairs, const Edge &e, vector<Ve
 
 			// First triangle
 			buffer.push_back(VectorAndNormal(e.v1, e.normal));
-			buffer.push_back(VectorAndNormal(e.v2, e.normal));
 			buffer.push_back(VectorAndNormal(e.v1, iter->normal));
+			buffer.push_back(VectorAndNormal(e.v2, e.normal));
 			// Second triangle
 			buffer.push_back(VectorAndNormal(e.v2, iter->normal));
-			buffer.push_back(VectorAndNormal(e.v1, iter->normal));
 			buffer.push_back(VectorAndNormal(e.v2, e.normal));
+			buffer.push_back(VectorAndNormal(e.v1, iter->normal));
 
 			pairs.erase(iter);
 			return true;

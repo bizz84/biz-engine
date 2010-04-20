@@ -13,7 +13,6 @@
  *****************************************************************************/
 
 #include "Pointer.h"
-#include <SDL/SDL.h>
 #include "Misc.h"
 #include "SDLShell.h"
 

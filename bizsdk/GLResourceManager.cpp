@@ -18,7 +18,11 @@
 #include <malloc.h>
 #include <string.h>
 
+#ifdef __linux__
 #include <SDL/SDL.h>
+#else
+#include <SDL.h>
+#endif
 #include <string>
 
 #include <lib3ds/file.h>
@@ -165,6 +169,98 @@ GLenum GLResourceManager::PrintShaderError(GLuint obj, bool bCompile)
 	return err;
 }
 
+bool GLResourceManager::LoadShaderFromMemory(const char *vertexShader,
+	const char *fragmentShader, GLuint &program)
+{
+	for (unsigned int i = 0; i < apShader.size(); i++)
+	{
+		if (apShader[i]->SameAs(vertexShader, fragmentShader))
+		{
+			program = apShader[i]->GetProgram();
+			return true;
+		}
+	}
+
+	GLint vertCompiled, fragCompiled;//, linked;
+	GLuint uiVS, uiFS;
+
+    uiVS = glCreateShader(GL_VERTEX_SHADER);
+    uiFS = glCreateShader(GL_FRAGMENT_SHADER);
+
+	const char *vs = vertexShader;
+	const char *fs = fragmentShader;
+    
+    glShaderSource(uiVS, 1, &vs, NULL);
+    if (PrintShaderError(uiVS, true)
+		!= GL_NO_ERROR)
+		return false;
+
+
+    glShaderSource(uiFS, 1, &fs, NULL);
+    if (PrintShaderError(uiFS, true)
+		!= GL_NO_ERROR)
+		return false;
+
+	if (Verbose(VerboseInfo))
+		printf("Compiling vertex shader %s... ", vertexShader);
+
+	glCompileShader(uiVS);
+	glGetShaderiv(uiVS, GL_COMPILE_STATUS, &vertCompiled);
+	if (!vertCompiled)
+	{
+		printf("\nUnable to compile %s\n", vertexShader);
+		return false;
+	}
+   	if (PrintShaderError(uiVS, true)
+		!= GL_NO_ERROR)
+		return false;
+
+	if (Verbose(VerboseInfo))
+		printf("and fragment shader %s... ", fragmentShader);
+
+    glCompileShader(uiFS);
+	glGetShaderiv(uiVS, GL_COMPILE_STATUS, &fragCompiled);
+	if (!fragCompiled)
+	{
+		printf("\nUnable to compile %s\n", fragmentShader);
+		return false;
+	}
+    if (PrintShaderError(uiFS, true)
+		!= GL_NO_ERROR)
+		return false;
+
+    program = glCreateProgram();
+
+    glAttachObjectARB(program, uiVS);
+	PrintShaderError(uiVS, true);
+    glAttachObjectARB(program, uiFS);
+	PrintShaderError(uiFS, true);
+
+	if (Verbose(VerboseInfo))
+		printf("linking... ");
+
+    glLinkProgram(program);
+    if (PrintShaderError(program, false)
+		!= GL_NO_ERROR)
+		return false;
+	//glGetShaderiv(program, GL_LINK_STATUS, &linked);
+	//if (!linked)
+	//{
+	//	printf("\nUnable to link %s %s\n", vertexShader, fragmentShader);
+	//	return false;
+	//}
+
+	// Clear errors
+	glGetError();
+
+	if (Verbose(VerboseInfo))
+		printf("Done\n");
+	
+	apShader.push_back(new Shader(vertexShader, fragmentShader, uiVS, uiFS,
+		program));
+
+    return true;	
+}
 
 
 bool GLResourceManager::LoadShaderFromFile(const char *vertexShader,

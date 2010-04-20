@@ -14,7 +14,11 @@
 #ifndef _COORDINATE_FRAME_H_
 #define _COORDINATE_FRAME_H_
 
+#ifdef __linux__
 #include <SDL/SDL.h>
+#else
+#include <SDL.h>
+#endif
 #include "Extensions.h"
 
 class CoordinateFrame
