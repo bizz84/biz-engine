@@ -15,15 +15,20 @@
 
 #include <CL/cl.hpp>
 
-const char *aszPIDParams[] = { "Kp", "Kd", "Ki", "Kg" };
 
 #define BUFFERS_SIZE (1 << 19)
+#define MIN_SIZE (1 << 8)
+
+#define TARGET_FRAMERATE 30.0f
 
 Fountain::Fountain()
 {
 	pos = vel = NULL;
 	hash = NULL;
-	strFountainKernel = NULL;
+	strFountainProgram = NULL;
+
+	pParticleVBOArray = NULL;
+	pParticleVBOStride = NULL;
 }
 
 Fountain::~Fountain()
@@ -33,8 +38,17 @@ Fountain::~Fountain()
 
 bool Fountain::InitApp()
 {
-	bUsePID = false;
+	// Standard initialization
+	fTimeArray = 0.0f;
+	fTimeStride = 0.0f;
+
+	bDisableRendering = false;
+
+	bUseStrideKernel = false;
+
+	// Initialization for command line modifiable variables
 	iShowInfo = 0;
+	bUsePID = false;
 
 	// Custom command line processing
 	vector<CmdLineParameter>::iterator iter;
@@ -65,13 +79,12 @@ bool Fountain::InitCL()
 	int err;
 
     nParticles = BUFFERS_SIZE; /* MUST be a nice power of two for simplicity */
-
-	// Load kernel from file
-	if (LoadFileIntoMemory("data/kernels/fountain.cl", &strFountainKernel) < 0)
+	// Load kernelArray from file
+	if (LoadFileIntoMemory("data/kernels/fountain.cl", &strFountainProgram) < 0)
 		return false;
 
 	// Create the compute program from the source buffer
-    program = clCreateProgramWithSource(context, 1, (const char **) & strFountainKernel, NULL, &err);
+    program = clCreateProgramWithSource(context, 1, (const char **) & strFountainProgram, NULL, &err);
     if (!program)
     {
         printf("Error: Failed to create compute program!\n");
@@ -90,27 +103,106 @@ bool Fountain::InitCL()
         printf("%s\n", buffer);
         return false;
     }
+	if (!SetupArrayKernel())
+	{
+		return false;
+	}
+	if (!SetupStrideKernel())
+	{
+		return false;
+	}
+	return true;
+}
 
-    // Create the compute kernel in the program we wish to run
-    kernel = clCreateKernel(program, "fountain_kern", &err);
-    if (!kernel || err != CL_SUCCESS)
+bool Fountain::SetupStrideKernel()
+{
+	int err;
+	/* ------------------------  Stride version  -------------------------------- */
+	nParticlesStride = nParticles;
+
+	// Create the compute kernelArray in the program we wish to run
+    kernelStride = clCreateKernel(program, "fountain_kern_stride", &err);
+    if (!kernelStride || err != CL_SUCCESS)
     {
-        printf("Error: Failed to create compute kernel!\n");
+        printf("Error: Failed to create compute kernelArray!\n");
         return false;
     }
 
-	// Get work group size for kernel
-	err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(workGroupSize), &workGroupSize, NULL);
+	// Get work group size for kernelArray
+	err = clGetKernelWorkGroupInfo(kernelStride, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(workGroupSizeStride), &workGroupSizeStride, NULL);
     if (err != CL_SUCCESS)
     {
-        printf("Error: Failed to retrieve kernel work group info! %d\n", err);
+        printf("Error: Failed to retrieve kernelArray work group info! %d\n", err);
         return false;
     }
-    localGroupSize = workGroupSize / sizeof(cl_float4);
+    localGroupSizeStride = workGroupSizeStride / sizeof(Particle);
+
+	// Other initialization
+	localSizeStride = localSizeArray;//localGroupSizeStride * sizeof(Particle);
+	globalSizeStride = globalSizeArray;//BUFFERS_SIZE * sizeof(Particle);
+
+
+	particle = new Particle[BUFFERS_SIZE];
+	ParticlesInit(BUFFERS_SIZE, particle);
+
+	pParticleVBOStride = new ParticleVBO(particle, sizeof(Particle), BUFFERS_SIZE);
+
+	//hDeviceParticle = clCreateBuffer(GetContext(),
+	//	CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR,
+	//	BUFFERS_SIZE*sizeof(cl_float4), particle, NULL);
+
+	hDeviceParticle = clCreateFromGLBuffer(GetContext(),
+		CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,//CL_MEM_ALLOC_HOST_PTR,
+		pParticleVBOStride->GetVBO(), &err);
+
+	if (!hDeviceParticle)
+    {
+        printf("Error: Failed to create buffers!\n");
+		return false;
+	}
+
+	err = 0;
+	// set attributes
+	err |= clSetKernelArg(kernelStride, 0, sizeof(cl_mem), (void *)&hDeviceParticle);
+
+    if (err != CL_SUCCESS)
+    {
+        printf("Error: Failed to set kernelArray arguments! %d\n", err);
+        return false;
+    }
+	return true;
+}
+
+bool Fountain::SetupArrayKernel()
+{
+	int err;
+	/* ------------------------  Array version  -------------------------------- */
+	nParticlesArray = nParticles;
+	
+	// Create the compute kernelArray in the program we wish to run
+    kernelArray = clCreateKernel(program, "fountain_kern_array", &err);
+    if (!kernelArray || err != CL_SUCCESS)
+    {
+        printf("Error: Failed to create compute kernelArray!\n");
+        return false;
+    }
+
+	// Get work group size for kernelArray
+	err = clGetKernelWorkGroupInfo(kernelArray, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(workGroupSizeArray), &workGroupSizeArray, NULL);
+    if (err != CL_SUCCESS)
+    {
+        printf("Error: Failed to retrieve kernelArray work group info! %d\n", err);
+        return false;
+    }
+    localGroupSizeArray = workGroupSizeArray / sizeof(cl_float4);
+
+	// Other initialization
+	localSizeArray = localGroupSizeArray * sizeof(cl_float4);
+	globalSizeArray = BUFFERS_SIZE * sizeof(cl_float4);
+
 
 	// Create host buffers 
 
-	// Instance client vectors
 	pos = new cl_float4[BUFFERS_SIZE];
 	vel = new cl_float4[BUFFERS_SIZE];
 	hash = new cl_float4[BUFFERS_SIZE];
@@ -128,15 +220,15 @@ bool Fountain::InitCL()
 		CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR,
 		BUFFERS_SIZE*sizeof(cl_float4), hash, NULL);
 
-	pParticleVBO = new ParticleVBO(pos, BUFFERS_SIZE);
+	pParticleVBOArray = new ParticleVBO(pos, sizeof(cl_float4), BUFFERS_SIZE);
 
 	hDevicePos = clCreateFromGLBuffer(GetContext(),
 		CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,//CL_MEM_ALLOC_HOST_PTR,
-		pParticleVBO->GetVBO(), &err);
+		pParticleVBOArray->GetVBO(), &err);
 
 
 	// Check for correctness
-	if (!hDevicePos || !hDeviceVel)
+	if (!hDevicePos || !hDeviceVel || !hDeviceHash)
     {
         printf("Error: Failed to create buffers!\n");
 		return false;
@@ -145,22 +237,47 @@ bool Fountain::InitCL()
 
 	err = 0;
 	// set attributes
-	err |= clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&hDevicePos);
-	err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&hDeviceVel);
-	err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&hDeviceHash);
+	err |= clSetKernelArg(kernelArray, 0, sizeof(cl_mem), (void *)&hDevicePos);
+	err |= clSetKernelArg(kernelArray, 1, sizeof(cl_mem), (void *)&hDeviceVel);
+	err |= clSetKernelArg(kernelArray, 2, sizeof(cl_mem), (void *)&hDeviceHash);
 
     if (err != CL_SUCCESS)
     {
-        printf("Error: Failed to set kernel arguments! %d\n", err);
+        printf("Error: Failed to set kernelArray arguments! %d\n", err);
         return false;
     }
-
-	// Other initialization
-	localSize = localGroupSize * sizeof(cl_float4);
-	globalSize = BUFFERS_SIZE * sizeof(cl_float4);
-
-	
 	return true;
+}
+
+void Fountain::ParticlesInit(int n, Particle *particle)
+{
+	int i;
+
+	srand(2112);
+
+	Particle *iter;
+
+	float angle = RandRange(-(float)M_PI, (float)M_PI);
+	for(iter = particle, i = 0; i < n; i++, iter++)
+	{
+		float arg = RandRange(-(float)M_PI, (float)M_PI);
+		iter->hash.s[0] = cos(arg + angle);
+		iter->hash.s[1] = arg;
+		iter->hash.s[2] = sin(arg + angle);
+		iter->hash.s[3] = RandRange(0.0f, 15.0f);
+
+		iter->pos.s[0] = 0.0f;
+		iter->pos.s[1] = 0.0f;
+		iter->pos.s[2] = 0.0f;
+		iter->pos.s[3] = 0.0f;
+
+		iter->vel.s[0] = iter->hash.s[0];
+		iter->vel.s[1] = iter->hash.s[1];
+		iter->vel.s[2] = iter->hash.s[2];
+		iter->vel.s[3] = 0.0f;//iter->hash.s[3];
+
+		angle += RandRange(-(float)M_PI, (float)M_PI);
+	}
 }
 
 void Fountain::ParticlesInit(int n, cl_float4 *pos, cl_float4 *vel, cl_float4 *hash)
@@ -194,9 +311,9 @@ void Fountain::ParticlesInit(int n, cl_float4 *pos, cl_float4 *vel, cl_float4 *h
 
 bool Fountain::ReleaseCL()
 {
-	if (strFountainKernel != NULL)
+	if (strFountainProgram != NULL)
 	{
-		FreeFileMemory(&strFountainKernel);
+		FreeFileMemory(&strFountainProgram);
 	}
 	if (hash)
 	{
@@ -212,6 +329,11 @@ bool Fountain::ReleaseCL()
 	{
 		delete [] vel;
 		vel = NULL;
+	}
+	if (particle)
+	{
+		delete [] particle;
+		particle = NULL;
 	}
 	return CLContext::ReleaseCL();
 }
@@ -254,9 +376,9 @@ bool Fountain::InitGL()
 	x = y = 0.0f;
 	camRotate = 0.0f;
 
-	pidController.Init(60.0f, 1.0f, 0.0f, 0.0f, 100.0f);
-
 	iCurPIDParam = -1;
+
+	pidController.Init(TARGET_FRAMERATE, 1.0f, 0.0f, 0.0f, 1000.0f);
 
 	timer.Start();
 
@@ -278,13 +400,17 @@ void Fountain::UpdatePID(float dt)
 {
 	float out = pidController.Update(dt, 1.0f / dt);
 
+	ParticleVBO *vbo = bUseStrideKernel ? pParticleVBOStride : pParticleVBOArray;
+
+	nParticles = vbo->GetCount();
+
 	nParticles -= out;
-	if ((nParticles /= 1.02f) < (1 << 10))
-		nParticles = (1 << 10);
+	if ((nParticles /= 1.02f) < MIN_SIZE)
+		nParticles = MIN_SIZE;
 	if ((nParticles *= 1.02f) > BUFFERS_SIZE)
 		nParticles = BUFFERS_SIZE;
 
-	pParticleVBO->SetCount(nParticles);
+	vbo->SetCount(nParticles);
 }
 
 
@@ -302,16 +428,29 @@ bool Fountain::Input(float t, float dt)
 		{
 			pidController.UpdateParam(iCurPIDParam, iCurPIDParam == 3 || iCurPIDParam == -1 ? 1.0f : 0.1f);
 		}
+		if (KeyPressed(KEY_UP))
+		{
+			iCurPIDParam = iCurPIDParam > 0 ? iCurPIDParam - 1 : 3;
+		}
+		if (KeyPressed(KEY_DOWN))
+		{
+			iCurPIDParam = iCurPIDParam < 3 ? iCurPIDParam + 1 : -1;
+		}
 		UpdatePID(dt);
 	}
 
-	if (KeyPressed(KEY_UP))
+
+	if (KeyPressed(KEY_1))
 	{
-		iCurPIDParam = iCurPIDParam > 0 ? iCurPIDParam - 1 : 3;
+		bUseStrideKernel = !bUseStrideKernel;
 	}
-	if (KeyPressed(KEY_DOWN))
+	if (KeyPressed(KEY_2))
 	{
-		iCurPIDParam = iCurPIDParam < 3 ? iCurPIDParam + 1 : -1;
+		bDisableRendering = !bDisableRendering;
+	}
+	if (KeyPressed(KEY_3))
+	{
+		bUsePID = !bUsePID;
 	}
 
 	if (ScrollUp())
@@ -325,8 +464,8 @@ bool Fountain::Input(float t, float dt)
 
 	/*if (KeyPressing(KEY_LEFT))
 	{
-		if ((nParticles /= 1.02f) < (1 << 10))
-			nParticles = (1 << 10);
+		if ((nParticles /= 1.02f) < MIN_SIZE))
+			nParticles = MIN_SIZE;
 
 		pParticleVBO->SetCount(nParticles);
 	}
@@ -367,38 +506,83 @@ bool Fountain::RunCL(float t, float dt)
 	float cldt = dt / 10.0f;
 	float g = 10.0f;
 
-	err |= clSetKernelArg(kernel, 3, sizeof(int), &nParticles);
-	err |= clSetKernelArg(kernel, 4, sizeof(float), &t);
-	err |= clSetKernelArg(kernel, 5, sizeof(float), &cldt);
-	err |= clSetKernelArg(kernel, 6, sizeof(float), &g);
-
-	if (err != CL_SUCCESS)
+	if (bUseStrideKernel)
 	{
-		printf("Error: clSetKernelArg failed!\n");
-		return false;
-	}
+		Timer temp;
 
-	err |= clEnqueueAcquireGLObjects(GetCommandQueue(), 1, &hDevicePos, 0, NULL, NULL);
-	if (err != CL_SUCCESS)
+		err |= clSetKernelArg(kernelStride, 1, sizeof(int), &nParticles);
+		err |= clSetKernelArg(kernelStride, 2, sizeof(float), &t);
+		err |= clSetKernelArg(kernelStride, 3, sizeof(float), &cldt);
+		err |= clSetKernelArg(kernelStride, 4, sizeof(float), &g);
+
+		if (err != CL_SUCCESS)
+		{
+			printf("Error: clSetKernelArg failed!\n");
+			return false;
+		}
+
+		err |= clEnqueueAcquireGLObjects(GetCommandQueue(), 1, &hDeviceParticle, 0, NULL, NULL);
+		if (err != CL_SUCCESS)
+		{
+			printf("Error: clEnqueueAcquireGLObjects failed!\n");
+			return false;
+		}
+
+		err = clEnqueueNDRangeKernel(GetCommandQueue(), kernelStride, 1, 0,
+			&globalSizeStride, &localSizeStride, 0, 0, 0);
+
+		if (err != CL_SUCCESS)
+		{
+			printf("Error: clEnqueueNDRangeKernel failed!\n");
+			return false;
+		}
+
+		//Read(cldt, g);
+
+		err = clEnqueueReleaseGLObjects(GetCommandQueue(), 1, &hDeviceParticle, 0, NULL, NULL);
+		clFlush(GetCommandQueue()); 
+
+
+		fTimeStride = temp.Update();
+	}
+	else
 	{
-		printf("Error: clEnqueueAcquireGLObjects failed!\n");
-		return false;
+		Timer temp;
+
+		err |= clSetKernelArg(kernelArray, 3, sizeof(int), &nParticles);
+		err |= clSetKernelArg(kernelArray, 4, sizeof(float), &t);
+		err |= clSetKernelArg(kernelArray, 5, sizeof(float), &cldt);
+		err |= clSetKernelArg(kernelArray, 6, sizeof(float), &g);
+
+		if (err != CL_SUCCESS)
+		{
+			printf("Error: clSetKernelArg failed!\n");
+			return false;
+		}
+
+		err |= clEnqueueAcquireGLObjects(GetCommandQueue(), 1, &hDevicePos, 0, NULL, NULL);
+		if (err != CL_SUCCESS)
+		{
+			printf("Error: clEnqueueAcquireGLObjects failed!\n");
+			return false;
+		}
+
+		err = clEnqueueNDRangeKernel(GetCommandQueue(), kernelArray, 1, 0,
+			&globalSizeArray, &localSizeArray, 0, 0, 0);
+
+		if (err != CL_SUCCESS)
+		{
+			printf("Error: clEnqueueNDRangeKernel failed!\n");
+			return false;
+		}
+
+		//Read(cldt, g);
+
+		err = clEnqueueReleaseGLObjects(GetCommandQueue(), 1, &hDevicePos, 0, NULL, NULL);
+		clFlush(GetCommandQueue()); 
+
+		fTimeArray = temp.Update();
 	}
-
-	err = clEnqueueNDRangeKernel(GetCommandQueue(), kernel, 1, 0,
-		&globalSize, &localSize, 0, 0, 0);
-
-	if (err != CL_SUCCESS)
-	{
-		printf("Error: clEnqueueNDRangeKernel failed!\n");
-		return false;
-	}
-
-	//Read(cldt, g);
-
-	err = clEnqueueReleaseGLObjects(GetCommandQueue(), 1, &hDevicePos, 0, NULL, NULL);
-	clFlush(GetCommandQueue()); 
-
 	return true;
 }
 
@@ -412,18 +596,27 @@ bool Fountain::RunGL(float t, float dt)
 	float yRot = y + 20.0f * camRotate;
 	float xRot = x + 20.0f * sin(camRotate);
 
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
-	glTranslatef(0.0f, -0.5f, -fDistance);
-	glRotatef(xRot, 1.0f, 0.0f, 0.0f);
-	glRotatef(yRot, 0.0f, 1.0f, 0.0f);
+	if (!bDisableRendering)
+	{
+		glMatrixMode( GL_MODELVIEW );
+		glLoadIdentity();
+		glTranslatef(0.0f, -0.5f, -fDistance);
+		glRotatef(xRot, 1.0f, 0.0f, 0.0f);
+		glRotatef(yRot, 0.0f, 1.0f, 0.0f);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
 
-	// Draw Particle System
-	glUseProgram(uiParticleProgram);
-	pParticleVBO->Render(GL_POINTS);
-
+		// Draw Particle System
+		glUseProgram(uiParticleProgram);
+		if (bUseStrideKernel)
+		{
+			pParticleVBOStride->Render(GL_POINTS);
+		}
+		else
+		{
+			pParticleVBOArray->Render(GL_POINTS);
+		}
+	}
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	// Draw Coordinate frame
@@ -454,12 +647,15 @@ bool Fountain::RunGL(float t, float dt)
 
 		if (iShowInfo == 1)
 		{
-			sprintf(text, "%.1f",  1.0f / timer.GetDeltaTime());
+			sprintf(text, "%.1f",  1.0f / dt);
 			ttFont.SDL_GL_RenderText(text, color, &position);
 		}
 		else if (iShowInfo == 2)
 		{
-			sprintf(text, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
+			sprintf(text, "FPS=%.1f",  1.0f / dt);
+			ttFont.SDL_GL_RenderText(text, color, &position);
+			position.y -= position.h * 1.2f;
+			sprintf(text, "ms=%.1f",  dt * 1000.0f);
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
 
@@ -468,6 +664,14 @@ bool Fountain::RunGL(float t, float dt)
 			position.y -= position.h * 1.2f;
 
 			sprintf(text, "PointSize=%.0f", fPointSize);
+			ttFont.SDL_GL_RenderText(text, color, &position);
+			position.y -= position.h * 1.2f;
+
+			sprintf(text, "TimeArray=%.3f", fTimeArray);
+			ttFont.SDL_GL_RenderText(text, color, &position);
+			position.y -= position.h * 1.2f;
+
+			sprintf(text, "TimeStride=%.3f", fTimeStride);
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
 		}
@@ -523,10 +727,10 @@ bool Fountain::Read(float dt, float g)
 	cl_event events[2];
 
 	err |= clEnqueueReadBuffer(GetCommandQueue(), hDevicePos, CL_TRUE, 0,
-		globalSize, pos, 0, 0, &events[0]);
+		globalSizeArray, pos, 0, 0, &events[0]);
 
 	err |= clEnqueueReadBuffer(GetCommandQueue(), hDeviceVel, CL_TRUE, 0,
-		globalSize, vel, 0, 0, &events[1]);
+		globalSizeArray, vel, 0, 0, &events[1]);
 
 	err = clWaitForEvents(2, &events[0]);
 	if (err != CL_SUCCESS)

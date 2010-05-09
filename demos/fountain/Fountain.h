@@ -48,12 +48,9 @@ class Fountain : public SDLShell, public CLContext
 
 	GLuint uiParticleProgram, uiCoordFrame;
 
-	ParticleVBO *pParticleVBO;
-
     cl_program program;                 // compute program
-    cl_kernel kernel;                   // compute kernel
     
-	char *strFountainKernel;
+	char *strFountainProgram;
 
 	unsigned int nParticles;
 	float fPointSize;
@@ -61,20 +58,62 @@ class Fountain : public SDLShell, public CLContext
 
 	float angle;
 
+	bool bUseStrideKernel;
+
+	/* Stride version */
+	unsigned int nParticlesStride;
+	cl_kernel kernelStride;              // compute kernel
+
+	struct Particle
+	{
+		cl_float4 pos;
+		cl_float4 vel;
+		cl_float4 hash;
+	} *particle;
+
+	ParticleVBO *pParticleVBOStride;
+
+	cl_mem hDeviceParticle;
+
+	int workGroupSizeStride, localGroupSizeStride;
+	size_t globalSizeStride, localSizeStride;
+	
+	// Debug timer
+	float fTimeStride;
+
+	bool SetupStrideKernel();
+
+
+	/* Array version */
+	unsigned int nParticlesArray;
+    cl_kernel kernelArray;                   // compute kernel
+
+	int workGroupSizeArray, localGroupSizeArray;
+	size_t globalSizeArray, localSizeArray;
+
 	cl_float4* pos;
 	cl_float4* vel;
 	cl_float4* hash;
 
-	cl_float4 min;
-	cl_float4 max;
+	ParticleVBO *pParticleVBOArray;
 
 	cl_mem hDevicePos;
 	cl_mem hDeviceVel;
 	cl_mem hDeviceHash;
 
-	int workGroupSize, localGroupSize;
-	size_t globalSize, localSize;
+	// Debug timer
+	float fTimeArray;
 
+	bool SetupArrayKernel();
+
+
+
+	// Debug values
+	cl_float4 min;
+	cl_float4 max;
+
+
+	bool bDisableRendering;
 	// PID Controller related variables
 	bool bUsePID;
 	PIDControllerGain pidController;
@@ -86,6 +125,7 @@ class Fountain : public SDLShell, public CLContext
 	Timer timer;
 
 
+	void ParticlesInit(int n, Particle *particle);
 	void ParticlesInit(int n, cl_float4 *pos, cl_float4 *vel, cl_float4 *hash);
 
 	void DrawCoordinateFrame(float xRot, float yRot);
