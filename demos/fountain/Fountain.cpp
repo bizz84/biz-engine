@@ -245,6 +245,8 @@ bool Fountain::InitGL()
 	x = y = 0.0f;
 	camRotate = 0.0f;
 
+	pidController.Init(60.0f, 1.0f, 0.0f, 0.0f, 100.0f);
+
 	timer.Start();
 
 	return true;
@@ -265,6 +267,16 @@ bool Fountain::Input(float t, float dt)
 {
 	fpsGraph.Input(1.0f / dt, t);
 
+	float out = pidController.Update(dt, 1.0f / dt);
+
+	nParticles -= out;
+	if ((nParticles /= 1.02f) < (1 << 10))
+		nParticles = (1 << 10);
+	if ((nParticles *= 1.02f) > BUFFERS_SIZE)
+		nParticles = BUFFERS_SIZE;
+
+	pParticleVBO->SetCount(nParticles);
+
 	if (ScrollUp())
 	{
 		fDistance /= 1.25f;
@@ -274,7 +286,7 @@ bool Fountain::Input(float t, float dt)
 		fDistance *= 1.25f;
 	}
 
-	if (KeyPressing(KEY_LEFT))
+	/*if (KeyPressing(KEY_LEFT))
 	{
 		if ((nParticles /= 1.02f) < (1 << 10))
 			nParticles = (1 << 10);
@@ -287,7 +299,7 @@ bool Fountain::Input(float t, float dt)
 			nParticles = BUFFERS_SIZE;
 
 		pParticleVBO->SetCount(nParticles);
-	}
+	}*/
 	if (KeyPressed(KEY_9))
 	{
 		if ((fPointSize -= 1.0f) < 1.0f)

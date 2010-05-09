@@ -30,6 +30,7 @@
 
 #include "BaseGraph.h"
 #include "Mesh.h"
+#include "PIDController.h"
 
 // Code for OpenCL Initialization
 #include "CLContext.h"
@@ -45,6 +46,9 @@ class Fountain : public SDLShell, public CLContext
 	TTFont ttFont;
 	GLuint uiTextProgram;
 
+	GLuint uiParticleProgram, uiCoordFrame;
+
+	ParticleVBO *pParticleVBO;
 
     cl_program program;                 // compute program
     cl_kernel kernel;                   // compute kernel
@@ -71,14 +75,15 @@ class Fountain : public SDLShell, public CLContext
 	int workGroupSize, localGroupSize;
 	size_t globalSize, localSize;
 
-	void ParticlesInit(int n, cl_float4 *pos, cl_float4 *vel, cl_float4 *hash);
+	// PID Controller related variables
+	PIDControllerGain pidController;
 
+	// Timing
 	BaseGraph fpsGraph;
 	Timer timer;
 
-	GLuint uiParticleProgram, uiCoordFrame;
 
-	ParticleVBO *pParticleVBO;
+	void ParticlesInit(int n, cl_float4 *pos, cl_float4 *vel, cl_float4 *hash);
 
 	void DrawCoordinateFrame(float xRot, float yRot);
 	bool Read(float dt, float g);
