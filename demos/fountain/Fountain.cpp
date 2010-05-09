@@ -15,6 +15,8 @@
 
 #include <CL/cl.hpp>
 
+const char *aszPIDParams[] = { "Kp", "Kd", "Ki", "Kg" };
+
 #define BUFFERS_SIZE (1 << 19)
 
 Fountain::Fountain()
@@ -31,6 +33,7 @@ Fountain::~Fountain()
 
 bool Fountain::InitApp()
 {
+	bUsePID = false;
 	iShowInfo = 0;
 
 	// Custom command line processing
@@ -41,7 +44,13 @@ bool Fountain::InitApp()
 	{
 		if (iter->sName == "showinfo")
 		{
-			iShowInfo = atoi(iter->sValue.c_str());
+			const char *str = iter->sValue.c_str();
+			iShowInfo = atoi(str);
+		}
+		if (iter->sName == "usepid")
+		{
+			const char *str = iter->sValue.c_str();
+			bUsePID = (bool)atoi(str);
 		}
 	}	
 
@@ -247,6 +256,8 @@ bool Fountain::InitGL()
 
 	pidController.Init(60.0f, 1.0f, 0.0f, 0.0f, 100.0f);
 
+	iCurPIDParam = -1;
+
 	timer.Start();
 
 	return true;
@@ -263,10 +274,8 @@ bool Fountain::Resize(unsigned int width, unsigned int height)
 	return true;
 }
 
-bool Fountain::Input(float t, float dt)
+void Fountain::UpdatePID(float dt)
 {
-	fpsGraph.Input(1.0f / dt, t);
-
 	float out = pidController.Update(dt, 1.0f / dt);
 
 	nParticles -= out;
@@ -276,6 +285,34 @@ bool Fountain::Input(float t, float dt)
 		nParticles = BUFFERS_SIZE;
 
 	pParticleVBO->SetCount(nParticles);
+}
+
+
+bool Fountain::Input(float t, float dt)
+{
+	fpsGraph.Input(1.0f / dt, t);
+
+	if (bUsePID)
+	{
+		if (KeyPressed(KEY_LEFT))
+		{
+			pidController.UpdateParam(iCurPIDParam, iCurPIDParam == 3 || iCurPIDParam == -1 ? -1.0f : -0.1f);
+		}
+		if (KeyPressed(KEY_RIGHT))
+		{
+			pidController.UpdateParam(iCurPIDParam, iCurPIDParam == 3 || iCurPIDParam == -1 ? 1.0f : 0.1f);
+		}
+		UpdatePID(dt);
+	}
+
+	if (KeyPressed(KEY_UP))
+	{
+		iCurPIDParam = iCurPIDParam > 0 ? iCurPIDParam - 1 : 3;
+	}
+	if (KeyPressed(KEY_DOWN))
+	{
+		iCurPIDParam = iCurPIDParam < 3 ? iCurPIDParam + 1 : -1;
+	}
 
 	if (ScrollUp())
 	{
@@ -395,7 +432,7 @@ bool Fountain::RunGL(float t, float dt)
 	glDisableClientState(GL_VERTEX_ARRAY);
 
 
-	if (iShowInfo > 0)
+	if (iShowInfo > 0 || bUsePID)
 	{
 		fpsGraph.Draw();
 		
@@ -413,15 +450,15 @@ bool Fountain::RunGL(float t, float dt)
 		position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
 		position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.75f);
 
+		char text[200];
+
 		if (iShowInfo == 1)
 		{
-			char text[200];
 			sprintf(text, "%.1f",  1.0f / timer.GetDeltaTime());
 			ttFont.SDL_GL_RenderText(text, color, &position);
 		}
 		else if (iShowInfo == 2)
 		{
-			char text[200];
 			sprintf(text, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
@@ -433,6 +470,32 @@ bool Fountain::RunGL(float t, float dt)
 			sprintf(text, "PointSize=%.0f", fPointSize);
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
+		}
+
+		if (bUsePID)
+		{
+			position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.4f);
+
+			sprintf(text, "%starget=%.1f", iCurPIDParam == -1 ? "> " : "", pidController.fTarget);
+			ttFont.SDL_GL_RenderText(text, color, &position);
+			position.y -= position.h * 1.2f;
+
+			sprintf(text, "%sKp=%.1f", iCurPIDParam == 0 ? "> " : "", pidController.Kp);
+			ttFont.SDL_GL_RenderText(text, color, &position);
+			position.y -= position.h * 1.2f;
+
+			sprintf(text, "%sKi=%.1f", iCurPIDParam == 1 ? "> " : "", pidController.Ki);
+			ttFont.SDL_GL_RenderText(text, color, &position);
+			position.y -= position.h * 1.2f;
+
+			sprintf(text, "%sKd=%.1f", iCurPIDParam == 2 ? "> " : "", pidController.Kd);
+			ttFont.SDL_GL_RenderText(text, color, &position);
+			position.y -= position.h * 1.2f;
+
+			sprintf(text, "%sKg=%.1f", iCurPIDParam == 3 ? "> " : "", pidController.Kg);
+			ttFont.SDL_GL_RenderText(text, color, &position);
+			position.y -= position.h * 1.2f;
+
 		}
 		TTFont::glDisable2D();
 		glDisable(GL_BLEND);

@@ -76,7 +76,10 @@ class Fountain : public SDLShell, public CLContext
 	size_t globalSize, localSize;
 
 	// PID Controller related variables
+	bool bUsePID;
 	PIDControllerGain pidController;
+	int iCurPIDParam;
+	void UpdatePID(float dt);
 
 	// Timing
 	BaseGraph fpsGraph;
