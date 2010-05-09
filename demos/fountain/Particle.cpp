@@ -21,9 +21,8 @@
 #include <CL/cl.hpp>
 
 
-
-ParticleVBO::ParticleVBO(void *data, unsigned int count)
-: VBO(data, sizeof(cl_float4), count)
+ParticleVBO::ParticleVBO(void *data, unsigned int stride, unsigned int count)
+: VBO(data, stride, count)
 {
 	uiVertexSize = 4;
 }

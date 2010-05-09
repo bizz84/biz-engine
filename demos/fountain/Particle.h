@@ -27,11 +27,10 @@ class ParticleVBO : public VBO
 protected:
 
 public:
-	ParticleVBO(void *data, unsigned int count);
-
-	GLuint GetVBO() { return uiVBO; }
+	ParticleVBO(void *data, unsigned int stride, unsigned int count);
 
 	void SetCount(unsigned int count) { uiCount = count; }
+	unsigned int GetCount() { return uiCount; }
 };
 
 
