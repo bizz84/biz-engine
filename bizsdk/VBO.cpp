@@ -13,7 +13,9 @@
 
 #include "VBO.h"
 
-
+/*****************************************************************************
+ * VBO class implementation
+ *****************************************************************************/
 VBO::VBO(void *data, GLsizei stride, unsigned int count)
 	: uiStride(stride), uiCount(count), usFlags(VERTEX_POINTER_FLAG),
 	pVertexOffset(NULL), pNormalOffset(NULL), pColorOffset(NULL),
@@ -113,9 +115,9 @@ void VBO::Render(GLenum mode)
 }
 
 
-
-
-
+/*****************************************************************************
+ * IndexedVBO class implementation
+ *****************************************************************************/
 IndexedVBO::IndexedVBO(void *data, GLsizei stride, unsigned int count,
 	void *indices, unsigned int elements)
 	: VBO(data, stride, count), uiElements(elements)

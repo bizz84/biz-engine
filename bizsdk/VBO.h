@@ -56,7 +56,7 @@ protected:
 
 public:
 	VBO(void *data, GLsizei stride, unsigned int count);
-	~VBO();
+	virtual ~VBO();
 
 	void AddEntry(ArrayFuncPointer pointer, GLint size, GLenum type,
 		unsigned int offset);
@@ -73,6 +73,8 @@ public:
 	void SetNormalData(unsigned int offset);
 	void SetColorData(unsigned int offset, unsigned int size = 3);
 	void SetTexCoordData(unsigned int offset, unsigned int size = 2);
+
+	GLuint GetVBO() { return uiVBO; }
 };
 
 class IndexedVBO : public VBO
@@ -90,6 +92,9 @@ public:
 	virtual void Render(GLenum mode);
 
 	unsigned int GetElements() { return uiElements; }
+
+	GLuint GetIndexedVBO() { return uiIndexVBO; }
+
 };
 
 #endif
