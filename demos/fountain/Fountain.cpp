@@ -15,8 +15,13 @@
 
 #include <CL/cl.hpp>
 
+const char *aszModes[] = {
+	"OpenCL Arrays",
+	"OpenCL Struct", 
+	"CPU Reference"
+};
 
-#define BUFFERS_SIZE (1 << 19)
+#define BUFFERS_SIZE (1 << 20)
 #define MIN_SIZE (1 << 8)
 
 #define TARGET_FRAMERATE 30.0f
@@ -39,12 +44,12 @@ Fountain::~Fountain()
 bool Fountain::InitApp()
 {
 	// Standard initialization
-	fTimeArray = 0.0f;
-	fTimeStride = 0.0f;
-
 	bDisableRendering = false;
 
-	bUseStrideKernel = false;
+	eMode = OPENCL_ARRAY;
+
+	sImpl[CPU].nParticles = BUFFERS_SIZE;
+
 
 	// Initialization for command line modifiable variables
 	iShowInfo = 0;
@@ -78,7 +83,6 @@ bool Fountain::InitCL()
 
 	int err;
 
-    nParticles = BUFFERS_SIZE; /* MUST be a nice power of two for simplicity */
 	// Load kernelArray from file
 	if (LoadFileIntoMemory("data/kernels/fountain.cl", &strFountainProgram) < 0)
 		return false;
@@ -114,70 +118,11 @@ bool Fountain::InitCL()
 	return true;
 }
 
-bool Fountain::SetupStrideKernel()
-{
-	int err;
-	/* ------------------------  Stride version  -------------------------------- */
-	nParticlesStride = nParticles;
-
-	// Create the compute kernelArray in the program we wish to run
-    kernelStride = clCreateKernel(program, "fountain_kern_stride", &err);
-    if (!kernelStride || err != CL_SUCCESS)
-    {
-        printf("Error: Failed to create compute kernelArray!\n");
-        return false;
-    }
-
-	// Get work group size for kernelArray
-	err = clGetKernelWorkGroupInfo(kernelStride, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(workGroupSizeStride), &workGroupSizeStride, NULL);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error: Failed to retrieve kernelArray work group info! %d\n", err);
-        return false;
-    }
-    localGroupSizeStride = workGroupSizeStride / sizeof(Particle);
-
-	// Other initialization
-	localSizeStride = localSizeArray;//localGroupSizeStride * sizeof(Particle);
-	globalSizeStride = globalSizeArray;//BUFFERS_SIZE * sizeof(Particle);
-
-
-	particle = new Particle[BUFFERS_SIZE];
-	ParticlesInit(BUFFERS_SIZE, particle);
-
-	pParticleVBOStride = new ParticleVBO(particle, sizeof(Particle), BUFFERS_SIZE);
-
-	//hDeviceParticle = clCreateBuffer(GetContext(),
-	//	CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR,
-	//	BUFFERS_SIZE*sizeof(cl_float4), particle, NULL);
-
-	hDeviceParticle = clCreateFromGLBuffer(GetContext(),
-		CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,//CL_MEM_ALLOC_HOST_PTR,
-		pParticleVBOStride->GetVBO(), &err);
-
-	if (!hDeviceParticle)
-    {
-        printf("Error: Failed to create buffers!\n");
-		return false;
-	}
-
-	err = 0;
-	// set attributes
-	err |= clSetKernelArg(kernelStride, 0, sizeof(cl_mem), (void *)&hDeviceParticle);
-
-    if (err != CL_SUCCESS)
-    {
-        printf("Error: Failed to set kernelArray arguments! %d\n", err);
-        return false;
-    }
-	return true;
-}
-
 bool Fountain::SetupArrayKernel()
 {
 	int err;
 	/* ------------------------  Array version  -------------------------------- */
-	nParticlesArray = nParticles;
+	sImpl[OPENCL_ARRAY].nParticles = BUFFERS_SIZE;
 	
 	// Create the compute kernelArray in the program we wish to run
     kernelArray = clCreateKernel(program, "fountain_kern_array", &err);
@@ -249,6 +194,66 @@ bool Fountain::SetupArrayKernel()
 	return true;
 }
 
+bool Fountain::SetupStrideKernel()
+{
+	int err;
+	/* ------------------------  Stride version  -------------------------------- */
+	sImpl[OPENCL_STRUCT].nParticles = BUFFERS_SIZE;
+
+	// Create the compute kernelArray in the program we wish to run
+    kernelStride = clCreateKernel(program, "fountain_kern_stride", &err);
+    if (!kernelStride || err != CL_SUCCESS)
+    {
+        printf("Error: Failed to create compute kernelArray!\n");
+        return false;
+    }
+
+	// Get work group size for kernelArray
+	err = clGetKernelWorkGroupInfo(kernelStride, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(workGroupSizeStride), &workGroupSizeStride, NULL);
+    if (err != CL_SUCCESS)
+    {
+        printf("Error: Failed to retrieve kernelArray work group info! %d\n", err);
+        return false;
+    }
+    localGroupSizeStride = workGroupSizeStride / sizeof(Particle);
+
+	// Other initialization
+	localSizeStride = localSizeArray;//localGroupSizeStride * sizeof(Particle);
+	globalSizeStride = globalSizeArray;//BUFFERS_SIZE * sizeof(Particle);
+
+
+	particle = new Particle[BUFFERS_SIZE];
+	ParticlesInit(BUFFERS_SIZE, particle);
+
+	pParticleVBOStride = new ParticleVBO(particle, sizeof(Particle), BUFFERS_SIZE);
+
+	//hDeviceParticle = clCreateBuffer(GetContext(),
+	//	CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR,
+	//	BUFFERS_SIZE*sizeof(cl_float4), particle, NULL);
+
+	hDeviceParticle = clCreateFromGLBuffer(GetContext(),
+		CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,//CL_MEM_ALLOC_HOST_PTR,
+		pParticleVBOStride->GetVBO(), &err);
+
+	if (!hDeviceParticle)
+    {
+        printf("Error: Failed to create buffers!\n");
+		return false;
+	}
+
+	err = 0;
+	// set attributes
+	err |= clSetKernelArg(kernelStride, 0, sizeof(cl_mem), (void *)&hDeviceParticle);
+
+    if (err != CL_SUCCESS)
+    {
+        printf("Error: Failed to set kernelArray arguments! %d\n", err);
+        return false;
+    }
+	return true;
+}
+
+
 void Fountain::ParticlesInit(int n, Particle *particle)
 {
 	int i;
@@ -262,7 +267,7 @@ void Fountain::ParticlesInit(int n, Particle *particle)
 	{
 		float arg = RandRange(-(float)M_PI, (float)M_PI);
 		iter->hash.s[0] = cos(arg + angle);
-		iter->hash.s[1] = arg;
+		iter->hash.s[1] = 3.0f + arg;
 		iter->hash.s[2] = sin(arg + angle);
 		iter->hash.s[3] = RandRange(0.0f, 15.0f);
 
@@ -291,7 +296,7 @@ void Fountain::ParticlesInit(int n, cl_float4 *pos, cl_float4 *vel, cl_float4 *h
 	{
 		float arg = RandRange(-(float)M_PI, (float)M_PI);
 		hash[i].s[0] = cos(arg + angle);
-		hash[i].s[1] = arg;
+		hash[i].s[1] = 3.0f + arg;
 		hash[i].s[2] = sin(arg + angle);
 		hash[i].s[3] = RandRange(0.0f, 15.0f);
 
@@ -376,9 +381,20 @@ bool Fountain::InitGL()
 	x = y = 0.0f;
 	camRotate = 0.0f;
 
+	for (unsigned int i = 0; i < NUM_IMPLEMENTATIONS; i++)
+	{
+		sImpl[i].bFullSteam = bUsePID;
+		sImpl[i].nParticles = bUsePID ? BUFFERS_SIZE : MIN_SIZE;
+	}
+	if (!bUsePID)
+	{
+		pParticleVBOArray->SetCount(MIN_SIZE);
+		pParticleVBOStride->SetCount(MIN_SIZE);
+	}
+
 	iCurPIDParam = -1;
 
-	pidController.Init(TARGET_FRAMERATE, 1.0f, 0.0f, 0.0f, 1000.0f);
+	pidController.Init(TARGET_FRAMERATE, 1.0f, 0.0f, 0.0f, 200.0f);
 
 	timer.Start();
 
@@ -396,13 +412,46 @@ bool Fountain::Resize(unsigned int width, unsigned int height)
 	return true;
 }
 
-void Fountain::UpdatePID(float dt)
+void Fountain::CPUReference(float g, float dt)
+{
+	unsigned int i;
+	Particle *iter;
+	for (iter = particle, i = 0; i < sImpl[CPU].nParticles; i++, iter++)
+	{
+		float f = g * dt;
+
+		iter->vel.s[1] -= f;
+		
+		iter->pos.s[0] += iter->vel.s[0] * dt;
+		iter->pos.s[1] += iter->vel.s[1] * dt;
+		iter->pos.s[2] += iter->vel.s[2] * dt;
+		iter->pos.s[3] += dt;
+		
+		if (iter->pos.s[1] < 0.0f)
+		{
+			iter->vel.s[3] += 1.0f;
+			if (iter->vel.s[3] > iter->hash.s[3])
+			{
+				iter->vel = iter->hash;
+				iter->vel.s[3] = 0.0;
+
+				iter->pos.s[0] = 0.0f;
+				iter->pos.s[1] = 0.0f;
+				iter->pos.s[2] = 0.0f;
+				iter->pos.s[3] = 0.0f;
+			}
+			else
+			{
+				iter->pos.s[1] = -iter->pos.s[1];
+				iter->vel.s[1] *= -0.5f;
+			}
+		}
+	}
+}
+
+void Fountain::UpdatePID(float dt, unsigned int &nParticles)
 {
 	float out = pidController.Update(dt, 1.0f / dt);
-
-	ParticleVBO *vbo = bUseStrideKernel ? pParticleVBOStride : pParticleVBOArray;
-
-	nParticles = vbo->GetCount();
 
 	nParticles -= out;
 	if ((nParticles /= 1.02f) < MIN_SIZE)
@@ -410,13 +459,42 @@ void Fountain::UpdatePID(float dt)
 	if ((nParticles *= 1.02f) > BUFFERS_SIZE)
 		nParticles = BUFFERS_SIZE;
 
-	vbo->SetCount(nParticles);
+	if (eMode != CPU)
+	{
+		ParticleVBO *vbo = eMode == OPENCL_STRUCT ? pParticleVBOStride : pParticleVBOArray;
+		vbo->SetCount(nParticles);
+	}
 }
 
 
 bool Fountain::Input(float t, float dt)
 {
 	fpsGraph.Input(1.0f / dt, t);
+
+	if (KeyPressed(KEY_1))
+	{
+		eMode = eMode < NUM_IMPLEMENTATIONS - 1 ? eMode + 1 : 0;
+	}
+	if (KeyPressed(KEY_2))
+	{
+		bUsePID = !bUsePID;
+	}
+	if (KeyPressed(KEY_3))
+	{
+		bDisableRendering = !bDisableRendering;
+	}
+	// Set reference # of particles for all implementations
+	if (KeyPressed(KEY_4))
+	{
+		unsigned int i, nParticles = sImpl[eMode].nParticles;
+		for (i = 0; i < NUM_IMPLEMENTATIONS; i++)
+		{
+			sImpl[i].nParticles = nParticles;
+			sImpl[i].bFullSteam = true;
+		}
+		pParticleVBOArray->SetCount(nParticles);
+		pParticleVBOStride->SetCount(nParticles);
+	}
 
 	if (bUsePID)
 	{
@@ -436,22 +514,55 @@ bool Fountain::Input(float t, float dt)
 		{
 			iCurPIDParam = iCurPIDParam < 3 ? iCurPIDParam + 1 : -1;
 		}
-		UpdatePID(dt);
+		UpdatePID(dt, sImpl[eMode].nParticles);
+	}
+	else
+	{
+		ParticleVBO *vbo = NULL;
+		if (eMode == OPENCL_ARRAY)
+			vbo = pParticleVBOArray;
+		else if (eMode == OPENCL_STRUCT)
+			vbo = pParticleVBOStride;
+
+		unsigned int &nParticles = sImpl[eMode].nParticles;
+		bool &bFullSteam = sImpl[eMode].bFullSteam;
+
+		if (!sImpl[eMode].bFullSteam)
+		{
+			if ((nParticles *= 1.0f + dt) > BUFFERS_SIZE)
+			{
+				bFullSteam = true;
+				nParticles = BUFFERS_SIZE;
+			}
+			if (vbo)
+				vbo->SetCount(sImpl[eMode].nParticles);
+		}
+		if (KeyPressing(KEY_LEFT))
+		{
+			if (!bFullSteam)
+				bFullSteam = true;
+
+			if ((nParticles /= 1.02f) < MIN_SIZE)
+				nParticles = MIN_SIZE;
+
+			if (vbo)
+				vbo->SetCount(sImpl[eMode].nParticles);
+		}
+		if (KeyPressing(KEY_RIGHT))
+		{
+			if (!bFullSteam)
+				bFullSteam = true;
+
+			if ((nParticles *= 1.02f) > BUFFERS_SIZE)
+				nParticles = BUFFERS_SIZE;
+
+			if (vbo)
+				vbo->SetCount(nParticles);
+		}
 	}
 
 
-	if (KeyPressed(KEY_1))
-	{
-		bUseStrideKernel = !bUseStrideKernel;
-	}
-	if (KeyPressed(KEY_2))
-	{
-		bDisableRendering = !bDisableRendering;
-	}
-	if (KeyPressed(KEY_3))
-	{
-		bUsePID = !bUsePID;
-	}
+
 
 	if (ScrollUp())
 	{
@@ -462,20 +573,6 @@ bool Fountain::Input(float t, float dt)
 		fDistance *= 1.25f;
 	}
 
-	/*if (KeyPressing(KEY_LEFT))
-	{
-		if ((nParticles /= 1.02f) < MIN_SIZE))
-			nParticles = MIN_SIZE;
-
-		pParticleVBO->SetCount(nParticles);
-	}
-	if (KeyPressing(KEY_RIGHT))
-	{
-		if ((nParticles *= 1.02f) > BUFFERS_SIZE)
-			nParticles = BUFFERS_SIZE;
-
-		pParticleVBO->SetCount(nParticles);
-	}*/
 	if (KeyPressed(KEY_9))
 	{
 		if ((fPointSize -= 1.0f) < 1.0f)
@@ -506,11 +603,11 @@ bool Fountain::RunCL(float t, float dt)
 	float cldt = dt / 10.0f;
 	float g = 10.0f;
 
-	if (bUseStrideKernel)
+	Timer temp;
+	switch (eMode)
 	{
-		Timer temp;
-
-		err |= clSetKernelArg(kernelStride, 1, sizeof(int), &nParticles);
+	case OPENCL_STRUCT:
+		err |= clSetKernelArg(kernelStride, 1, sizeof(int), &sImpl[eMode].nParticles);
 		err |= clSetKernelArg(kernelStride, 2, sizeof(float), &t);
 		err |= clSetKernelArg(kernelStride, 3, sizeof(float), &cldt);
 		err |= clSetKernelArg(kernelStride, 4, sizeof(float), &g);
@@ -541,15 +638,9 @@ bool Fountain::RunCL(float t, float dt)
 
 		err = clEnqueueReleaseGLObjects(GetCommandQueue(), 1, &hDeviceParticle, 0, NULL, NULL);
 		clFlush(GetCommandQueue()); 
-
-
-		fTimeStride = temp.Update();
-	}
-	else
-	{
-		Timer temp;
-
-		err |= clSetKernelArg(kernelArray, 3, sizeof(int), &nParticles);
+		break;
+	case OPENCL_ARRAY:
+		err |= clSetKernelArg(kernelArray, 3, sizeof(int), &sImpl[eMode].nParticles);
 		err |= clSetKernelArg(kernelArray, 4, sizeof(float), &t);
 		err |= clSetKernelArg(kernelArray, 5, sizeof(float), &cldt);
 		err |= clSetKernelArg(kernelArray, 6, sizeof(float), &g);
@@ -568,7 +659,7 @@ bool Fountain::RunCL(float t, float dt)
 		}
 
 		err = clEnqueueNDRangeKernel(GetCommandQueue(), kernelArray, 1, 0,
-			&globalSizeArray, &localSizeArray, 0, 0, 0);
+			&globalSizeArray, NULL/*&localSizeArray*/, 0, 0, 0);
 
 		if (err != CL_SUCCESS)
 		{
@@ -580,9 +671,13 @@ bool Fountain::RunCL(float t, float dt)
 
 		err = clEnqueueReleaseGLObjects(GetCommandQueue(), 1, &hDevicePos, 0, NULL, NULL);
 		clFlush(GetCommandQueue()); 
-
-		fTimeArray = temp.Update();
+		break;
+	case CPU:
+		CPUReference(g, dt);
+		break;
 	}
+	sImpl[eMode].fRunTime = temp.Update();
+
 	return true;
 }
 
@@ -608,13 +703,20 @@ bool Fountain::RunGL(float t, float dt)
 
 		// Draw Particle System
 		glUseProgram(uiParticleProgram);
-		if (bUseStrideKernel)
+		if (eMode == OPENCL_STRUCT)
 		{
 			pParticleVBOStride->Render(GL_POINTS);
 		}
-		else
+		else if (eMode == OPENCL_ARRAY)
 		{
 			pParticleVBOArray->Render(GL_POINTS);
+		}
+		else
+		{
+			//CPU
+			glBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
+			glVertexPointer(4, GL_FLOAT, sizeof(Particle), particle);
+			glDrawArrays(GL_POINTS, 0, sImpl[eMode].nParticles);
 		}
 	}
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -652,14 +754,18 @@ bool Fountain::RunGL(float t, float dt)
 		}
 		else if (iShowInfo == 2)
 		{
+			ttFont.SDL_GL_RenderText(aszModes[eMode], color, &position);
+			position.y -= position.h * 1.2f;
+
 			sprintf(text, "FPS=%.1f",  1.0f / dt);
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
+
 			sprintf(text, "ms=%.1f",  dt * 1000.0f);
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "Particles=%d", nParticles);
+			sprintf(text, "Particles=%d", sImpl[eMode].nParticles);
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
 
@@ -667,11 +773,7 @@ bool Fountain::RunGL(float t, float dt)
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "TimeArray=%.3f", fTimeArray);
-			ttFont.SDL_GL_RenderText(text, color, &position);
-			position.y -= position.h * 1.2f;
-
-			sprintf(text, "TimeStride=%.3f", fTimeStride);
+			sprintf(text, "RunTime=%.3f", sImpl[eMode].fRunTime);
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
 		}
@@ -746,7 +848,7 @@ bool Fountain::Read(float dt, float g)
 	max = pos[0];
 
 	unsigned int i, j;
-	for (i = 1; i < nParticles; i++)
+	for (i = 1; i < sImpl[eMode].nParticles; i++)
 	{
 		for (j = 0; j < 4; j++)
 		{

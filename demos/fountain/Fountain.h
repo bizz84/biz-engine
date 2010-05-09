@@ -52,16 +52,27 @@ class Fountain : public SDLShell, public CLContext
     
 	char *strFountainProgram;
 
-	unsigned int nParticles;
+	//unsigned int nParticles;
 	float fPointSize;
 	float camRotate;
 
 	float angle;
 
-	bool bUseStrideKernel;
+	enum { OPENCL_ARRAY, OPENCL_STRUCT, CPU, NUM_IMPLEMENTATIONS };
+	int eMode;
+
+	struct CommonParameters
+	{
+		bool bFullSteam;
+		unsigned int nParticles;
+
+		// debug timer
+		float fRunTime;
+
+	} sImpl[NUM_IMPLEMENTATIONS];
+	
 
 	/* Stride version */
-	unsigned int nParticlesStride;
 	cl_kernel kernelStride;              // compute kernel
 
 	struct Particle
@@ -77,15 +88,12 @@ class Fountain : public SDLShell, public CLContext
 
 	int workGroupSizeStride, localGroupSizeStride;
 	size_t globalSizeStride, localSizeStride;
-	
-	// Debug timer
-	float fTimeStride;
+
 
 	bool SetupStrideKernel();
 
 
 	/* Array version */
-	unsigned int nParticlesArray;
     cl_kernel kernelArray;                   // compute kernel
 
 	int workGroupSizeArray, localGroupSizeArray;
@@ -101,11 +109,10 @@ class Fountain : public SDLShell, public CLContext
 	cl_mem hDeviceVel;
 	cl_mem hDeviceHash;
 
-	// Debug timer
-	float fTimeArray;
-
 	bool SetupArrayKernel();
 
+	/* CPU version */
+	void CPUReference(float g, float dt);
 
 
 	// Debug values
@@ -118,7 +125,7 @@ class Fountain : public SDLShell, public CLContext
 	bool bUsePID;
 	PIDControllerGain pidController;
 	int iCurPIDParam;
-	void UpdatePID(float dt);
+	void UpdatePID(float dt, unsigned int &nParticles);
 
 	// Timing
 	BaseGraph fpsGraph;
