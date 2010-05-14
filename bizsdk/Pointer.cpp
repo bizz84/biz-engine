@@ -112,20 +112,26 @@ void Pointer::Update()
 	}
 }
 
+bool Pointer::MotionCondition()
+{
+	return currPressing && !read;
+}
 
 void Pointer::UpdateMouseMotion(SDL_MouseMotionEvent &event)
 {
-	if (currPressing && !read)
+	if (MotionCondition())
 	{
 		read = true;
 		timer.Update();
-		float dt = samples.size() > 0 ? timer.GetTime() - samples.back().t : 0.0f;
+		float dt = samples.size() > 0 ?
+			timer.GetTime() - samples.back().t : 0.0f;
 		samples.push_back(GenerateSample(event, dt));
 		/*if (Verbose(VerboseAll))
 		{
 			PointerInputSample sample = samples.back();
 			printf("x=%.3f y=%.3f dx=%.3f dy=%.3f t=%.5f dt=%.5f\n",
-				positionX, positionY, sample.dx, sample.dy, sample.t, sample.dt);
+				positionX, positionY, sample.dx
+				sample.dy, sample.t, sample.dt);
 		}*/
 	}
 }
@@ -145,19 +151,24 @@ void Pointer::UpdateMouseButton(SDL_MouseButtonEvent &event)
 	}
 }
 
-PointerInputSample Pointer::GenerateSample(SDL_MouseMotionEvent &event, float dt)
+PointerInputSample Pointer::GenerateSample(SDL_MouseMotionEvent &event,
+										   float dt)
 {
 	SDLShell *shell = (SDLShell *)pShell;
 	PointerInputSample sample;
 
-	positionX = 2.0f * (float)event.x / (float)shell->ShellGet(SDLShell::SHELL_WIDTH) - 1.0f;
-	positionY = 1.0f - 2.0f * (float)event.y / (float)shell->ShellGet(SDLShell::SHELL_HEIGHT);
+	positionX = 2.0f * (float)event.x /
+		(float)shell->ShellGet(SDLShell::SHELL_WIDTH) - 1.0f;
+	positionY = 1.0f - 2.0f * (float)event.y /
+		(float)shell->ShellGet(SDLShell::SHELL_HEIGHT);
 
 	sample.dx = (float)event.xrel;
 	sample.dy = -(float)event.yrel;
 
-	//sample.dx = 2.0f * (float)event.xrel / (float)shell->ShellGet(SDLShell::SHELL_WIDTH);
-	//sample.dy = -2.0f * (float)event.yrel / (float)shell->ShellGet(SDLShell::SHELL_HEIGHT);
+	//sample.dx = 2.0f * (float)event.xrel / 
+	//	(float)shell->ShellGet(SDLShell::SHELL_WIDTH);
+	//sample.dy = -2.0f * (float)event.yrel /
+	//	(float)shell->ShellGet(SDLShell::SHELL_HEIGHT);
 
 	sample.t = motionTime = timer.GetTime();
 	sample.dt = dt;
@@ -165,4 +176,13 @@ PointerInputSample Pointer::GenerateSample(SDL_MouseMotionEvent &event, float dt
 	return sample;
 }
 
+FPSPointer::FPSPointer(Shell *shell) : Pointer(shell)
+{
+	SDL_WM_GrabInput(SDL_GRAB_ON);
+	SDL_ShowCursor(0);
+}
 
+bool FPSPointer::MotionCondition()
+{
+	return ((SDLShell *)pShell)->GetCurrentFrame() > 0;
+}

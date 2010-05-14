@@ -33,6 +33,7 @@ struct PointerInputSample
 
 class Pointer
 {
+protected:
 	float maxDelay;
 	float inertiaTau;
 	//! Only one update per frame is allowed
@@ -64,9 +65,11 @@ class Pointer
 	void RemoveOld();
 	void Update();
 	PointerInputSample GenerateSample(SDL_MouseMotionEvent &event, float dt);
+
+	virtual bool MotionCondition();
 public:
 	Pointer(Shell *shell);
-	~Pointer();
+	virtual ~Pointer();
 
 	void Input();
 
@@ -90,6 +93,14 @@ public:
 
 	float TimeSinceLastInput() { return timeSinceLastInput; }
 	float LastInputTime() { return motionTime > releaseTime ? motionTime : releaseTime; }
+};
+
+class FPSPointer : public Pointer
+{
+protected:
+	virtual bool MotionCondition();
+public:
+	FPSPointer(Shell *shell);
 };
 
 
