@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="shadows"
-	ProjectGUID="{840A46AC-FEDC-4343-8ECD-3795ABB45E91}"
+	ProjectGUID="{44078D47-C3C9-43E1-B2C1-546984CDFDBB}"
 	RootNamespace="shadows"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
@@ -182,6 +182,10 @@
 			>
 			<File
 				RelativePath="..\..\Shadows.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Shadows.h"
 				>
 			</File>
 			<File
