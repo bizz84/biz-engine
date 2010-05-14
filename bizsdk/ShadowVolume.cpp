@@ -29,53 +29,67 @@ ShadowVolumeMesh::ShadowVolumeMesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/,
 	if (fp == NULL)
 	{
 		Timer tsw;
-		printf("Shadow volume for mesh %s does not exist. Creating it...\n", pMesh->name);
-		printf("Statistics for mesh \"%s\": faces=%d,points=%d\n", pMesh->name, pMesh->faces, pMesh->points);
+		printf("Shadow volume for mesh %s does not exist. Creating it...\n",
+			pMesh->name);
+		printf("Statistics for mesh \"%s\": faces=%d,points=%d\n",
+			pMesh->name, pMesh->faces, pMesh->points);
 
 		vector<Edge> pairs;
 		vector<VectorAndNormal> buffer(pMesh->faces * 3);
 
-		// First, create buffer containing initial geometry. This will be a normal GL_TRIANGLES vbo
+		// First, create buffer containing initial geometry
+		// This will be a normal GL_TRIANGLES vbo
 		unsigned int i;
 		for (i = 0; i < pMesh->faces; i++)
 		{
-			Vector3 normal(NormalsSign() * pMesh->faceL[i].normal[iPermutation[0]],
-				NormalsSign() * pMesh->faceL[i].normal[iPermutation[1]],
-				NormalsSign() * pMesh->faceL[i].normal[iPermutation[2]]);
+			Lib3dsFace &f = pMesh->faceL[i];
+			Vector3 normal(
+				NormalsSign() * f.normal[iPermutation[0]],
+				NormalsSign() * f.normal[iPermutation[1]],
+				NormalsSign() * f.normal[iPermutation[2]]);
 
 			Vector3 point[3] = {
-				Vector3(fScale * pMesh->pointL[pMesh->faceL[i].points[0]].pos[iPermutation[0]],
-					fScale * pMesh->pointL[pMesh->faceL[i].points[0]].pos[iPermutation[1]],
-					fScale * pMesh->pointL[pMesh->faceL[i].points[0]].pos[iPermutation[2]]),
+				Vector3(
+					fScale * pMesh->pointL[f.points[0]].pos[iPermutation[0]],
+					fScale * pMesh->pointL[f.points[0]].pos[iPermutation[1]],
+					fScale * pMesh->pointL[f.points[0]].pos[iPermutation[2]]),
 
-				Vector3(fScale * pMesh->pointL[pMesh->faceL[i].points[1]].pos[iPermutation[0]],
-					fScale * pMesh->pointL[pMesh->faceL[i].points[1]].pos[iPermutation[1]],
-					fScale * pMesh->pointL[pMesh->faceL[i].points[1]].pos[iPermutation[2]]),
+				Vector3(
+					fScale * pMesh->pointL[f.points[1]].pos[iPermutation[0]],
+					fScale * pMesh->pointL[f.points[1]].pos[iPermutation[1]],
+					fScale * pMesh->pointL[f.points[1]].pos[iPermutation[2]]),
 
-				Vector3(fScale * pMesh->pointL[pMesh->faceL[i].points[2]].pos[iPermutation[0]],
-					fScale * pMesh->pointL[pMesh->faceL[i].points[2]].pos[iPermutation[1]],
-					fScale * pMesh->pointL[pMesh->faceL[i].points[2]].pos[iPermutation[2]])
+				Vector3(
+					fScale * pMesh->pointL[f.points[2]].pos[iPermutation[0]],
+					fScale * pMesh->pointL[f.points[2]].pos[iPermutation[1]],
+					fScale * pMesh->pointL[f.points[2]].pos[iPermutation[2]])
 			};
 			buffer[i*3 + 0] = VectorAndNormal(point[0], normal);
 			buffer[i*3 + 1] = VectorAndNormal(point[1], normal);
 			buffer[i*3 + 2] = VectorAndNormal(point[2], normal);
 	
-			ProcessEdge(pairs, Edge(buffer[i*3 + 0].v, buffer[i*3 + 1].v, normal), buffer);
-			ProcessEdge(pairs, Edge(buffer[i*3 + 1].v, buffer[i*3 + 2].v, normal), buffer);
-			ProcessEdge(pairs, Edge(buffer[i*3 + 2].v, buffer[i*3 + 0].v, normal), buffer);
+			ProcessEdge(pairs,
+				Edge(buffer[i*3 + 0].v, buffer[i*3 + 1].v, normal), buffer);
+			ProcessEdge(pairs,
+				Edge(buffer[i*3 + 1].v, buffer[i*3 + 2].v, normal), buffer);
+			ProcessEdge(pairs,
+				Edge(buffer[i*3 + 2].v, buffer[i*3 + 0].v, normal), buffer);
 		}
 		if (pairs.size() > 0)
 		{
-			printf("WARNING: \"%s\" is not a 2-manifold! %d edges left\n", pMesh->name, pairs.size());
+			printf("WARNING: \"%s\" is not a 2-manifold! %d edges left\n",
+				pMesh->name, pairs.size());
 		}
 		fp = fopen(szShadowVolumeFile, "wb");
 		assert(fp != NULL);
 		Dump(buffer, fp);
 
-		printf("%.1f seconds elapsed. Resulting shadow volume has %d vertices. Written into %s\n",
+		printf("%.1f seconds elapsed. Resulting shadow volume has %d \
+			   vertices. Written into %s\n",
 			tsw.Update(), buffer.size(), szShadowVolumeFile);
 
-		pShadowVolumeVBO = new VBO((float *)&buffer[0], sizeof(VectorAndNormal), buffer.size());
+		pShadowVolumeVBO = new VBO(
+			(float *)&buffer[0], sizeof(VectorAndNormal), buffer.size());
 		pShadowVolumeVBO->SetNormalData(sizeof(Vector3));
 	}
 	else
@@ -89,7 +103,8 @@ ShadowVolumeMesh::ShadowVolumeMesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/,
 		}
 		else
 		{
-			printf("File %s is corrupted. Delete it and reload program\n", szShadowVolumeFile);
+			printf("File %s is corrupted. Delete it and reload program\n",
+				szShadowVolumeFile);
 		}
 	}
 }
@@ -100,7 +115,8 @@ ShadowVolumeMesh::~ShadowVolumeMesh()
 }
 
 
-bool ShadowVolumeMesh::ProcessEdge(vector<Edge> &pairs, const Edge &e, vector<VectorAndNormal> &buffer)
+bool ShadowVolumeMesh::ProcessEdge(vector<Edge> &pairs, const Edge &e,
+								   vector<VectorAndNormal> &buffer)
 {
 	if (Verbose(VerboseAll))
 		printf("Input Edge (%.0f,%.0f,%.0f) - (%.0f,%.0f,%.0f)",
@@ -117,7 +133,8 @@ bool ShadowVolumeMesh::ProcessEdge(vector<Edge> &pairs, const Edge &e, vector<Ve
 		if (*iter == e)
 		{
 			if (Verbose(VerboseAll))
-				printf("\n Deleting [(%.0f,%.0f,%.0f) - (%.0f,%.0f,%.0f)] = [(%.0f,%.0f,%.0f) - (%.0f,%.0f,%.0f)]\n",
+				printf("\n Deleting [(%.0f,%.0f,%.0f) - (%.0f,%.0f,%.0f)] = \
+					   [(%.0f,%.0f,%.0f) - (%.0f,%.0f,%.0f)]\n",
 					e.v1.v[0],
 					e.v1.v[1],
 					e.v1.v[2],

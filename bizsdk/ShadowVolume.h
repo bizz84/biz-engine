@@ -80,7 +80,8 @@ protected:
 	VBO *pShadowVolumeVBO;
 
 public:
-	ShadowVolumeMesh(Lib3dsMesh *mesh, float scale = 1.0f, bool flipNormals = false, int *permutation = NULL);
+	ShadowVolumeMesh(Lib3dsMesh *mesh, float scale = 1.0f,
+	                 bool flipNormals = false, int *permutation = NULL);
 	~ShadowVolumeMesh();
 
 	VBO *GetShadowVolumeVBO() { return pShadowVolumeVBO; }
