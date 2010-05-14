@@ -47,6 +47,7 @@ enum ExitStage
 
 class SDLShell : public Shell
 {
+	int shellFrame;
 protected:
 	Pointer *pPointer;
 	bool pressed[128];
@@ -65,12 +66,7 @@ protected:
 	unsigned int Flags();
 
 	void CreatePointer();
-
-	bool KeyPressed(Uint8 key) { return pressed[key]; }
-	bool KeyPressing(Uint8 key) { return pressing[key]; }
-
-	bool ScrollUp() { return scrollUp; }
-	bool ScrollDown() { return scrollDown; }
+	virtual Pointer *NewPointer() { return new Pointer(this); }
 	
 public:
 	SDLShell();
@@ -84,7 +80,16 @@ public:
 	unsigned int ShellGet(ShellParameter param);	
 	void ShellSet(ShellParameter param, unsigned int value);
 
+	// Getters
 	Pointer *GetPointer() { return pPointer; }
+
+	bool KeyPressed(Uint8 key) { return pressed[key]; }
+	bool KeyPressing(Uint8 key) { return pressing[key]; }
+
+	bool ScrollUp() { return scrollUp; }
+	bool ScrollDown() { return scrollDown; }
+
+	int GetCurrentFrame() { return shellFrame; }
 private:
 	vector<CmdLineParameter> aCmdLineParams;
 	unsigned int auiShellParams[SHELL_NUM_PARAMETERS];

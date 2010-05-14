@@ -26,6 +26,7 @@ Shell *shell = NULL;
 
 SDLShell::SDLShell() : pPointer(NULL)
 {
+	shellFrame = 0;
 	ShellSet(SHELL_WIDTH, 640);
 	ShellSet(SHELL_HEIGHT, 480);
 	ShellSet(SHELL_BPP, 32);
@@ -113,7 +114,7 @@ void SDLShell::CreatePointer()
 {
 	if (pPointer == NULL)
 	{
-		pPointer = new Pointer(this);
+		pPointer = NewPointer();
 	}
 }
 
@@ -142,7 +143,8 @@ void SDLShell::ProcessCommandLine(int argc, char *argv[])
 		if (Verbose(VerboseAll))
 		{
 			printf("CmdLineParam(%d) = [%s,%s]\n", i,
-				aCmdLineParams[i].sName.c_str(), aCmdLineParams[i].sValue.c_str());
+				aCmdLineParams[i].sName.c_str(),
+				aCmdLineParams[i].sValue.c_str());
 		}
 		if (aCmdLineParams[i].sName.compare("width") == 0)
 		{
@@ -235,8 +237,9 @@ int SDLShell::Run(int argc, char *argv[])
 		    return 0;
 		}
 
-		if(!GLEW_VERSION_2_0 && !(GLEW_ARB_shading_language_100 && GLEW_ARB_shader_objects
-			&& GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader))
+		if(!GLEW_VERSION_2_0 &&
+		   !(GLEW_ARB_shading_language_100 && GLEW_ARB_shader_objects &&
+		     GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader))
 		{
 		    fprintf(stderr, "[ Fail ] - Shaders not supported\n");
 			return 0;
@@ -360,6 +363,8 @@ int SDLShell::Run(int argc, char *argv[])
 			break;
 
 		SDL_GL_SwapBuffers();
+
+		shellFrame++;
 	}
 	ReleaseGL();
 	ReleaseApp();
