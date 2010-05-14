@@ -76,7 +76,7 @@ public:
 	//! Constructor.
 	BaseGraph();
 
-	//! Deconstructor.
+	//! Destructor
 	virtual ~BaseGraph();
 
 	bool Init(float timeFrame, unsigned int samples, 

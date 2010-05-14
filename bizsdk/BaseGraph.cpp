@@ -57,7 +57,8 @@ BaseGraph::~BaseGraph()
 }
 
 bool BaseGraph::Init(float timeFrame, unsigned int samples, 
-		float x0, float y0,  float x1, float y1, bool negative, float max/* = 0.0f*/)
+		float x0, float y0,  float x1, float y1, bool negative,
+		float max/* = 0.0f*/)
 {
 	fTimeFrame = timeFrame;
 	uiSamples = samples;
@@ -101,12 +102,14 @@ bool BaseGraph::Init(float timeFrame, unsigned int samples,
 						gl_FragColor =  vec4(Color);\
 					 }";
 
-	if (!loader.LoadShaderFromMemory(borderVertCode, borderFragCode, sBorderGraphShader.uiID))
+	if (!loader.LoadShaderFromMemory(borderVertCode, borderFragCode,
+		sBorderGraphShader.uiID))
 	{
 		return false;
 	}
 
-	sBorderGraphShader.uiColourLoc = glGetUniformLocation(sBorderGraphShader.uiID, "Color");
+	sBorderGraphShader.uiColourLoc =
+		glGetUniformLocation(sBorderGraphShader.uiID, "Color");
 
 	// Load data shader
 	const char* dataVertCode = "\
@@ -117,7 +120,8 @@ bool BaseGraph::Init(float timeFrame, unsigned int samples,
 					 uniform vec2 Transition;\
 					 void main(void)\
 					 {\
-						vec2 pos = vec2(max(inVertex.x, 0.0), clamp(inVertex.y / Max, Min, 1.0));\
+						vec2 pos = vec2(max(inVertex.x, 0.0), \
+						                clamp(inVertex.y / Max, Min, 1.0));\
 						vec2 scaled = pos * Scale + Transition; \
 						gl_Position = vec4(scaled, 0.0, 1.0);\
 					 }";
@@ -129,17 +133,20 @@ bool BaseGraph::Init(float timeFrame, unsigned int samples,
 						gl_FragColor =  vec4(Color);\
 					 }";
 
-	if (!loader.LoadShaderFromMemory(dataVertCode, dataFragCode, sGraphShader.uiID))
+	if (!loader.LoadShaderFromMemory(dataVertCode, dataFragCode,
+		sGraphShader.uiID))
 	{
 		return false;
 	}
 
-	sGraphShader.uiColourLoc	= glGetUniformLocation(sGraphShader.uiID, "Color");
+	sGraphShader.uiColourLoc =
+		glGetUniformLocation(sGraphShader.uiID, "Color");
+	sGraphShader.uiTransitionLoc =
+		glGetUniformLocation(sGraphShader.uiID, "Transition");
 
-	sGraphShader.uiMaxLoc	= glGetUniformLocation(sGraphShader.uiID, "Max");
-	sGraphShader.uiMinLoc	= glGetUniformLocation(sGraphShader.uiID, "Min");
+	sGraphShader.uiMaxLoc = glGetUniformLocation(sGraphShader.uiID, "Max");
+	sGraphShader.uiMinLoc = glGetUniformLocation(sGraphShader.uiID, "Min");
 	sGraphShader.uiScaleLoc	= glGetUniformLocation(sGraphShader.uiID, "Scale");
-	sGraphShader.uiTransitionLoc	= glGetUniformLocation(sGraphShader.uiID, "Transition");
 
 	float afAttribs[] = {
 		x0, y0,
@@ -166,7 +173,10 @@ void BaseGraph::Input(float value, float time/* = 0.0f*/)
 	fCurTime = time;
 
 	unsigned int i;
-	for (i = 0; uiLastSample != uiCurrentSample; uiLastSample = (uiLastSample == uiSamples - 1 ? 0 : uiLastSample + 1), i++)
+	for (i = 0;
+		uiLastSample != uiCurrentSample;
+		uiLastSample = (uiLastSample == uiSamples - 1 ? 0 : uiLastSample + 1),
+		i++)
 	{
 		if (psSamples[uiLastSample].time >= time - fTimeFrame)
 			break;
@@ -176,14 +186,16 @@ void BaseGraph::Input(float value, float time/* = 0.0f*/)
 		uiLastSample = uiLastSample == 0 ? uiSamples - 1 : uiLastSample - 1;
 	}
 
-	uiCurrentSample = uiCurrentSample == uiSamples - 1 ? 0 : uiCurrentSample + 1;
+	uiCurrentSample =
+		uiCurrentSample == uiSamples - 1 ? 0 : uiCurrentSample + 1;
 
 	// Update state
 	fCurrentMax = -c_fBigNumber;
 	fCurrentMin = c_fBigNumber;
 	fCurrentSum = 0.0f;
 	unsigned int cur;
-	for (uiCurSamples = 0, cur = uiLastSample; cur != uiCurrentSample; cur = (cur == uiSamples - 1 ? 0 : cur + 1), uiCurSamples++)
+	for (uiCurSamples = 0, cur = uiLastSample; cur != uiCurrentSample;
+		cur = (cur == uiSamples - 1 ? 0 : cur + 1), uiCurSamples++)
 	{	
 		fCurrentSum += psSamples[cur].value;
 		if (psSamples[cur].value > fCurrentMax)
@@ -191,7 +203,8 @@ void BaseGraph::Input(float value, float time/* = 0.0f*/)
 		if (psSamples[cur].value < fCurrentMin)
 			fCurrentMin = psSamples[cur].value;
 
-		pvSamples[uiCurSamples].x = 1.0f - (fCurTime - psSamples[cur].time) / fTimeFrame;
+		pvSamples[uiCurSamples].x =
+			1.0f - (fCurTime - psSamples[cur].time) / fTimeFrame;
 		pvSamples[uiCurSamples].y = psSamples[cur].value;
 	}
 	if (fMax != 0.0f)
@@ -222,7 +235,8 @@ void BaseGraph::Draw()
 	{
 		glUniform4fv(sBorderGraphShader.uiColourLoc, 1, white);		
 
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, &afVertexAttribsAxis);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0,
+			&afVertexAttribsAxis);
 
 		glDrawArrays(GL_LINE_STRIP, 0, 2);
 	}
