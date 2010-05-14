@@ -13,25 +13,7 @@
  *
  *****************************************************************************/
 
-#include "Extensions.h"
-#include "SDLShell.h"
-#include "Misc.h"
-#include "Timer.h"
-#include "TTFont.h"
-#include "Keys.h"
-
-#include <math.h>
-#include <stdio.h>
-
-#include "GLResourceManager.h"
-#include "VBO.h"
-#include "CoordinateFrame.h"
-
-#include "BaseGraph.h"
-#include "Mesh.h"
-#include "ShadowVolume.h"
-
-#include "version.h"
+#include "Shadows.h"
 
 enum DisplayMode {
 	E_SHADOWS,
@@ -46,44 +28,6 @@ const char *DisplayMoreStr[] = {
 	"Shadows",
 	"Stencil Count",
 	"No Shadows"
-};
-
-enum Shaders {
-	E_LOOKUP, 
-	E_COLOR_OFFSET, 
-	E_DIFFUSE, 
-	E_UNIFORM, 
-	E_SHADOW_VOLUME, 
-	E_SHADOW,
-	E_PLANE,
-	E_NUM_PROGRAMS 
-};
-
-const char *shaders[] = {
-	"data/shaders/Lookup.vert", "data/shaders/Lookup.frag",
-	"data/shaders/ColorOffset.vert", "data/shaders/ColorOffset.frag",
-	"data/shaders/DiffuseColor.vert", "data/shaders/DiffuseColor.frag",
-	"data/shaders/UniformColor.vert", "data/shaders/UniformColor.frag",
-	"data/shaders/ShadowVolume.vert", "data/shaders/ShadowVolume.frag",
-	"data/shaders/Shadow.vert", "data/shaders/Shadow.frag",
-	"data/shaders/Plane.vert", "data/shaders/UniformColor.frag",
-};
-
-enum Primitives {
-	MESH_TORUS_KNOT, 
-	MESH_TORUS, 
-	MESH_SPHERE,
-	MESH_CUBE,
-	MESH_MONKEY, 
-	MESH_NUM 
-};
-
-const char *meshes[] = {
-	"TorusKnot",
-	"Torus",
-	"Sphere",
-	"Cube",
-	"Suzanne",
 };
 
 const float TetraVertices[12] = {
@@ -112,97 +56,7 @@ const float Colors[] = {
 const float GrayColor[] = { 0.5f, 0.5f, 0.5f, 1.0f };
 const float WhiteColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 
-#define GROUPS_COUNT 3
 
-class Shadows : public SDLShell
-{
-
-protected:
-	GLuint uiProgram[E_NUM_PROGRAMS];
-
-	int iShowInfo;
-
-	float y, x, t;
-	bool bWireframe;
-
-	Timer timer;
-
-	TTFont ttFont;
-
-	GLuint uiBGTexture;
-	GLuint uiCoordFrameList;
-
-	float fMaxDistance, fMinDistance;
-	float fDefDistance;
-
-	float fBoxSize;
-	float fDistance;
-
-	float fShadowExtent;
-	float fMinShadowExtent;
-	float fMaxShadowExtent;
-
-	//bool bInfiniteShadowVolume;
-	// Light related members
-	float fLightSpeed;
-	float fLightAngle;
-	float fLightHeight;
-	float fLightRadius;
-	bool bLightMove;
-
-	bool bUseDoubleStencil;
-
-	int iFrameCounter;
-	int iCurrentGroup;
-
-	IndexedVBO *pTetraVBO;
-	ShadowVolumeMesh *pSVMesh[MESH_NUM];
-	Mesh *pRoomMesh;
-
-	std::vector<int> aaiMeshGroup[GROUPS_COUNT];
-
-	int eDisplayMode;
-
-	BaseGraph fpsGraph;
-
-	bool LoadShaders();
-
-	void DrawLightMarker(float xRot, float yRot, float *lightPos);
-	void DrawCoordinateFrame(float xRot, float yRot);
-	void CalculateBoundaries(int index3ds);
-
-	void PreRenderGeometry(GLuint program);
-	void PostRenderGeometry(GLuint program);
-
-	void RenderGeometry(GLuint program);
-	void RenderShadowVolumes();
-	void RenderScene(float *light);
-	void ShowShadowVolume();
-	void RenderCurrentGroup(bool shadowVolume);
-
-	void CurrentGroupDesc(char *str);
-
-	void RenderPlane(GLuint program, const float *color);
-
-	GLenum GLRenderMode() { return bWireframe ? GL_LINES : GL_TRIANGLES; }
-
-	// Virtuals
-	virtual bool InitApp();
-	virtual bool InitGL();
-	virtual bool Render();
-	virtual bool ReleaseGL();
-	virtual bool ReleaseApp();	
-	virtual bool Resize(unsigned int width, unsigned int height);
-
-	virtual bool RequiresOpenGL2() { return true; }
-	virtual bool RequiresTTF()  { return true; }
-
-	virtual const char *GetAppName() { return szAppName; }
-	virtual const char *GetAppVersion()  { return szAppVersion; }
-
-public:
-	Shadows();
-};
 
 Shadows::Shadows()
 {
@@ -218,16 +72,33 @@ Shadows::Shadows()
 
 	eDisplayMode = E_SHADOWS;
 
-	//bInfiniteShadowVolume = false;
-
 	iFrameCounter = 0;
 
 	iCurrentGroup = 0;
 
-	fLightSpeed = 0.5f;
-	fLightAngle = 0.0f;
-	fLightHeight = 100.0f;
-	fLightRadius = 1.0f;
+	iCurLight = 0;
+	iNumLights = 1;
+	light[0].fLightSpeed = 0.5f;
+	light[0].fLightAngle = 0.0f;
+	light[0].fLightHeight = 100.0f;
+	light[0].fLightRadius = 1.0f;
+
+	light[1].fLightSpeed = 0.6f;
+	light[1].fLightAngle = 0.5 * M_PI;
+	light[1].fLightHeight = -100.0f;
+	light[1].fLightRadius = 1.2f;
+
+	light[2].fLightSpeed = 0.35f;
+	light[2].fLightAngle = M_PI;
+	light[2].fLightHeight = 50.0f;
+	light[2].fLightRadius = 1.5f;
+
+	light[3].fLightSpeed = 0.4f;
+	light[3].fLightAngle = M_PI + M_PI_2;
+	light[3].fLightHeight = 40.0f;
+	light[3].fLightRadius = 1.8f;
+
+
 	bLightMove = true;
 
 	bUseDoubleStencil = true;
@@ -236,6 +107,7 @@ Shadows::Shadows()
 bool Shadows::InitApp()
 {
 	iShowInfo = 0;
+	bFPSMode = false;
 
 	// Custom command line processing
 	vector<CmdLineParameter>::iterator iter;
@@ -247,6 +119,11 @@ bool Shadows::InitApp()
 		{
 			iShowInfo = atoi(iter->sValue.c_str());
 		}
+		if (iter->sName == "fpsmode")
+		{
+			bFPSMode = (bool)atoi(iter->sValue.c_str());
+		}
+		
 	}	
 
 	return true;
@@ -257,7 +134,8 @@ bool Shadows::LoadShaders()
 	GLResourceManager &loader = GLResourceManager::Instance();
 	for (unsigned int i = 0; i < E_NUM_PROGRAMS; i++)
 	{
-		if (!loader.LoadShaderFromFile(shaders[i*2+0], shaders[i*2+1], uiProgram[i]))
+		if (!loader.LoadShaderFromFile(shaders[i*2+0], shaders[i*2+1],
+			uiProgram[i]))
 			return false;
 	}
 	return true;
@@ -275,7 +153,8 @@ bool Shadows::InitGL()
 	if (!ttFont.LoadFont("data/fonts/LucidaBrightDemiBold.ttf", 20))
 		return false;	
 
-	if (!loader.LoadTextureFromFile("data/textures/crate-base.bmp", uiBGTexture, GL_LINEAR, GL_LINEAR))
+	if (!loader.LoadTextureFromFile("data/textures/crate-base.bmp",
+		uiBGTexture, GL_LINEAR, GL_LINEAR))
 		return false;
 	
 	unsigned int handle3DSFile[2];
@@ -292,14 +171,18 @@ bool Shadows::InitGL()
 	pRoomMesh = new Mesh(loader.FindMesh(handle3DSFile[0], "Box"));
 	
 	// Load Object Meshes and generate Shadow Volumes
-	pSVMesh[MESH_TORUS] = new ShadowVolumeMesh(loader.FindMesh(handle3DSFile[0], meshes[MESH_TORUS]));
-	pSVMesh[MESH_TORUS_KNOT] = new ShadowVolumeMesh(loader.FindMesh(handle3DSFile[0], meshes[MESH_TORUS_KNOT]));
+	pSVMesh[MESH_TORUS] = new ShadowVolumeMesh(
+		loader.FindMesh(handle3DSFile[0], meshes[MESH_TORUS]));
+	pSVMesh[MESH_TORUS_KNOT] = new ShadowVolumeMesh(
+		loader.FindMesh(handle3DSFile[0], meshes[MESH_TORUS_KNOT]));
 	
-	pSVMesh[MESH_CUBE] = new ShadowVolumeMesh(loader.FindMesh(handle3DSFile[1], meshes[MESH_CUBE]));
-	pSVMesh[MESH_SPHERE] = new ShadowVolumeMesh(loader.FindMesh(handle3DSFile[1], meshes[MESH_SPHERE]));
+	pSVMesh[MESH_CUBE] = new ShadowVolumeMesh(
+		loader.FindMesh(handle3DSFile[1], meshes[MESH_CUBE]));
+	pSVMesh[MESH_SPHERE] = new ShadowVolumeMesh(
+		loader.FindMesh(handle3DSFile[1], meshes[MESH_SPHERE]));
 
-	//pSVMesh[MESH_MONKEY] = new ShadowVolumeMesh(loader.FindMesh(handle3DSFile[2], meshes[MESH_MONKEY]), 60.0f);
-
+	//pSVMesh[MESH_MONKEY] = new ShadowVolumeMesh(
+	//	loader.FindMesh(handle3DSFile[2], meshes[MESH_MONKEY]), 60.0f);
 
 	aaiMeshGroup[0].push_back(MESH_TORUS_KNOT);
 	aaiMeshGroup[1].push_back(MESH_TORUS);
@@ -313,7 +196,8 @@ bool Shadows::InitGL()
 	fMaxShadowExtent = 2.0f * fMaxDistance;
 	fShadowExtent = fMaxShadowExtent;
 
-	pTetraVBO = new IndexedVBO((void *)TetraVertices, sizeof(float) * 3, 4, (void *)TetraIndices, 12);
+	pTetraVBO = new IndexedVBO((void *)TetraVertices, sizeof(float) * 3, 4,
+	                           (void *)TetraIndices, 12);
 
 
 	if (!fpsGraph.Init(4.0f, 3000, -0.98f, 0.60f, -0.6f, 0.95f, false))
@@ -330,6 +214,8 @@ bool Shadows::InitGL()
 
 	// Hack
 	fMaxDistance *= 3.0f;
+
+	FPSInit(fDefDistance, -20.0f);
 
 	timer.Start();
 	return true;
@@ -363,16 +249,40 @@ bool Shadows::Resize(unsigned int width, unsigned int height)
 	// Select and setup the projection matrix
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity();
-	gluPerspective( 65.0f, (GLfloat)width/(GLfloat)height, 10.0f, 4000.0f );
+	gluPerspective( 65.0f, (GLfloat)width/(GLfloat)height, 10.0f, 4000.0f);
+	glMatrixMode( GL_MODELVIEW );
 	return true;
 }
 
+void Shadows::UpdateModelView()
+{
+	// Select and setup the modelview matrix
+	glMatrixMode( GL_MODELVIEW );
+
+	if (bFPSMode)
+	{
+		LoadFPSMatrix();
+	}
+	else
+	{
+		glLoadIdentity();
+
+		glTranslatef(0.0f, 0.0f, -fDistance);
+		glRotatef(xRot, 1.0f, 0.0f, 0.0f);
+		glRotatef(yRot, 0.0f, 1.0f, 0.0f);
+	}
+}
+
+
 bool Shadows::Render()
 {
-	/* Input - timer and fps graph*/
+	/* Input - timer and fps graph */
 	timer.Update();
 
-	fpsGraph.Input(1.0f / timer.GetDeltaTime(), timer.GetTime());
+	float dt = timer.GetDeltaTime();
+
+	fpsGraph.Input(1.0f / dt, timer.GetTime());
+
 
 	/* User input */
 	if (KeyPressed(KEY_SPACE))
@@ -385,18 +295,14 @@ bool Shadows::Render()
 	}
 	if (KeyPressing(KEY_LEFT))
 	{
-		if ((fShadowExtent -= timer.GetDeltaTime() * 300.0f) < fMinShadowExtent)
+		if ((fShadowExtent -= dt * 300.0f) < fMinShadowExtent)
 			fShadowExtent = fMinShadowExtent;
 	}
 	if (KeyPressing(KEY_RIGHT))
 	{
-		if ((fShadowExtent += timer.GetDeltaTime() * 300.0f) > fMaxShadowExtent)
+		if ((fShadowExtent += dt * 300.0f) > fMaxShadowExtent)
 			fShadowExtent = fMaxShadowExtent;
 	}
-	//if (KeyPressed(KEY_7))
-	//{
-	//	bInfiniteShadowVolume = !bInfiniteShadowVolume;
-	//}
 	if (KeyPressed(KEY_8))
 	{
 		bUseDoubleStencil = !bUseDoubleStencil;
@@ -411,12 +317,12 @@ bool Shadows::Render()
 	}
 	if (KeyPressing(KEY_UP))
 	{
-		if ((fDistance -= timer.GetDeltaTime() * 150.0f) < fMinDistance)
+		if ((fDistance -= dt * 150.0f) < fMinDistance)
 			fDistance = fMinDistance;
 	}
 	if (KeyPressing(KEY_DOWN))
 	{
-		if ((fDistance += timer.GetDeltaTime() * 150.0f) > fMaxDistance)
+		if ((fDistance += dt * 150.0f) > fMaxDistance)
 			fDistance = fMaxDistance;
 	}
 	if (ScrollUp())
@@ -429,37 +335,65 @@ bool Shadows::Render()
 		if ((fDistance *= 1.05f) > fMaxDistance)
 			fDistance = fMaxDistance;
 	}
-
-	if (KeyPressing(KEY_Q))
+	if (KeyPressed(KEY_R))
 	{
-		fLightHeight += 50.0f * timer.GetDeltaTime();
-	}
-	if (KeyPressing(KEY_E))
-	{
-		fLightHeight -= 50.0f * timer.GetDeltaTime();
-	}
-	if (KeyPressing(KEY_W))
-	{
-		fLightRadius += timer.GetDeltaTime();
-	}
-	if (KeyPressing(KEY_S))
-	{
-		fLightRadius -= timer.GetDeltaTime();
+		bFPSMode = !bFPSMode;
 	}
 
+	if (bFPSMode)
+	{
+		FPSMove(this, dt);
+	}
+	else
+	{
+		if (KeyPressing(KEY_Q))
+		{
+			light[iCurLight].fLightHeight += 50.0f * dt;
+		}
+		if (KeyPressing(KEY_E))
+		{
+			light[iCurLight].fLightHeight -= 50.0f * dt;
+		}
+		if (KeyPressing(KEY_W))
+		{
+			light[iCurLight].fLightRadius += dt;
+		}
+		if (KeyPressing(KEY_S))
+		{
+			light[iCurLight].fLightRadius -= dt;
+		}
+	}
+	if (KeyPressed(KEY_1))
+	{
+		if (iNumLights > 1)
+			iNumLights--;
+	}
+	if (KeyPressed(KEY_2))
+	{
+		if (iNumLights < MAX_LIGHTS)
+			iNumLights++;
+	}
+
+	
+	// Update light positions
 	if (bLightMove)
 	{
-		fLightAngle += timer.GetDeltaTime();
+		for (unsigned int i = 0; i < MAX_LIGHTS; i++)
+		{
+			light[i].fLightAngle += dt;
+
+			light[i].UpdatePos(fMinDistance);
+		}
 	}
 
 	/* Update camera state */
 	y += 0.002f * (GetPointer()->GetMotionX() + GetPointer()->GetInertiaX());
 	x -= 0.002f * (GetPointer()->GetMotionY() + GetPointer()->GetInertiaY());
 	if (GetPointer()->TimeSinceLastInput() > 10.0f && bLightMove)
-		t += timer.GetDeltaTime();
+		t += dt;
 
-	float yRot = y + 20.0f * t;
-	float xRot = x + 20.0f * sin(t);
+	yRot = y + 20.0f * t;
+	xRot = x + 20.0f * sin(t);
 
 	/* Rendering */
 	// Clear color and depth buffer
@@ -467,35 +401,26 @@ bool Shadows::Render()
 
 	glEnable(GL_DEPTH_TEST);
 
-	// Select and setup the modelview matrix
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
+	UpdateModelView();
 
-	glTranslatef(0.0f, 0.0f, -fDistance);
-	glRotatef(xRot, 1.0f, 0.0f, 0.0f);
-	glRotatef(yRot, 0.0f, 1.0f, 0.0f);
-
-	float light[4] = {
-		fLightRadius * fMinDistance * cos(fLightAngle * fLightSpeed),
-		fLightHeight,
-		fLightRadius * fMinDistance * sin(fLightAngle * fLightSpeed),
-		1.0f
-	};
 
 	glEnable(GL_CULL_FACE);
 
 	// Draw scene (including shadow if enabled)
-	RenderScene(light);
+	RenderScene();
 
 	glDisable(GL_CULL_FACE);
 
 	// Render Light
-	DrawLightMarker(xRot, yRot, light);
+	for (unsigned int i = 0; i < iNumLights; i++)
+	{
+		DrawLightMarker(light[i].fPos);
+	}
 
 	//glDisable(GL_DEPTH_TEST);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	DrawCoordinateFrame(xRot, yRot);
+	DrawCoordinateFrame();
 
 	if (iShowInfo)
 	{
@@ -523,13 +448,13 @@ bool Shadows::Render()
 		if (iShowInfo == 1)
 		{
 			char text[200];
-			sprintf(text, "%.1f",  1.0f / timer.GetDeltaTime());
+			sprintf(text, "%.1f",  1.0f / dt);
 			ttFont.SDL_GL_RenderText(text, color, &position);
 		}
 		else if (iShowInfo == 2)
 		{
 			char text[200];
-			sprintf(text, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
+			sprintf(text, "FPS=%.1f",  1.0f / dt);
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
 
@@ -541,13 +466,10 @@ bool Shadows::Render()
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;			
 
-			sprintf(text, "[ENTER] Render Mode=%s", DisplayMoreStr[eDisplayMode]);
+			sprintf(text, "[ENTER] Render Mode=%s",
+				DisplayMoreStr[eDisplayMode]);
 			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
-
-			//sprintf(text, "[7] Infinite Shadow Volume=%d", bInfiniteShadowVolume ? 1 : 0);
-			//ttFont.SDL_GL_RenderText(text, color, &position);
-			//position.y -= position.h * 1.2f;
 
 			sprintf(text, "[8] Double Stencil=%d", bUseDoubleStencil ? 1 : 0);
 			ttFont.SDL_GL_RenderText(text, color, &position);
@@ -592,11 +514,19 @@ void Shadows::RenderGeometry(GLuint program)
 {
 	PreRenderGeometry(program);
 
-	glUniform4fv(GetUniLoc(program, "Color"), 1, GrayColor);
+	if (program == uiProgram[E_DIFFUSE])
+	{
+		glUniform1i(GetUniLoc(program, "NumLights"), iNumLights);
+		glUniform4fv(GetUniLoc(program, "Color"), 1, GrayColor);
+	}
+	PrintOpenGLError();
 
 	pRoomMesh->GetVBO()->Render(GL_TRIANGLES);
 
-	glUniform4fv(GetUniLoc(program, "Color"), 1, WhiteColor);
+	if (program == uiProgram[E_DIFFUSE])
+	{
+		glUniform4fv(GetUniLoc(program, "Color"), 1, WhiteColor);
+	}
 	RenderCurrentGroup(false);
 
 	PostRenderGeometry(program);
@@ -610,16 +540,18 @@ void Shadows::RenderCurrentGroup(bool shadowVolume)
 	// are different
 	if (shadowVolume)
 	{
-		for (iter = aaiMeshGroup[iCurrentGroup].begin(); iter != aaiMeshGroup[iCurrentGroup].end(); iter++)
+		for (iter = aaiMeshGroup[iCurrentGroup].begin();
+			 iter != aaiMeshGroup[iCurrentGroup].end(); iter++)
 		{
-			pSVMesh[*iter]->GetShadowVolumeVBO()->Render(bWireframe ? GL_LINES : GL_TRIANGLES);
+			pSVMesh[*iter]->GetShadowVolumeVBO()->Render(GLRenderMode());
 		}
 	}
 	else
 	{
-		for (iter = aaiMeshGroup[iCurrentGroup].begin(); iter != aaiMeshGroup[iCurrentGroup].end(); iter++)
+		for (iter = aaiMeshGroup[iCurrentGroup].begin();
+			 iter != aaiMeshGroup[iCurrentGroup].end(); iter++)
 		{
-			pSVMesh[*iter]->GetVBO()->Render(bWireframe ? GL_LINES : GL_TRIANGLES);
+			pSVMesh[*iter]->GetVBO()->Render(GLRenderMode());
 		}
 	}
 }
@@ -631,7 +563,8 @@ void Shadows::CurrentGroupDesc(char *str)
 	char local[100];
 	strcpy(local, "[SPACE] ( ");
 	vector<int>::iterator iter;
-	for (iter = aaiMeshGroup[iCurrentGroup].begin(); iter != aaiMeshGroup[iCurrentGroup].end(); iter++)
+	for (iter = aaiMeshGroup[iCurrentGroup].begin();
+		 iter != aaiMeshGroup[iCurrentGroup].end(); iter++)
 	{
 		strcat(local, meshes[*iter]);
 		strcat(local, " ");
@@ -642,7 +575,7 @@ void Shadows::CurrentGroupDesc(char *str)
 	sprintf(str, "%s = (%d, %d)", local, VBOSize, shadowVBOSize);
 }
 
-void Shadows::ShowShadowVolume()
+void Shadows::ShowShadowVolume(unsigned int lightIndex)
 {
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -651,8 +584,10 @@ void Shadows::ShowShadowVolume()
 
 	glEnable(GL_BLEND);
 
-	glUniform1f(GetUniLoc(uiProgram[E_SHADOW_VOLUME], "ShadowExtent"), fShadowExtent);
-	glUniform1i(GetUniLoc(uiProgram[E_SHADOW_VOLUME], "InfiniteShadowVolume"), false/*bInfiniteShadowVolume*/);
+	GLuint program = uiProgram[E_SHADOW_VOLUME];
+	glUniform1i(GetUniLoc(program, "LightIndex"), lightIndex);
+	glUniform1f(GetUniLoc(program, "ShadowExtent"), fShadowExtent);
+	glUniform1i(GetUniLoc(program, "InfiniteShadowVolume"), false);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
@@ -665,16 +600,18 @@ void Shadows::ShowShadowVolume()
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void Shadows::RenderShadowVolumes()
+void Shadows::RenderShadowVolumes(unsigned int lightIndex)
 {
 	// store current OpenGL state
-	glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT | GL_STENCIL_BUFFER_BIT);
+	//glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | 
+	//             GL_POLYGON_BIT | GL_STENCIL_BUFFER_BIT);
 
 	GLuint program = uiProgram[E_SHADOW_VOLUME];
 	glUseProgram(program);
 
+	glUniform1i(GetUniLoc(program, "LightIndex"), lightIndex);
 	glUniform1f(GetUniLoc(program, "ShadowExtent"), fShadowExtent);
-	glUniform1i(GetUniLoc(program, "InfiniteShadowVolume"), false/*bInfiniteShadowVolume*/);
+	glUniform1i(GetUniLoc(program, "InfiniteShadowVolume"), false);
 
 	glClear(GL_STENCIL_BUFFER_BIT);
 
@@ -738,7 +675,7 @@ void Shadows::RenderShadowVolumes()
 	glDepthMask(1); // do not write to the depth (Z) buffer
 
 	// restore OpenGL state
-	glPopAttrib();
+	//glPopAttrib();
 }
 
 void Shadows::RenderPlane(GLuint program, const float *color)
@@ -762,10 +699,9 @@ void Shadows::RenderPlane(GLuint program, const float *color)
 
 }
 
-void Shadows::RenderScene(float *light)
+void Shadows::RenderScene()
 {
-	glEnable(GL_LIGHT0);
-	glLightfv(GL_LIGHT0, GL_POSITION, light);
+	unsigned int i;
 
 	glDepthFunc(GL_LESS);
 
@@ -777,101 +713,123 @@ void Shadows::RenderScene(float *light)
 	//	break;
 	//case E_SHADOW_VOLUMES:
 	//	RenderGeometry(uiProgram[E_DIFFUSE]);
+	//	for (i = 0; i < iNumLights; i++)
+	//	{
+	//		glEnable(GL_LIGHT0 + i);
+	//		glLightfv(GL_LIGHT0 + i, GL_POSITION, light[i].fPos);
+	//	}
 	//	ShowShadowVolume();
 	//	break;
 	case E_SHADOW_VOLUMES:
 	case E_SHADOWS:
-
+		for (i = 0; i < iNumLights; i++)
+		{
+			glEnable(GL_LIGHT0 + i);
+			glLightfv(GL_LIGHT0 + i, GL_POSITION, light[i].fPos);
+		}
 		/* First, render all geometry with color and depth write enabled */
 		RenderGeometry(uiProgram[E_DIFFUSE]);
 
+
 		/* Then, render the shadow volumes with color and depth write 
 		   disabled. Use the Z-fail approach */
-		RenderShadowVolumes();
+		for (i = 0; i < iNumLights; i++)
+		{
+			RenderShadowVolumes(i);
 
-		/* Finally, render again all the geometry setting a uniform
-		   transparency factor affecting only non-zero stencil pixels
-		   (areas in shadow) */
-		glDepthFunc(GL_EQUAL);
+			/* Finally, render again all the geometry setting a uniform
+			   transparency factor affecting only non-zero stencil pixels
+			   (areas in shadow) */
+			glDepthFunc(GL_EQUAL);
 
-		// Enable Stencil Test
-		glEnable(GL_STENCIL_TEST);
+			// Enable Stencil Test
+			glEnable(GL_STENCIL_TEST);
 
-		// update the color only where the stencil value is 0
-		glStencilFunc(GL_NOTEQUAL, 0, ~0);
-		
-		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+			// update the color only where the stencil value is 0
+			glStencilFunc(GL_NOTEQUAL, 0, ~0);
+			
+			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-		glEnable(GL_BLEND);
+			glEnable(GL_BLEND);
 
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		//RenderGeometry(uiProgram[E_DIFFUSE]);
-		RenderGeometry(uiProgram[E_SHADOW]);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			//RenderGeometry(uiProgram[E_DIFFUSE]);
+			RenderGeometry(uiProgram[E_SHADOW]);
 
-		glDisable(GL_STENCIL_TEST);
-		glDisable(GL_BLEND);
-		glDepthFunc(GL_LESS);
+			glDisable(GL_STENCIL_TEST);
+			glDisable(GL_BLEND);
+			glDepthFunc(GL_LESS);
+		}
 		break;
 
-	/* Start with same approach, then render multiple passes corresponding to
-	   different values in the stencil buffer */
+	/* 
+	  E_STENCIL is a debug mode used to render visually the values in the
+	  stencil buffer.
+	  Start with same approach as normal stencil rendering, then render 
+	  multiple passes corresponding to different values in the stencil buffer.
+	*/
 	case E_STENCIL:
+		for (i = 0; i < iNumLights; i++)
+		{
+			glEnable(GL_LIGHT0 + i);
+			glLightfv(GL_LIGHT0 + i, GL_POSITION, light[i].fPos);
+		}
+
 		RenderGeometry(uiProgram[E_DIFFUSE]);
 
-		RenderShadowVolumes();
-
-		// re-draw the model with the light enabled only where
-		// it has previously been drawn
-		glDisable(GL_DEPTH_TEST);
-
-		// update the color only where the stencil value is 0
-		glEnable(GL_STENCIL_TEST);
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);		
-		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-		glEnable(GL_BLEND);
-
-		glDisable(GL_CULL_FACE);
-		glUseProgram(uiProgram[E_PLANE]);
-		for (unsigned int i = 1; i < 5; i++)
+		for (i = 0; i < iNumLights; i++)
 		{
-			glStencilFunc(GL_EQUAL, i, ~0);
+			RenderShadowVolumes(i);
 
-			RenderPlane(uiProgram[E_PLANE], Colors + (i-1) * 4);
+			// re-draw the model with the light enabled only where
+			// it has previously been drawn
+			glDisable(GL_DEPTH_TEST);
+
+			// update the color only where the stencil value is 0
+			glEnable(GL_STENCIL_TEST);
+
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);		
+			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+			glEnable(GL_BLEND);
+
+			glDisable(GL_CULL_FACE);
+			glUseProgram(uiProgram[E_PLANE]);
+			for (unsigned int j = 1; j < 5; j++)
+			{
+				glStencilFunc(GL_EQUAL, j, ~0);
+
+				RenderPlane(uiProgram[E_PLANE], Colors + (j-1) * 4);
+			}
+			glStencilFunc(GL_GEQUAL, 5, ~0);
+			RenderPlane(uiProgram[E_PLANE], Colors + 16 * 4);
+
+			glDisable(GL_STENCIL_TEST);
+			glEnable(GL_CULL_FACE);
+			glDisable(GL_BLEND);
+			glEnable(GL_DEPTH_TEST);
 		}
-		glStencilFunc(GL_GEQUAL, 5, ~0);
-		RenderPlane(uiProgram[E_PLANE], Colors + 16 * 4);
-
-		glDisable(GL_STENCIL_TEST);
-		glEnable(GL_CULL_FACE);
-		glDisable(GL_BLEND);
-		glEnable(GL_DEPTH_TEST);
 		break;
 	}
 }
 
 
-void Shadows::DrawLightMarker(float xRot, float yRot, float *lightPos)
+void Shadows::DrawLightMarker(float *lightPos)
 {
 	float white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glUseProgram(uiProgram[E_UNIFORM]);
 	glUniform4fv(GetUniLoc(uiProgram[E_UNIFORM], "Color"), 1, white);
 
-	glLoadIdentity();
-
-	glTranslatef(0.0f, 0.0f, -fDistance);
-	glRotatef(xRot, 1.0f, 0.0f, 0.0f);
-	glRotatef(yRot, 0.0f, 1.0f, 0.0f);
-
+	glPushMatrix();
 	glTranslatef(lightPos[0], lightPos[1], lightPos[2]);
 	glScalef(10.0f, 10.0f, 10.0f);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	pTetraVBO->Render(GL_TRIANGLES);
 	glDisableClientState(GL_VERTEX_ARRAY);
+	glPopMatrix();
 }
 
-void Shadows::DrawCoordinateFrame(float xRot, float yRot)
+void Shadows::DrawCoordinateFrame()
 {
 	glUseProgram(uiProgram[E_COLOR_OFFSET]);
 	float offset[] = { -0.9f, -0.9f };
@@ -905,8 +863,6 @@ bool Shadows::ReleaseApp()
 {
 	return true;
 }
-
-
 
 Shell *NewDemo()
 {
