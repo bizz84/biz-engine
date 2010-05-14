@@ -97,7 +97,7 @@ void TTFont::SDL_GL_RenderText(const char *text,
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glColor3f(1.0f, 1.0f, 1.0f);
 	
-	RenderQuad(location->x, location->y, w, h, 0.0, 0.0, 1.0, 1.0);
+	RenderQuad2D(location->x, location->y, w, h, 0.0, 0.0, 1.0, 1.0);
 
 	
 	/* Bad things happen if we delete the texture before it finishes */
