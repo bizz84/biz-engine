@@ -21,15 +21,16 @@
 
 /* Version History 
 
-
+V0.0.2
+- Added CPU reference implementation
 V0.0.1
 - Different presets for updating particle system
 
 */
 
 
-const char szAppVersion[] = "0.0.1";
-const char szAppName[] = "Water Fountain Simulation";
+const char szAppVersion[] = "0.0.2";
+const char szAppName[] = "Water Fountain OpenCL Demo";
 
 
 #endif
