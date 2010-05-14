@@ -184,6 +184,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\FPSInput.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\FPSInput.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\GLResourceManager.cpp"
 				>
 			</File>
