@@ -111,7 +111,7 @@ bool LoadImage(const char *filename, SDL_Surface *&surface,
 }
 
 
-void RenderQuad(float x, float y, float w, float h,
+void RenderQuad2D(float x, float y, float w, float h,
 	float u0, float v0, float u1, float v1)
 {
 	glEnableClientState(GL_VERTEX_ARRAY);	
@@ -124,7 +124,7 @@ void RenderQuad(float x, float y, float w, float h,
 		x    , y + h, u0, v0
 	};
 
-	glVertexPointer(3, GL_FLOAT, sizeof(float) * 4, afAttribs);
+	glVertexPointer(2, GL_FLOAT, sizeof(float) * 4, afAttribs);
 	glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 4, afAttribs + 2);
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -132,7 +132,6 @@ void RenderQuad(float x, float y, float w, float h,
 	glDisableClientState(GL_VERTEX_ARRAY);	
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
-
 
 int IntRound(double x)
 {
@@ -176,4 +175,15 @@ GLint GetUniLoc(GLuint program, const GLchar *name)
 	}
 	PrintOpenGLError();	
 	return loc;
+}
+
+
+float RandRange(float min, float max)
+{
+	float temp = (rand() / (static_cast<float>(RAND_MAX) + 1.0))
+		* (max - min) + min;
+	return temp;
+
+	//double val = (double)(rand() % 1073741824);
+	//return min + (val * float((min - max) / 1073741824.0));
 }

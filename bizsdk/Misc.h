@@ -35,9 +35,11 @@ int LoadFileIntoMemory(const char *filename, char **result);
 
 void FreeFileMemory(char **memory);
 
-bool LoadImage(const char *filename, SDL_Surface *&surface, GLenum &textureFormat, GLint &nOfColors);
+bool LoadImage(const char *filename, SDL_Surface *&surface,
+			   GLenum &textureFormat, GLint &nOfColors);
 
-void RenderQuad(float x, float y, float width, float height, float u0, float v0, float u1, float v1);
+void RenderQuad2D(float x, float y, float width, float height,
+				float u0, float v0, float u1, float v1);
 
 int IntRound(double x);
 
@@ -47,6 +49,9 @@ float Inertia(float t, float tau);
 
 void PrintOpenGLError();
 GLint GetUniLoc(GLuint program, const GLchar *name);
+
+
+float RandRange(float min, float max);
 
 extern const int permutation[3];
 
