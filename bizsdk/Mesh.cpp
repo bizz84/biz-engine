@@ -16,7 +16,8 @@
 #include "assert.h"
 #include "Timer.h"
 
-Mesh::Mesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/, bool flipNormals/* = false*/, int *permutation/* = NULL*/)
+Mesh::Mesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/,
+		   bool flipNormals/* = false*/, int *permutation/* = NULL*/)
 	: pVBO(NULL), pMesh(mesh), fScale(scale), bFlipNormals(flipNormals)
 {
 	assert(mesh != NULL);
@@ -54,9 +55,12 @@ Mesh::Mesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/, bool flipNormals/* = false*
 		for (j = 0; j < 3; j++)
 		{
 			p = pMesh->faceL[i].points[j];
-			attribs[offset * p + 0] = scale * pMesh->pointL[p].pos[iPermutation[0]];
-			attribs[offset * p + 1] = scale * pMesh->pointL[p].pos[iPermutation[1]];
-			attribs[offset * p + 2] = scale * pMesh->pointL[p].pos[iPermutation[2]];
+			attribs[offset * p + 0] =
+				scale * pMesh->pointL[p].pos[iPermutation[0]];
+			attribs[offset * p + 1] =
+				scale * pMesh->pointL[p].pos[iPermutation[1]];
+			attribs[offset * p + 2] =
+				scale * pMesh->pointL[p].pos[iPermutation[2]];
 
 			// one normal per face
 			//attribs[offset * p + 3] = pMesh->faceL[i].normal[iPermutation[0]];
@@ -64,16 +68,20 @@ Mesh::Mesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/, bool flipNormals/* = false*
 			//attribs[offset * p + 5] = pMesh->faceL[i].normal[iPermutation[2]];
 			
 			// one normal per vertex
-			attribs[offset * p + 3] = NormalsSign() * normalL[3 * i + j][iPermutation[0]];
-			attribs[offset * p + 4] = NormalsSign() * normalL[3 * i + j][iPermutation[1]];
-			attribs[offset * p + 5] = NormalsSign() * normalL[3 * i + j][iPermutation[2]];
+			attribs[offset * p + 3] =
+				NormalsSign() * normalL[3 * i + j][iPermutation[0]];
+			attribs[offset * p + 4] =
+				NormalsSign() * normalL[3 * i + j][iPermutation[1]];
+			attribs[offset * p + 5] =
+				NormalsSign() * normalL[3 * i + j][iPermutation[2]];
 
 			if (pMesh->texelL)
 			{
 				attribs[offset * p + 6] = pMesh->texelL[p][0];
 				attribs[offset * p + 7] = pMesh->texelL[p][1];
 			}
-			//printf("u=%.2f,v=%.2f\n", pMesh->texelL[p][0], pMesh->texelL[p][1]);
+			//printf("u=%.2f,v=%.2f\n",
+			//	pMesh->texelL[p][0], pMesh->texelL[p][1]);
 		}
 	}
 

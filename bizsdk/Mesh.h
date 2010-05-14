@@ -37,7 +37,8 @@ protected:
 
 	float NormalsSign() { return bFlipNormals ? -1.0f : 1.0f; }
 public:
-	Mesh(Lib3dsMesh *mesh, float scale = 1.0f, bool flipNormals = false, int *permutation = NULL);
+	Mesh(Lib3dsMesh *mesh, float scale = 1.0f, bool flipNormals = false,
+		int *permutation = NULL);
 	~Mesh();
 
 	IndexedVBO *GetVBO() { return pVBO; }
