@@ -85,7 +85,8 @@ PIDControllerGain::PIDControllerGain()
 
 }
 
-void PIDControllerGain::Init(float target, float kp, float ki, float kd, float kg)
+void PIDControllerGain::Init(float target,
+							 float kp, float ki, float kd, float kg)
 {
 	Kg = kg;
 	PIDController::Init(target, kp, ki, kd);
