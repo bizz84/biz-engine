@@ -14,7 +14,22 @@
 #ifndef _VERSION_H_
 #define _VERSION_H_
 
-/* Log History 
+/* TODO
+
+
+*/
+
+/* Version History 
+
+V1.1.6
+- Added First Person Shooter Camera mode
+
+V1.1.5
+- Added support for multiple lights
+- Code reformatting
+- Known Issue: when multiple lights are used, self shadowing is wrong.
+  This is due to areas in shadow from a light viewpoint that are visible from
+  the eye position.
 
 V1.1.3
 - Correct Shadow Volume precomputation in ShadowVolume.cpp
@@ -27,7 +42,7 @@ V1.1.3
 */
 
 
-const char szAppVersion[] = "1.1.4";
+const char szAppVersion[] = "1.1.5";
 const char szAppName[] = "Vertex Shader Depth-fail Shadow Volumes";
 
 
