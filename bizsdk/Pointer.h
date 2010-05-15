@@ -77,22 +77,22 @@ public:
 	void UpdateMouseButton(SDL_MouseButtonEvent &event);
 
 	// Get functions
-	bool Pressed() { return !prevPressing && currPressing; }
-	bool Pressing() { return currPressing; }
-	bool Released() { return prevPressing && !currPressing; }
+	const bool Pressed() const { return !prevPressing && currPressing; }
+	const bool Pressing() const { return currPressing; }
+	const bool Released() const { return prevPressing && !currPressing; }
 
-	float GetMotionX() { return motionX; }
-	float GetMotionY() { return motionY; }
-	float GetReleaseMotionX() { return releaseMotionX; }
-	float GetReleaseMotionY() { return releaseMotionY; }
-	float GetPositionX() { return positionX; }
-	float GetPositionY() { return positionY; }
-	float GetMotionTime() { return motionTime; }
-	float GetInertiaX() { return inertiaX; }
-	float GetInertiaY() { return inertiaY; }
+	const float GetMotionX() const { return motionX; }
+	const float GetMotionY() const { return motionY; }
+	const float GetReleaseMotionX() const { return releaseMotionX; }
+	const float GetReleaseMotionY() const { return releaseMotionY; }
+	const float GetPositionX() const { return positionX; }
+	const float GetPositionY() const { return positionY; }
+	const float GetMotionTime() const { return motionTime; }
+	const float GetInertiaX() const { return inertiaX; }
+	const float GetInertiaY() const { return inertiaY; }
 
-	float TimeSinceLastInput() { return timeSinceLastInput; }
-	float LastInputTime() { return motionTime > releaseTime ? motionTime : releaseTime; }
+	const float TimeSinceLastInput() const { return timeSinceLastInput; }
+	const float LastInputTime() const { return motionTime > releaseTime ? motionTime : releaseTime; }
 };
 
 class FPSPointer : public Pointer

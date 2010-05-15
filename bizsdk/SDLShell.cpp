@@ -271,7 +271,7 @@ int SDLShell::Run(int argc, char *argv[])
 	done = 0;
 	while (!done)
 	{
-		GetPointer()->Input();
+		pPointer->Input();
 		ResetPressed();
 		ResetScroll();
 
@@ -298,7 +298,7 @@ int SDLShell::Run(int argc, char *argv[])
 				}
 				break;
             case SDL_MOUSEMOTION:
-				GetPointer()->UpdateMouseMotion(event.motion);
+				pPointer->UpdateMouseMotion(event.motion);
 				/*if (Verbose(VerboseAll))
 				{
                 	printf("Mouse moved by %d,%d to (%d,%d)\n", 
@@ -311,7 +311,7 @@ int SDLShell::Run(int argc, char *argv[])
 				{
 					scrollDown = true;
 				}
-				GetPointer()->UpdateMouseButton(event.button);
+				pPointer->UpdateMouseButton(event.button);
 				/*if (Verbose(VerboseAll))
 				{
                 	printf("Mouse button %d pressed at (%d,%d)\n",
@@ -323,7 +323,7 @@ int SDLShell::Run(int argc, char *argv[])
 				{
 					scrollUp = true;
 				}
-				GetPointer()->UpdateMouseButton(event.button);
+				pPointer->UpdateMouseButton(event.button);
 				/*if (Verbose(VerboseAll))
 				{
                 	printf("Mouse button %d released at (%d,%d)\n",

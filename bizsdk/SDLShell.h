@@ -54,6 +54,8 @@ protected:
 	bool pressing[128];
 	bool scrollUp;
 	bool scrollDown;
+	bool leftClick;
+	bool rightClick;
 
 	void Exit(ExitStage stage);
 
@@ -81,13 +83,16 @@ public:
 	void ShellSet(ShellParameter param, unsigned int value);
 
 	// Getters
-	Pointer *GetPointer() { return pPointer; }
+	const Pointer *GetPointer() { return pPointer; }
 
-	bool KeyPressed(Uint8 key) { return pressed[key]; }
-	bool KeyPressing(Uint8 key) { return pressing[key]; }
+	bool KeyPressed(Uint8 key) const { return pressed[key]; }
+	bool KeyPressing(Uint8 key) const { return pressing[key]; }
 
-	bool ScrollUp() { return scrollUp; }
-	bool ScrollDown() { return scrollDown; }
+	bool ScrollUp() const { return scrollUp; }
+	bool ScrollDown() const { return scrollDown; }
+
+	bool LeftClick() const { return leftClick; }
+	bool RightClick() const { return rightClick; }
 
 	int GetCurrentFrame() { return shellFrame; }
 private:
