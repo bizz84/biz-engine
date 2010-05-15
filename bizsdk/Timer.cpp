@@ -61,14 +61,3 @@ float Timer::Update()
 		0.000001f * (float)(tv.tv_usec - start.tv_usec);
 	return fTimeCur;
 }
-
-float Timer::GetTime()
-{
-	return fTimeCur;
-}
-
-float Timer::GetDeltaTime()
-{
-	return fTimeCur - fTimePrev;
-}
-

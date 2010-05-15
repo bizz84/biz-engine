@@ -33,8 +33,8 @@ public:
 
 	float Update();
 
-	float GetTime();
-	float GetDeltaTime();
+	const float GetTime() const { return fTimeCur; }
+	const float GetDeltaTime() const { return fTimeCur - fTimePrev; }
 };
 
 #endif
