@@ -14,6 +14,7 @@
 #include "Misc.h"
 #include <stdio.h>
 #include <malloc.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include <stdio.h>

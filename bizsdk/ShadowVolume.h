@@ -14,6 +14,7 @@
 #ifndef _SHADOW_VOLUME_H_
 #define _SHADOW_VOLUME_H_
 
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <stdio.h>
 
