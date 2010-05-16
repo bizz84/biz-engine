@@ -69,14 +69,14 @@ public:
 
 	virtual void Render(GLenum mode);
 
-	unsigned int GetCount() { return uiCount; }
+	const unsigned int GetCount() const { return uiCount; }
 
 	void SetVertexData(unsigned int offset = 0, unsigned int size = 3);
 	void SetNormalData(unsigned int offset);
 	void SetColorData(unsigned int offset, unsigned int size = 3);
 	void SetTexCoordData(unsigned int offset, unsigned int size = 2);
 
-	GLuint GetVBO() { return uiVBO; }
+	const GLuint GetVBO() const { return uiVBO; }
 };
 
 class IndexedVBO : public VBO
@@ -93,9 +93,9 @@ public:
 
 	virtual void Render(GLenum mode);
 
-	unsigned int GetElements() { return uiElements; }
+	const unsigned int GetElements() const { return uiElements; }
 
-	GLuint GetIndexedVBO() { return uiIndexVBO; }
+	const GLuint GetIndexedVBO() const { return uiIndexVBO; }
 
 };
 
