@@ -82,17 +82,17 @@ void FPSCamera::Update(SDLShell *shell, float dt)
 		matrix00 * moveZ + matrix01 * moveX);
 }
 
-void FPSCamera::MultMatrix()
+void FPSCamera::MultMatrix() const
 {
 	// first rotate beta angle to avoid spin
 	glRotatef(beta, 1.0, 0.0, 0.0);
 	// then rotate alpha angle to orient
 	glRotatef(alpha, 0.0, 1.0, 0.0);
 	// finally apply the translation
-	glTranslatef(translation[0], translation[1], translation[2]);
+	glTranslatef(translation.s[0], translation.s[1], translation.s[2]);
 }
 
-void FPSCamera::LoadMatrix()
+void FPSCamera::LoadMatrix() const
 {
 	// load identity matrix
 	glLoadIdentity();

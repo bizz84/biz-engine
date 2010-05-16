@@ -22,8 +22,8 @@ class CameraController
 public:
 
 	virtual void Update(SDLShell *shell, float) = 0;
-	virtual void LoadMatrix() = 0;
-	virtual void MultMatrix() = 0;
+	virtual void LoadMatrix() const = 0;
+	virtual void MultMatrix() const = 0;
 
 };
 
@@ -42,8 +42,8 @@ public:
 	void Init(float translationFactor, float ty = 0.0f);
 
 	virtual void Update(SDLShell *shell, float dt);
-	virtual void LoadMatrix();
-	virtual void MultMatrix();
+	virtual void LoadMatrix() const;
+	virtual void MultMatrix() const;
 
 	const float GetAlpha() const { return alpha; }
 	const float GetBeta() const { return beta; }
