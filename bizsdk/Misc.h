@@ -22,6 +22,8 @@
 #endif
 #include "Extensions.h"
 
+// TODO: Group functions by category
+
 enum VerboseLevel { NoVerbose, VerboseInfo, VerboseAll };
 
 VerboseLevel GetVerboseLevel();
