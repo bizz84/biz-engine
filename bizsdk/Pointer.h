@@ -66,7 +66,7 @@ protected:
 	void Update();
 	PointerInputSample GenerateSample(SDL_MouseMotionEvent &event, float dt);
 
-	virtual bool MotionCondition();
+	virtual const bool MotionCondition() const { return currPressing && !read; }
 public:
 	Pointer(Shell *shell);
 	virtual ~Pointer();
@@ -98,7 +98,7 @@ public:
 class FPSPointer : public Pointer
 {
 protected:
-	virtual bool MotionCondition();
+	virtual const bool MotionCondition() const;
 public:
 	FPSPointer(Shell *shell);
 };

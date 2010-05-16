@@ -112,11 +112,6 @@ void Pointer::Update()
 	}
 }
 
-bool Pointer::MotionCondition()
-{
-	return currPressing && !read;
-}
-
 void Pointer::UpdateMouseMotion(SDL_MouseMotionEvent &event)
 {
 	if (MotionCondition())
@@ -182,7 +177,7 @@ FPSPointer::FPSPointer(Shell *shell) : Pointer(shell)
 	SDL_ShowCursor(0);
 }
 
-bool FPSPointer::MotionCondition()
+const bool FPSPointer::MotionCondition() const 
 {
 	return ((SDLShell *)pShell)->GetCurrentFrame() > 0;
 }
