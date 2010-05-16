@@ -41,6 +41,8 @@ SDLShell::SDLShell() : pPointer(NULL)
 	}
 	scrollUp = false;
 	scrollDown = false;
+	leftClick = false;
+	rightClick = false;
 }
 
 SDLShell::~SDLShell()
@@ -55,10 +57,12 @@ void SDLShell::ResetPressed()
 		pressed[i] = false;
 	}
 }
-void SDLShell::ResetScroll()
+void SDLShell::ResetMouse()
 {
 	scrollUp = false;
 	scrollDown = false;
+	leftClick = false;
+	rightClick = false;
 }
 
 void SDLShell::Exit(ExitStage stage)
@@ -98,7 +102,7 @@ bool SDLShell::Reshape(unsigned int width, unsigned int height)
 
 	return Resize(width, height);
 }
-unsigned int SDLShell::ShellGet(ShellParameter param)
+const unsigned int SDLShell::ShellGet(ShellParameter param) const 
 {
 	assert(param >= 0 && param < SHELL_NUM_PARAMETERS);
 	return auiShellParams[param];
@@ -273,7 +277,7 @@ int SDLShell::Run(int argc, char *argv[])
 	{
 		pPointer->Input();
 		ResetPressed();
-		ResetScroll();
+		ResetMouse();
 
 		SDL_Event event;
 
@@ -322,6 +326,10 @@ int SDLShell::Run(int argc, char *argv[])
 				if (event.button.button == SDL_BUTTON_WHEELUP)
 				{
 					scrollUp = true;
+				}
+				if (event.button.button == SDL_BUTTON_LEFT)
+				{
+					leftClick = true;
 				}
 				pPointer->UpdateMouseButton(event.button);
 				/*if (Verbose(VerboseAll))

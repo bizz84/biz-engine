@@ -79,22 +79,22 @@ public:
 	enum ShellParameter { SHELL_WIDTH = 0, SHELL_HEIGHT, SHELL_BPP,
 		SHELL_FULLSCREEN, SHELL_RESIZABLE, SHELL_VSYNC, SHELL_NUM_PARAMETERS };
 
-	unsigned int ShellGet(ShellParameter param);	
+	const unsigned int ShellGet(ShellParameter param) const;
 	void ShellSet(ShellParameter param, unsigned int value);
 
 	// Getters
 	const Pointer *GetPointer() { return pPointer; }
 
-	bool KeyPressed(Uint8 key) const { return pressed[key]; }
-	bool KeyPressing(Uint8 key) const { return pressing[key]; }
+	const bool KeyPressed(Uint8 key) const { return pressed[key]; }
+	const bool KeyPressing(Uint8 key) const { return pressing[key]; }
 
-	bool ScrollUp() const { return scrollUp; }
-	bool ScrollDown() const { return scrollDown; }
+	const bool ScrollUp() const { return scrollUp; }
+	const bool ScrollDown() const { return scrollDown; }
 
-	bool LeftClick() const { return leftClick; }
-	bool RightClick() const { return rightClick; }
+	const bool LeftClick() const { return leftClick; }
+	const bool RightClick() const { return rightClick; }
 
-	int GetCurrentFrame() { return shellFrame; }
+	const int GetCurrentFrame() const { return shellFrame; }
 private:
 	vector<CmdLineParameter> aCmdLineParams;
 	unsigned int auiShellParams[SHELL_NUM_PARAMETERS];
@@ -102,7 +102,7 @@ private:
 	void SetPressed(Uint8 key, bool value) { pressed[key] = value; }
 	void SetPressing(Uint8 key, bool value) { pressing[key] = value; }
 	void ResetPressed();
-	void ResetScroll();
+	void ResetMouse();
 };
 
 #endif
