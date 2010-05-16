@@ -89,7 +89,7 @@ void FPSCamera::MultMatrix() const
 	// then rotate alpha angle to orient
 	glRotatef(alpha, 0.0, 1.0, 0.0);
 	// finally apply the translation
-	glTranslatef(translation.s[0], translation.s[1], translation.s[2]);
+	glTranslatef(translation[0], translation[1], translation[2]);
 }
 
 void FPSCamera::LoadMatrix() const
