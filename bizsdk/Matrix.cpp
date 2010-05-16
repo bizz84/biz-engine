@@ -26,6 +26,7 @@ Matrix3::Matrix3()
 	s[3] = 0.0f; s[4] = 1.0f; s[5] = 0.0f;
 	s[6] = 0.0f; s[7] = 1.0f; s[8] = 0.0f;
 }
+
 Matrix3::Matrix3(const float *f)
 {
 	float *p = s;
@@ -71,22 +72,18 @@ const Matrix3 Matrix3::RotationZ(const float angle)
 
 const Vector3 Matrix3::operator*(const Vector3 &v) const
 {
-	return Vector3(
-		Vector3(s+0).dot(v),
-		Vector3(s+3).dot(v),
-		Vector3(s+6).dot(v));
+	return Vector3(v.dot(s+0), v.dot(s+3), v.dot(s+6));
 }
 
 const Matrix3 Matrix3::operator*(const Matrix3 &m) const
 {
-	Vector3 x(s+0), y(s+3), z(s+6);
 	Vector3 mx(m.s[0], m.s[3], m.s[6]);
 	Vector3 my(m.s[1], m.s[4], m.s[7]);
 	Vector3 mz(m.s[2], m.s[5], m.s[8]);
 	float f[] = {
-		x.dot(mx), x.dot(my), x.dot(mz),
-		y.dot(mx), y.dot(my), y.dot(mz),
-		z.dot(mx), z.dot(my), z.dot(mz)
+		mx.dot(s+0), my.dot(s+0), mz.dot(s+0),
+		mx.dot(s+3), my.dot(s+3), mz.dot(s+3),
+		mx.dot(s+6), my.dot(s+6), mz.dot(s+6),
 	};
 	return Matrix3(f);
 }
