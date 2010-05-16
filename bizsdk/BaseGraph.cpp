@@ -217,7 +217,7 @@ void BaseGraph::Input(float value, float time/* = 0.0f*/)
 	}
 }
 
-void BaseGraph::Draw()
+void BaseGraph::Draw() const
 {
 	glEnableVertexAttribArray(0);
 

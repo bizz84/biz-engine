@@ -84,16 +84,16 @@ public:
 
 	virtual void Input(float value, float time = 0.0f);
 
-	virtual void Draw();
+	virtual void Draw() const;
 
-	bool IsOverflow() { return bOverflow; }
-	bool IsUnderflow() { return bUnderflow; }
+	const bool IsOverflow() const { return bOverflow; }
+	const bool IsUnderflow() const { return bUnderflow; }
 
-	float GetCurrent() { return fCurValue; }
-	float GetMax() { return fCurrentMax; }
-	float GetMin() { return fCurrentMin; }
-	float GetAverage() { return fCurrentSum / uiCurSamples; }
-	float GetTime() { return fCurTime; }	
+	const float GetCurrent() const { return fCurValue; }
+	const float GetMax() const { return fCurrentMax; }
+	const float GetMin() const { return fCurrentMin; }
+	const float GetAverage() const { return fCurrentSum / uiCurSamples; }
+	const float GetTime() const { return fCurTime; }	
 };
 
 #endif
