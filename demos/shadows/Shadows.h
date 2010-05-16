@@ -36,7 +36,7 @@
 
 #include "version.h"
 
-#include "FPSInput.h"
+#include "CameraController.h"
 
 
 #define GROUPS_COUNT 3
@@ -81,8 +81,18 @@ const char *meshes[] = {
 	"Suzanne",
 };
 
+/*class RollingSpinCamera : public SpinCamera
+{
+public:
+	void Update(SDLShell *shell, float d, float a, float b)
+	{
+		alpha = a;
+		beta = b;
+		SpinCamera::Update(shell, d);
+	}
+};*/
 
-class Shadows : public SDLShell, public FPSInput
+class Shadows : public SDLShell
 {
 
 protected:
@@ -154,6 +164,9 @@ protected:
 	int eDisplayMode;
 
 	BaseGraph fpsGraph;
+
+	FPSCamera fpsCamera;
+	//RollingSpinCamera spinCamera;
 
 	bool LoadShaders();
 

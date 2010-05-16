@@ -215,7 +215,7 @@ bool Shadows::InitGL()
 	// Hack
 	fMaxDistance *= 3.0f;
 
-	FPSInit(fDefDistance, -20.0f);
+	fpsCamera.Init(fDefDistance, -20.0f);
 
 	timer.Start();
 	return true;
@@ -261,10 +261,11 @@ void Shadows::UpdateModelView()
 
 	if (bFPSMode)
 	{
-		LoadFPSMatrix();
+		fpsCamera.LoadMatrix();
 	}
 	else
 	{
+		//spinCamera.LoadMatrix();
 		glLoadIdentity();
 
 		glTranslatef(0.0f, 0.0f, -fDistance);
@@ -342,10 +343,11 @@ bool Shadows::Render()
 
 	if (bFPSMode)
 	{
-		FPSMove(this, dt);
+		fpsCamera.Update(this, dt);
 	}
 	else
 	{
+
 		if (KeyPressing(KEY_Q))
 		{
 			light[iCurLight].fLightHeight += 50.0f * dt;
@@ -447,36 +449,29 @@ bool Shadows::Render()
 
 		if (iShowInfo == 1)
 		{
-			char text[200];
-			sprintf(text, "%.1f",  1.0f / dt);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "%.1f",  1.0f / dt);
 		}
 		else if (iShowInfo == 2)
 		{
+			ttFont.SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / dt);
+			position.y -= position.h * 1.2f;
+
+			ttFont.SDL_GL_RenderText(color, &position, "[LEFT,RIGHT] Extent=%.1f", fShadowExtent);
+			position.y -= position.h * 1.2f;
+
 			char text[200];
-			sprintf(text, "FPS=%.1f",  1.0f / dt);
-			ttFont.SDL_GL_RenderText(text, color, &position);
-			position.y -= position.h * 1.2f;
-
-			sprintf(text, "[LEFT,RIGHT] Extent=%.1f", fShadowExtent);
-			ttFont.SDL_GL_RenderText(text, color, &position);
-			position.y -= position.h * 1.2f;
-
 			CurrentGroupDesc(text);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, text);
 			position.y -= position.h * 1.2f;			
 
-			sprintf(text, "[ENTER] Render Mode=%s",
+			ttFont.SDL_GL_RenderText(color, &position, "[ENTER] Render Mode=%s",
 				DisplayMoreStr[eDisplayMode]);
-			ttFont.SDL_GL_RenderText(text, color, &position);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "[8] Double Stencil=%d", bUseDoubleStencil ? 1 : 0);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "[8] Double Stencil=%d", bUseDoubleStencil ? 1 : 0);
 			position.y -= position.h * 1.2f;
 			
-			sprintf(text, "[0] Wireframe=%d", bWireframe ? 1 : 0);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "[0] Wireframe=%d", bWireframe ? 1 : 0);
 			position.y -= position.h * 1.2f;
 		}
 
