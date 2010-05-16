@@ -22,10 +22,12 @@ using namespace std;
 typedef void (*ArrayFuncPointer)(GLint size, GLenum type, GLsizei stride,
 	const GLvoid *pointer);
 
-#define VERTEX_POINTER_FLAG 0x01
-#define NORMAL_POINTER_FLAG 0x02
-#define COLOR_POINTER_FLAG 0x04
-#define TEXCOORD_POINTER_FLAG 0x08
+enum {
+	VERTEX_POINTER_FLAG   = 0x01U,
+	NORMAL_POINTER_FLAG   = 0x02U,
+	COLOR_POINTER_FLAG    = 0x04U,
+	TEXCOORD_POINTER_FLAG = 0x08U,
+};
 
 class VBO
 {
