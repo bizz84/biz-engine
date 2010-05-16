@@ -24,6 +24,12 @@ class Vector
 public:
 	virtual float &operator[] (int i) = 0;
 	virtual const float &operator[] (int i) const = 0;
+
+	virtual const float dot(const float *f) const = 0;
+	virtual const float operator*(const float *f) const = 0;
+
+	virtual const bool operator==(const float *f) const = 0;
+	virtual const bool operator!=(const float *f) const = 0;
 };
 
 /*****************************************************************************
@@ -70,25 +76,30 @@ public:
 	{
 		return Vector3(s[0] * scalar, s[1] * scalar, s[2] * scalar);
 	}
-	inline const float operator *(const Vector3 &v) const
-	{
-		return this->dot(v);
-	}
-
+	//
 	inline const float dot(const Vector3 &v) const
 	{
 		return s[0] * v[0] + s[1] * v[1] + s[2] * v[2];
 	}
-	inline const float dot(const float *f) const
+	inline const float operator *(const Vector3 &v) const
+	{
+		return this->dot(v);
+	}
+	//
+	inline virtual const float dot(const float *f) const
 	{
 		return s[0] * f[0] + s[1] * f[1] + s[2] * f[2];
+	}
+	inline virtual const float operator *(const float *f) const
+	{
+		return this->dot(f);
 	}
 
 	inline const bool operator==(const Vector3 &v) const
 	{
 		return s[0] == v[0] && s[1] == v[1] && s[2] == v[2];
 	}
-	inline const bool operator==(const float *f) const
+	inline virtual const bool operator==(const float *f) const
 	{
 		return s[0] == f[0] && s[1] == f[1] && s[2] == f[2];
 	}
@@ -96,7 +107,7 @@ public:
 	{
 		return !(*this == v);
 	}
-	inline const bool operator!=(const float *f) const
+	inline virtual const bool operator!=(const float *f) const
 	{
 		return !(*this != f);
 	}
@@ -131,17 +142,50 @@ public:
 	Vector4(const float *f);
 	Vector4(const float x, const float y, const float z, const float w);
 
+	virtual float &operator[] (int i) { return s[i]; }
+	virtual const float &operator[] (int i) const { return s[i]; }
+
+	inline const Vector4 operator *(const float scalar) const
+	{
+		return Vector4(s[0] * scalar, s[1] * scalar,
+		               s[2] * scalar, s[3] * scalar);
+	}
+	//
 	inline const float dot(const Vector4 &v) const
 	{
 		return s[0]*v[0] + s[1]*v[1] + s[2]*v[2] + s[3]*v[3];
 	}
-	inline const float dot(const float *f) const
+	inline const float operator*(const Vector4 &v) const
+	{
+		return this->dot(v);
+	}
+	//
+	inline virtual const float dot(const float *f) const
 	{
 		return s[0]*f[0] + s[1]*f[1] + s[2]*f[2] + s[3]*f[3];
 	}
+	inline virtual const float operator*(const float *f) const
+	{
+		return this->dot(f);
+	}
 
-	virtual float &operator[] (int i) { return s[i]; }
-	virtual const float &operator[] (int i) const { return s[i]; }
+	//
+	inline virtual const bool operator==(const Vector4 &v) const
+	{
+		return s[0] == v[0] && s[1] == v[1] && s[2] == v[2] && s[3] == v[3];
+	}
+	inline virtual const bool operator==(const float *f) const
+	{
+		return s[0] == f[0] && s[1] == f[1] && s[2] == f[2] && s[3] == f[3];
+	}
+	inline virtual const bool operator!=(const float *f) const
+	{
+		return !(*this == f);
+	}
+	inline virtual const bool operator!=(const Vector4 &v) const
+	{
+		return !(*this == v);
+	}
 
 	void AssignTo(float *f);
 
