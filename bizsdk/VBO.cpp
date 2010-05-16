@@ -73,7 +73,7 @@ void VBO::AddEntry(ArrayFuncPointer pointer, GLint size, GLenum type,
 	aEntry.push_back(new VBOEntry(pointer, size, type, offset));
 }
 
-void VBO::Bind()
+void VBO::Bind() const
 {
 	glBindBuffer(GL_ARRAY_BUFFER_ARB, uiVBO);
 	for (unsigned int i = 0; i < aEntry.size(); i++)
@@ -101,14 +101,14 @@ void VBO::Bind()
 }
 
 void VBO::Bind(ArrayFuncPointer funcPointer, GLint size, GLenum type,
-	unsigned int offset)
+	unsigned int offset) const
 {
 	glBindBuffer(GL_ARRAY_BUFFER_ARB, uiVBO);
 	(*funcPointer)(size, type, uiStride, (void *)offset);
 	glBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
 }
 
-void VBO::Render(GLenum mode)
+void VBO::Render(GLenum mode) const
 {
 	Bind();
 	glDrawArrays(mode, 0, GetCount());
@@ -130,18 +130,18 @@ IndexedVBO::IndexedVBO(void *data, GLsizei stride, unsigned int count,
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 }
 
-void IndexedVBO::Bind()
+void IndexedVBO::Bind() const
 {
 	VBO::Bind();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER_ARB, uiIndexVBO);
 }	
 
-void IndexedVBO::Unbind()
+void IndexedVBO::Unbind() const
 {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 }
 
-void IndexedVBO::Render(GLenum mode)
+void IndexedVBO::Render(GLenum mode) const
 {
 	Bind();
 	glDrawElements(mode, GetElements(), GL_UNSIGNED_INT, 0);

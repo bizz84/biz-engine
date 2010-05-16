@@ -63,11 +63,11 @@ public:
 	void AddEntry(ArrayFuncPointer pointer, GLint size, GLenum type,
 		unsigned int offset);
 
-	virtual void Bind();
+	virtual void Bind() const;
 	virtual void Bind(ArrayFuncPointer funcPointer, GLint size, GLenum type,
-		unsigned int offset);
+		unsigned int offset) const ;
 
-	virtual void Render(GLenum mode);
+	virtual void Render(GLenum mode) const;
 
 	const unsigned int GetCount() const { return uiCount; }
 
@@ -88,10 +88,10 @@ public:
 	IndexedVBO(void *data, GLsizei stride, unsigned int count, void *indices,
 		unsigned int elements);
 
-	virtual void Bind();
-	virtual void Unbind();
+	virtual void Bind() const;
+	virtual void Unbind() const;
 
-	virtual void Render(GLenum mode);
+	virtual void Render(GLenum mode) const;
 
 	const unsigned int GetElements() const { return uiElements; }
 
