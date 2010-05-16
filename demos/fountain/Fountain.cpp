@@ -745,36 +745,28 @@ bool Fountain::RunGL(float t, float dt)
 		position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
 		position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.75f);
 
-		char text[200];
-
 		if (iShowInfo == 1)
 		{
-			sprintf(text, "%.1f",  1.0f / dt);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "%.1f",  1.0f / dt);
 		}
 		else if (iShowInfo == 2)
 		{
-			ttFont.SDL_GL_RenderText(aszModes[eMode], color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, aszModes[eMode]);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "FPS=%.1f",  1.0f / dt);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / dt);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "ms=%.1f",  dt * 1000.0f);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "ms=%.1f",  dt * 1000.0f);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "Particles=%d", sImpl[eMode].nParticles);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "Particles=%d", sImpl[eMode].nParticles);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "PointSize=%.0f", fPointSize);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "PointSize=%.0f", fPointSize);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "RunTime=%.3f", sImpl[eMode].fRunTime);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "RunTime=%.3f", sImpl[eMode].fRunTime);
 			position.y -= position.h * 1.2f;
 		}
 
@@ -782,24 +774,19 @@ bool Fountain::RunGL(float t, float dt)
 		{
 			position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.4f);
 
-			sprintf(text, "%starget=%.1f", iCurPIDParam == -1 ? "> " : "", pidController.fTarget);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "%starget=%.1f", iCurPIDParam == -1 ? "> " : "", pidController.fTarget);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "%sKp=%.1f", iCurPIDParam == 0 ? "> " : "", pidController.Kp);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "%sKp=%.1f", iCurPIDParam == 0 ? "> " : "", pidController.Kp);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "%sKi=%.1f", iCurPIDParam == 1 ? "> " : "", pidController.Ki);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "%sKi=%.1f", iCurPIDParam == 1 ? "> " : "", pidController.Ki);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "%sKd=%.1f", iCurPIDParam == 2 ? "> " : "", pidController.Kd);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "%sKd=%.1f", iCurPIDParam == 2 ? "> " : "", pidController.Kd);
 			position.y -= position.h * 1.2f;
 
-			sprintf(text, "%sKg=%.1f", iCurPIDParam == 3 ? "> " : "", pidController.Kg);
-			ttFont.SDL_GL_RenderText(text, color, &position);
+			ttFont.SDL_GL_RenderText(color, &position, "%sKg=%.1f", iCurPIDParam == 3 ? "> " : "", pidController.Kg);
 			position.y -= position.h * 1.2f;
 
 		}
