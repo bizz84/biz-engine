@@ -31,14 +31,15 @@ public:
 
 class Vector2 : public Vector
 {
+protected:
+	float s[2];
 public:
 	Vector2();
 	Vector2(const float *f);
 	Vector2(const float x, const float y);
 
 	virtual float &operator[] (int i) { return s[i]; }
-public:
-	float s[2];
+	virtual const float &operator[] (int i) const { return s[i]; }
 };
 
 /*****************************************************************************
@@ -47,7 +48,7 @@ public:
 
 class Vector3 : public Vector
 {
-public:
+protected:
 	float s[3];
 public:
 	Vector3();
@@ -55,6 +56,7 @@ public:
 	Vector3(const float x, const float y, const float z);
 
 	virtual float &operator[] (int i) { return s[i]; }
+	virtual const float &operator[] (int i) const { return s[i]; }
 
 	inline Vector3 &operator +=(const Vector3 &rhs)
 	{
@@ -102,6 +104,8 @@ public:
 
 class Vector4 : public Vector
 {
+protected:
+	float s[4];
 public:
 	Vector4();
 	Vector4(const float *f);
@@ -110,15 +114,12 @@ public:
 	float dot(const Vector4 &v);
 	float dot(const float *f);
 
-	//const float &operator[] (int i) const { return s[i]; }
 	virtual float &operator[] (int i) { return s[i]; }
+	virtual const float &operator[] (int i) const { return s[i]; }
 
 	void AssignTo(float *f);
 
 	//friend ostream &operator<<(ostream &stream, const Vector4 &m);
-public:
-	float s[4];
-
 };
 
 
