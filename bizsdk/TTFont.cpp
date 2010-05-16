@@ -115,3 +115,16 @@ void TTFont::SDL_GL_RenderText(const char *text,
 }
 
 
+int TTFont::SDL_GL_RenderText(SDL_Color color,
+                      SDL_Rect *location,
+					  const char *text, ...)
+{
+    int retval = 0;
+    va_list va_args;
+    va_start( va_args, text );
+    retval = _vsnprintf( intBuffer, 1024, text, va_args );
+    va_end(va_args);
+	SDL_GL_RenderText(intBuffer, color, location);
+    return retval;
+
+}
