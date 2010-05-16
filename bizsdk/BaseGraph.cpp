@@ -21,33 +21,31 @@ static const float white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 static const float c_fBigNumber = 1000000000.0f;
 
-BaseGraph::BaseGraph()
+BaseGraph::BaseGraph() :
+	pvSamples(NULL),
+	psSamples(NULL),
+
+	fTimeFrame(0.0f),
+	uiSamples(100),
+	fX0(-1.0f), fY0(-1.0f), fX1(1.0f), fY1(1.0f),
+	bNegative(false),
+	fMax(0.0f),
+
+	uiCurrentSample(0),
+	uiLastSample(0),
+
+	fCurrentMax(0.0f),
+	fCurrentMin(0.0f),
+	fCurrentSum(0.0f),
+	uiCurSamples(0),
+
+	fCurValue(0.0f),
+	fCurTime(0.0f),
+
+	bOverflow(false),
+	bUnderflow(false)
 {
-	fTimeFrame = 0.0f;
-	uiSamples = 100;
-	fX0 = -1.0f;
-	fY0 = -1.0f;
-	fX1 = 1.0f;
-	fY1 = 1.0f;
-	bNegative = false;
-	fMax = 0.0f;
-
 	afScale[0] = afScale[1] = 1.0f;
-
-	fCurrentMax = 0.0f;
-	fCurrentMin = 0.0f;
-	fCurrentSum = 0.0f;
-	bOverflow = false;
-	bUnderflow = false;
-
-	psSamples = NULL;
-	pvSamples = NULL;
-	uiCurrentSample = 0U;
-	uiLastSample = 0U;
-	uiCurSamples = 0U;
-
-	fCurValue = 0.0f;
-	fCurTime = 0.0f;
 }
 
 BaseGraph::~BaseGraph()

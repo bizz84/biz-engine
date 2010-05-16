@@ -19,19 +19,23 @@
 class BaseGraph
 {
 protected:
-	float fTimeFrame;
-	unsigned int uiSamples;
-	float fX0, fY0, fX1, fY1;
-	bool bNegative;
-	float fMax;
-
-	float afScale[2];
-	float afTransition[2];
-
 	struct BaseGraphShader {
 		GLuint uiID;
 		GLuint uiColourLoc;
 	} sBorderGraphShader;
+	
+	
+	struct GraphSample
+	{
+		float x;
+		float y;
+	} *pvSamples;
+
+	struct BaseGraphSample
+	{
+		float value;
+		float time;
+	} *psSamples;
 
 	struct DataGraphShader {
 		GLuint uiID;
@@ -42,21 +46,18 @@ protected:
 		GLuint uiTransitionLoc;
 	} sGraphShader;
 
+	float fTimeFrame;
+	unsigned int uiSamples;
+	float fX0, fY0, fX1, fY1;
+	bool bNegative;
+	float fMax;
+
+	float afScale[2];
+	float afTransition[2];
+
 	float afVertexAttribs[8];
 	float afVertexAttribsAxis[4];
 
-	struct GraphSample
-	{
-		float x;
-		float y;
-	};
-	GraphSample *pvSamples;
-
-	struct BaseGraphSample
-	{
-		float value;
-		float time;
-	} *psSamples;
 	unsigned int uiCurrentSample;
 	unsigned int uiLastSample;
 
