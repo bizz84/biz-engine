@@ -172,6 +172,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\CameraController.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\CameraController.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\CoordinateFrame.cpp"
 				>
 			</File>
@@ -184,14 +192,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\FPSInput.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\FPSInput.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\GLResourceManager.cpp"
 				>
 			</File>
@@ -201,6 +201,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Keys.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Matrix.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Matrix.h"
 				>
 			</File>
 			<File
