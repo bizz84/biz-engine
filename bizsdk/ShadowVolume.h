@@ -85,7 +85,7 @@ public:
 	                 bool flipNormals = false, int *permutation = NULL);
 	~ShadowVolumeMesh();
 
-	VBO *GetShadowVolumeVBO() { return pShadowVolumeVBO; }
+	const VBO *GetShadowVolumeVBO() const { return pShadowVolumeVBO; }
 
 };
 
