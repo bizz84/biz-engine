@@ -92,15 +92,6 @@ Vector4::Vector4(const float x, const float y, const float z, const float w)
 
 }
 
-float Vector4::dot(const Vector4 &v)
-{
-	return s[0]*v.s[0] + s[1]*v.s[1] + s[2]*v.s[2] + s[3]*v.s[3];
-}
-
-float Vector4::dot(const float *f)
-{
-	return s[0]*f[0] + s[1]*f[1] + s[2]*f[2] + s[3]*f[3];
-}
 
 void Vector4::AssignTo(float *f)
 {

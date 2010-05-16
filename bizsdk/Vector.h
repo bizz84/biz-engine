@@ -66,23 +66,39 @@ public:
 		s[2] += rhs.s[2];
 		return *this;
 	}
-	inline const Vector3 operator *(const float &scalar) const
+	inline const Vector3 operator *(const float scalar) const
 	{
 		return Vector3(s[0] * scalar, s[1] * scalar, s[2] * scalar);
+	}
+	inline const float operator *(const Vector3 &v) const
+	{
+		return this->dot(v);
 	}
 
 	inline const float dot(const Vector3 &v) const
 	{
-		return s[0] * v.s[0] + s[1] * v.s[1] + s[2] * v.s[2];
+		return s[0] * v[0] + s[1] * v[1] + s[2] * v[2];
+	}
+	inline const float dot(const float *f) const
+	{
+		return s[0] * f[0] + s[1] * f[1] + s[2] * f[2];
 	}
 
 	inline const bool operator==(const Vector3 &v) const
 	{
-		return s[0] == v.s[0] && s[1] == v.s[1] && s[2] == v.s[2];
+		return s[0] == v[0] && s[1] == v[1] && s[2] == v[2];
+	}
+	inline const bool operator==(const float *f) const
+	{
+		return s[0] == f[0] && s[1] == f[1] && s[2] == f[2];
 	}
 	inline const bool operator!=(const Vector3 &v) const
 	{
 		return !(*this == v);
+	}
+	inline const bool operator!=(const float *f) const
+	{
+		return !(*this != f);
 	}
 	inline void Translate(const float x, const float y, const float z)
 	{
@@ -99,10 +115,13 @@ public:
 
 };
 
+typedef Vector3 Point3;
+
 /*****************************************************************************
  * Vector4 class definition
  *****************************************************************************/
 
+// TODO: Add all functions as in Vector3
 class Vector4 : public Vector
 {
 protected:
@@ -112,8 +131,14 @@ public:
 	Vector4(const float *f);
 	Vector4(const float x, const float y, const float z, const float w);
 
-	float dot(const Vector4 &v);
-	float dot(const float *f);
+	inline const float dot(const Vector4 &v) const
+	{
+		return s[0]*v[0] + s[1]*v[1] + s[2]*v[2] + s[3]*v[3];
+	}
+	inline const float dot(const float *f) const
+	{
+		return s[0]*f[0] + s[1]*f[1] + s[2]*f[2] + s[3]*f[3];
+	}
 
 	virtual float &operator[] (int i) { return s[i]; }
 	virtual const float &operator[] (int i) const { return s[i]; }
@@ -123,8 +148,6 @@ public:
 	//friend ostream &operator<<(ostream &stream, const Vector4 &m);
 };
 
-
-typedef Vector3 Point3;
 typedef Vector4 Point4;
 
 #endif
