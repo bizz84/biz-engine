@@ -60,14 +60,21 @@ public:
 	Matrix4(const float *f);
 
 	static Matrix4 Identity() { return Matrix4(); }
+	static Matrix4 Zero();
 
 	//Vector4 operator*(const Vector4 &v);
+	Matrix4 operator*(const Matrix4 &m) const;
 
 	//! Overloaded [] to return pointer to start of row i
 	virtual float *operator[] (int i) { return s + 4 * i; }
 	virtual const float *operator[] (int i) const { return s + 4 * i; }
 
+	const float at(int i) const { return s[i]; }
+
 	friend ostream &operator<<(ostream &stream, const Matrix4 &m);
+
+	Matrix4 Transpose();
+	Matrix4 Inverse(const float epsilon);
 };
 
 

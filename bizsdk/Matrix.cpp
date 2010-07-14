@@ -104,9 +104,9 @@ ostream &operator<<(ostream &stream, const Matrix3 &m)
  *****************************************************************************/
 Matrix4::Matrix4()
 {
-	s[0] = 1.0f; s[1] = 0.0f; s[2] = 0.0f; s[3] = 0.0f;
-	s[4] = 0.0f; s[5] = 1.0f; s[6] = 0.0f; s[7] = 0.0f;
-	s[8] = 0.0f; s[9] = 0.0f; s[10] = 1.0f; s[11] = 0.0f;
+	s[0]  = 1.0f; s[1]  = 0.0f; s[2]  = 0.0f; s[3]  = 0.0f;
+	s[4]  = 0.0f; s[5]  = 1.0f; s[6]  = 0.0f; s[7]  = 0.0f;
+	s[8]  = 0.0f; s[9]  = 0.0f; s[10] = 1.0f; s[11] = 0.0f;
 	s[12] = 0.0f; s[13] = 1.0f; s[14] = 0.0f; s[15] = 1.0f;
 }
 
@@ -116,6 +116,99 @@ Matrix4::Matrix4(const float *f)
 	for (unsigned int i = 0; i < 16; i++)
 		*p++ = *f++;
 
+}
+
+Matrix4 Matrix4::Zero()
+{
+	Matrix4 m;
+	memset(m.s, '\0', sizeof(float) * 16);
+	return m;
+}
+
+Matrix4 Matrix4::operator*(const Matrix4 &m) const
+{
+	Vector4 mx(m.s[0], m.s[4], m.s[8], m.s[12]);
+	Vector4 my(m.s[1], m.s[5], m.s[9], m.s[13]);
+	Vector4 mz(m.s[3], m.s[6], m.s[10], m.s[14]);
+	Vector4 mw(m.s[4], m.s[7], m.s[11], m.s[15]);
+	float f[] = {
+		mx.dot(s+0), my.dot(s+0), mz.dot(s+0), mw.dot(s+0),
+		mx.dot(s+4), my.dot(s+4), mz.dot(s+4), mw.dot(s+4),
+		mx.dot(s+8), my.dot(s+8), mz.dot(s+8), mw.dot(s+8),
+		mx.dot(s+12), my.dot(s+12), mz.dot(s+12), mw.dot(s+12)
+	};
+	return Matrix4(f);
+}
+
+
+Matrix4 Matrix4::Transpose()
+{
+	Matrix4 m;
+	m[0][0] = s[0]; m[0][1] = s[4]; m[0][2] = s[8]; m[0][3] = s[12];
+	m[1][0] = s[1]; m[1][1] = s[5]; m[1][2] = s[9]; m[1][3] = s[13];
+	m[2][0] = s[2]; m[2][1] = s[6]; m[2][2] = s[10]; m[2][3] = s[14];
+	m[3][0] = s[3]; m[3][1] = s[7]; m[3][2] = s[11]; m[3][3] = s[15];
+	return m;
+}
+
+Matrix4 Matrix4::Inverse(const float epsilon)
+{
+	float a0 = s[ 0]*s[ 5] - s[ 1]*s[ 4];
+    float a1 = s[ 0]*s[ 6] - s[ 2]*s[ 4];
+    float a2 = s[ 0]*s[ 7] - s[ 3]*s[ 4];
+    float a3 = s[ 1]*s[ 6] - s[ 2]*s[ 5];
+    float a4 = s[ 1]*s[ 7] - s[ 3]*s[ 5];
+    float a5 = s[ 2]*s[ 7] - s[ 3]*s[ 6];
+    float b0 = s[ 8]*s[13] - s[ 9]*s[12];
+    float b1 = s[ 8]*s[14] - s[10]*s[12];
+    float b2 = s[ 8]*s[15] - s[11]*s[12];
+    float b3 = s[ 9]*s[14] - s[10]*s[13];
+    float b4 = s[ 9]*s[15] - s[11]*s[13];
+    float b5 = s[10]*s[15] - s[11]*s[14];
+
+    float det = a0*b5 - a1*b4 + a2*b3 + a3*b2 - a4*b1 + a5*b0;
+    if (fabs(det) > epsilon)
+    {
+        Matrix4 inverse;
+        inverse.s[ 0] = + s[ 5]*b5 - s[ 6]*b4 + s[ 7]*b3;
+        inverse.s[ 4] = - s[ 4]*b5 + s[ 6]*b2 - s[ 7]*b1;
+        inverse.s[ 8] = + s[ 4]*b4 - s[ 5]*b2 + s[ 7]*b0;
+        inverse.s[12] = - s[ 4]*b3 + s[ 5]*b1 - s[ 6]*b0;
+        inverse.s[ 1] = - s[ 1]*b5 + s[ 2]*b4 - s[ 3]*b3;
+        inverse.s[ 5] = + s[ 0]*b5 - s[ 2]*b2 + s[ 3]*b1;
+        inverse.s[ 9] = - s[ 0]*b4 + s[ 1]*b2 - s[ 3]*b0;
+        inverse.s[13] = + s[ 0]*b3 - s[ 1]*b1 + s[ 2]*b0;
+        inverse.s[ 2] = + s[13]*a5 - s[14]*a4 + s[15]*a3;
+        inverse.s[ 6] = - s[12]*a5 + s[14]*a2 - s[15]*a1;
+        inverse.s[10] = + s[12]*a4 - s[13]*a2 + s[15]*a0;
+        inverse.s[14] = - s[12]*a3 + s[13]*a1 - s[14]*a0;
+        inverse.s[ 3] = - s[ 9]*a5 + s[10]*a4 - s[11]*a3;
+        inverse.s[ 7] = + s[ 8]*a5 - s[10]*a2 + s[11]*a1;
+        inverse.s[11] = - s[ 8]*a4 + s[ 9]*a2 - s[11]*a0;
+        inverse.s[15] = + s[ 8]*a3 - s[ 9]*a1 + s[10]*a0;
+
+        float invDet = ((float)1)/det;
+        inverse.s[ 0] *= invDet;
+        inverse.s[ 1] *= invDet;
+        inverse.s[ 2] *= invDet;
+        inverse.s[ 3] *= invDet;
+        inverse.s[ 4] *= invDet;
+        inverse.s[ 5] *= invDet;
+        inverse.s[ 6] *= invDet;
+        inverse.s[ 7] *= invDet;
+        inverse.s[ 8] *= invDet;
+        inverse.s[ 9] *= invDet;
+        inverse.s[10] *= invDet;
+        inverse.s[11] *= invDet;
+        inverse.s[12] *= invDet;
+        inverse.s[13] *= invDet;
+        inverse.s[14] *= invDet;
+        inverse.s[15] *= invDet;
+
+        return inverse;
+    }
+
+    return Zero();
 }
 
 ostream &operator<<(ostream &stream, const Matrix4 &m)
