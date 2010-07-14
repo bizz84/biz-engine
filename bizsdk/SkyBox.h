@@ -7,7 +7,7 @@
  *
  * Platform			LinuxX11 / OpenGL
  * 
- * Description		High resolution timer
+ * Description		CubeMap and SkyBox classes
  *
  *****************************************************************************/
 
@@ -17,12 +17,24 @@
 #include "Extensions.h"
 #include "VBO.h"
 
+/*****************************************************************************
+ * CubeMap class (loads GL_TEXTURE_CUBE_MAP from 6 textures
+ *****************************************************************************/
+class CubeMap
+{
+	GLuint uiCubeMap;
+public:
+	bool Init(const char *textures[]);
+	const GLuint Get() const { return uiCubeMap; }
+};
+
+/*****************************************************************************
+ * SkyBox class (loads GL_TEXTURE_CUBE_MAP from 6 textures
+ * SkyBox is implemented as a singleton
+ *****************************************************************************/
 class SkyBox
 {
 	bool init;
-	float fScale;
-
-	GLuint uiSkybox;
 	GLuint uiProgram;
 
 	static const float VertexAttrib[3 * 8];
@@ -34,18 +46,9 @@ protected:
 	~SkyBox();
 public:
 	static SkyBox &Instance();
-	bool Init(const char *textures[], const float scale = 1.0f);
-	void Render(const float alpha, const float beta);
-};
-
-class SkyBoxTexture
-{
-
-};
-
-class SkyBoxShader
-{
-
+	bool Init();
+	void Render(const CubeMap &cubemap, const float alpha, const float beta,
+		const float scale = 1.0);
 };
 
 #endif
