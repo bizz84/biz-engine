@@ -65,11 +65,11 @@ public:
 	virtual float &operator[] (int i) { return s[i]; }
 	virtual const float &operator[] (int i) const { return s[i]; }
 
-	inline Vector3 &operator +=(const Vector3 &rhs)
+	inline Vector3 &operator +=(const Vector3 &v)
 	{
-		s[0] += rhs.s[0];
-		s[1] += rhs.s[1];
-		s[2] += rhs.s[2];
+		s[0] += v[0];
+		s[1] += v[1];
+		s[2] += v[2];
 		return *this;
 	}
 	inline const Vector3 operator *(const float scalar) const
@@ -120,6 +120,16 @@ public:
 	inline const Vector3 operator-() const 
 	{
 		return Vector3(-s[0], -s[1], -s[2]);
+	}
+
+	inline const Vector3 operator +(const Vector3 &rhs) const
+	{
+		return Vector3(s[0] + rhs[0], s[1] + rhs[1], s[2] + rhs[2]);
+	}
+
+	inline const Vector3 operator -(const Vector3 &rhs) const
+	{
+		return Vector3(s[0] - rhs[0], s[1] - rhs[1], s[2] - rhs[2]);
 	}
 
 	friend ostream &operator<<(ostream &stream, const Vector3 &v);
@@ -187,6 +197,14 @@ public:
 		return !(*this == v);
 	}
 
+	inline Vector4 &operator +=(const Vector4 &v)
+	{
+		s[0] += v[0];
+		s[1] += v[1];
+		s[2] += v[2];
+		s[3] += v[3];
+		return *this;
+	}
 	void AssignTo(float *f);
 
 	//friend ostream &operator<<(ostream &stream, const Vector4 &m);
