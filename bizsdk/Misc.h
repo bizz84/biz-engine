@@ -22,6 +22,9 @@
 #endif
 #include "Extensions.h"
 
+#include "Vector.h"
+#include "Matrix.h"
+
 // TODO: Group functions by category
 
 enum VerboseLevel { NoVerbose, VerboseInfo, VerboseAll };
@@ -54,6 +57,9 @@ GLint GetUniLoc(GLuint program, const GLchar *name);
 
 
 float RandRange(float min, float max);
+
+unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv, const Vector3 &eye, const float far);
+void IntersectionLinePlane(Vector3 &intersection, const float *plane, const Vector3 &a, const Vector3 &b);
 
 extern const int permutation[3];
 
