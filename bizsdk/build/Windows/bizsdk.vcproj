@@ -264,6 +264,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\SkyBox.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\SkyBox.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Timer.cpp"
 				>
 			</File>
@@ -285,6 +293,14 @@
 			</File>
 			<File
 				RelativePath="..\..\VBO.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Vector.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Vector.h"
 				>
 			</File>
 		</Filter>
