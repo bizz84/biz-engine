@@ -16,27 +16,26 @@
 
 /* TODO
 
-- Infinite ground plane
-- Mouse input
 - Crosshair
 - OpenAL integration
 - Big Head meshes
-- Grenades physics
-
 
 */
 
 /* Version History 
-
+V0.0.2
+- Working infinite plane
+- Working SkyBox
 
 V0.0.1
+- Working grenades
 - Plane rendering + projection functions
 - Run&strafe on plane
 
 */
 
 
-const char szAppVersion[] = "0.0.1";
+const char szAppVersion[] = "0.0.2";
 const char szAppName[] = "Big Head Screamers";
 
 
