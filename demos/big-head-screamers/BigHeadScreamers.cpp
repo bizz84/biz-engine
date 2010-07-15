@@ -109,10 +109,23 @@ bool BigHeadScreamers::InitGL()
 	if (!ttFont.LoadFont("data/fonts/LucidaBrightDemiBold.ttf", 20))
 		return false;	
 
+	// Load texture for ground
 	if (!loader.LoadTextureFromFile("data/textures/crate-base.bmp",
 		uiBGTexture, GL_LINEAR, GL_LINEAR))
 		return false;
 	
+	// Initialize FPS graph
+	if (!fpsGraph.Init(4.0f, 3000, -0.98f, 0.60f, -0.6f, 0.95f, false))
+		return false;
+	
+	// Initialize skybox singleton
+	if (!SkyBox::Instance().Init())
+		return false;
+
+	// Load cubemap for skybox
+	if (!alpinCubeMap.Init(szSkybox))
+		return false;
+
 	CoordinateFrame::Instance().Make(400);
 
 	pTetraVBO = new IndexedVBO((void *)TetraVertices, sizeof(float) * 5, 4,
@@ -120,20 +133,6 @@ bool BigHeadScreamers::InitGL()
 	pTetraVBO->SetTexCoordData(sizeof(float) * 3);
 
 
-	if (!fpsGraph.Init(4.0f, 3000, -0.98f, 0.60f, -0.6f, 0.95f, false))
-	{
-		return false;
-	}
-	
-	if (!SkyBox::Instance().Init())
-	{
-		return false;
-	}
-
-	if (!alpinCubeMap.Init(szSkybox))
-	{
-		return false;
-	}
 
 
 	glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
@@ -157,17 +156,16 @@ bool BigHeadScreamers::Resize(unsigned int width, unsigned int height)
 	glMatrixMode( GL_PROJECTION );
 	float fov = 65.0f * M_PI / 180.0f;
 	float aspect = (GLfloat)width/(GLfloat)height;
-	Matrix4 proj = ProjectionRH(fov, aspect, Near, Far);
-	//Matrix4 proj = ProjectionRHInfinite(fov, aspect, Near);
+	//Matrix4 proj = ProjectionRH(fov, aspect, Near, Far);
+	Matrix4 proj = ProjectionRHInfinite(fov, aspect, Near);
 	glLoadTransposeMatrixf(proj.data());
 	// Calculate inverse (used to draw infinite plane)
 	mInvProj = InverseProjectionRHInfinite(fov, 1.0/aspect, Near);
 
+	// Alternatively use standard gluPerspective method
 	//glLoadIdentity();
 	//gluPerspective( 65.0f, (GLfloat)width/(GLfloat)height, Near, Far);
 
-	//float p[16];
-	//glGetFloatv(GL_PROJECTION_MATRIX, p);
 	return true;
 }
 
@@ -222,21 +220,15 @@ bool BigHeadScreamers::Render()
 	Matrix4 P = Matrix4(p).Transpose();
 	Matrix4 M = Matrix4(m).Transpose();*/
 
-	Matrix4 rotation = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
-	//Vector3 translation = fpsCamera.GetTranslation();
+	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
 	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
-	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rotation);
+	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
 
 	ground.Render(projViewInv, -fpsCamera.GetTranslation(), Far);
 
 	fpsCamera.LoadMatrix();
 	RenderGrenades();
 
-	// Render Light
-	/*for (unsigned int i = 0; i < iNumLights; i++)
-	{
-		DrawLightMarker(light[i].fPos);
-	}*/
 
 	//glDisable(GL_DEPTH_TEST);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -302,7 +294,7 @@ bool BigHeadScreamers::Render()
 	return true;
 }
 
-void BigHeadScreamers::RenderGrenades()
+void BigHeadScreamers::RenderGrenades() const
 {
 	float yellow[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 	GLuint shader = uiProgram[E_LOOKUP_COLOR];
@@ -334,28 +326,15 @@ void BigHeadScreamers::RenderGrenades()
 }
 
 
-void BigHeadScreamers::DrawLightMarker(float *lightPos)
+void BigHeadScreamers::DrawCoordinateFrame() const
 {
-	float white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glUseProgram(uiProgram[E_UNIFORM]);
-	glUniform4fv(GetUniLoc(uiProgram[E_UNIFORM], "Color"), 1, white);
-
-	glTranslatef(lightPos[0], lightPos[1], lightPos[2]);
-	glScalef(10.0f, 10.0f, 10.0f);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	pTetraVBO->Render(GL_TRIANGLES);
-	glDisableClientState(GL_VERTEX_ARRAY);
-}
-
-void BigHeadScreamers::DrawCoordinateFrame()
-{
-	glUseProgram(uiProgram[E_COLOR_OFFSET]);
 	float offset[] = { -0.9f, -0.9f };
+	glUseProgram(uiProgram[E_COLOR_OFFSET]);
 	glUniform2fv(GetUniLoc(uiProgram[E_COLOR_OFFSET], "Offset"), 1, offset);
 
 	glLoadIdentity();
 
-	glTranslatef(0.0f, 0.0f, -271.92487);
+	glTranslatef(0.0f, 0.0f, -250);
 	//glTranslatef(0.0f, 0.0f, -fDefDistance);
 	glRotatef(fpsCamera.GetBeta(), 1.0f, 0.0f, 0.0f);
 	glRotatef(fpsCamera.GetAlpha(), 0.0f, 1.0f, 0.0f);

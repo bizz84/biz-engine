@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Filename			BigHeadScreamers.cpp
+ * Filename			BigHeadScreamers.h
  * 
  * License			LGPL
  *
@@ -78,10 +78,9 @@ protected:
 protected:
 	bool LoadShaders();
 
-	void DrawLightMarker(float *lightPos);
-	void DrawCoordinateFrame();
+	void DrawCoordinateFrame() const;
 
-	void RenderGrenades();
+	void RenderGrenades() const;
 
 	// Virtuals
 	virtual bool InitApp();
