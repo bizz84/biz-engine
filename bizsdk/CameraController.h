@@ -31,6 +31,7 @@ class FPSCamera : public CameraController
 {
 protected:
 	// fps move stuff
+	float height;
 	Vector3 translation;
 	float alpha, beta;
 

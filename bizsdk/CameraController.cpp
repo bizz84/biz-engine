@@ -30,7 +30,7 @@ FPSCamera::FPSCamera()
 void FPSCamera::Init(float translationFactor, float ty/* = 0.0f*/)
 {
 	fTranslationFactor = translationFactor;
-	translation[1] = ty;
+	translation[1] = height = ty;
 }
 
 void FPSCamera::Update(SDLShell *shell, float dt)
@@ -80,6 +80,11 @@ void FPSCamera::Update(SDLShell *shell, float dt)
 		matrix10 * moveZ + matrix11 * moveX,
 		moveY,
 		matrix00 * moveZ + matrix01 * moveX);
+
+	// HACK: force y > epsilon
+	const float epsilon = 0.25f * height;
+	if (translation[1] >= epsilon)
+		translation[1] = epsilon;
 }
 
 void FPSCamera::ApplyRotation() const
