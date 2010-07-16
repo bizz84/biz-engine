@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Filename			NBody.cpp
+ * Filename			Weapon.cpp
  * 
  * License			LGPL
  *
@@ -7,7 +7,7 @@
  *
  * Platform			LinuxX11 / OpenGL
  * 
- * Description		NBody Simulation
+ * Description		Weapon
  *
  *****************************************************************************/
 

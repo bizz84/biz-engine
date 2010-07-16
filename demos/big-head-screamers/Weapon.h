@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Filename			NBody.h
+ * Filename			Weapon.h
  * 
  * License			LGPL
  *
@@ -7,7 +7,7 @@
  *
  * Platform			LinuxX11 / OpenGL
  * 
- * Description		NBody Simulation
+ * Description		Weapon
  *
  *****************************************************************************/
 #ifndef _WEAPON_H_
