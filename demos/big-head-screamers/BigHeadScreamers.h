@@ -90,6 +90,8 @@ protected:
 	void RenderReflection() const;
 	void RenderGround();
 	void ShowInfo();
+
+	void RenderReflectionFBO();
 	
 	// Virtuals
 	virtual bool InitApp();

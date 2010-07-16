@@ -54,7 +54,8 @@ static const char *shaders[] = {
 
 
 BigHeadScreamers::BigHeadScreamers()
-	: launcher(0.1f),
+	: ground(this),
+	launcher(0.1f),
 	iShowInfo(0),
 	uiBGTexture(~0),
 	pTetraVBO(NULL),
@@ -118,7 +119,7 @@ bool BigHeadScreamers::InitGL()
 
 	// Load texture for ground
 	if (!loader.LoadTextureFromFile("data/textures/crate-base.bmp",
-		uiBGTexture, GL_LINEAR, GL_LINEAR))
+		uiBGTexture, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
 		return false;
 	
 	// Initialize FPS graph
@@ -227,8 +228,8 @@ bool BigHeadScreamers::Render()
 	DrawCoordinateFrame();
 
 	glDisable(GL_DEPTH_TEST);
-	
-	// Draws overlays
+
+	// Draws fps counter, fbos and overlays
 	ShowInfo();
 	
 	return true;
@@ -238,6 +239,8 @@ void BigHeadScreamers::ShowInfo()
 {
 	if (iShowInfo)
 	{
+		RenderReflectionFBO();
+
 		fpsGraph.Draw();
 
 		/* Draw font */
@@ -339,6 +342,8 @@ void BigHeadScreamers::RenderReflection() const
 	SkyBoxRotate();
 	glMultMatrixf(mirror.data());
 
+
+
 	SkyBox::Instance().Render(alpinCubeMap);
 
 	glEnable(GL_DEPTH_TEST);
@@ -365,7 +370,13 @@ void BigHeadScreamers::RenderGround()
 	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
 	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
 
-	ground.Render(projViewInv, -fpsCamera.GetTranslation(), Far);
+
+	// Set reflection texture (the shader in Ground expects it)
+	glActiveTexture(GL_TEXTURE1);
+	pReflectionFBO->BindTexture();
+	glActiveTexture(GL_TEXTURE0);
+
+	ground.Render(projViewInv, rot, -fpsCamera.GetTranslation(), Far);
 }
 
 
@@ -403,6 +414,30 @@ void BigHeadScreamers::RenderGrenades() const
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
+
+void BigHeadScreamers::RenderReflectionFBO()
+{
+
+	glMatrixMode( GL_MODELVIEW );
+	glPushMatrix();
+	glLoadIdentity();
+
+	glMatrixMode( GL_PROJECTION );
+	glPushMatrix();
+	glLoadIdentity();
+
+	glUseProgram(uiProgram[E_LOOKUP]);
+
+	pReflectionFBO->BindTexture();
+
+	RenderQuad2D(0.68f, -0.98f, 0.3f, 0.3f, 0.0f, 0.0f, 1.0f, 1.0f);
+
+	glPopMatrix();
+
+	glMatrixMode( GL_MODELVIEW );
+	glPopMatrix();
+}
+
 
 
 void BigHeadScreamers::DrawCoordinateFrame() const
