@@ -36,6 +36,9 @@ protected:
 
 	float fTranslationFactor;
 
+	void ApplyRotation() const;
+	virtual void MultMatrix() const;
+	virtual void MultMatrixNoXZ() const;
 public:
 	FPSCamera();
 
@@ -43,7 +46,7 @@ public:
 
 	virtual void Update(SDLShell *shell, float dt);
 	virtual void LoadMatrix() const;
-	virtual void MultMatrix() const;
+	virtual void LoadMatrixNoXZ() const;
 
 	const float GetAlpha() const { return alpha; }
 	const float GetBeta() const { return beta; }
