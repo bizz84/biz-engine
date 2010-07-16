@@ -29,6 +29,7 @@
 
 enum VerboseLevel { NoVerbose, VerboseInfo, VerboseAll };
 
+
 VerboseLevel GetVerboseLevel();
 void SetVerboseLevel(VerboseLevel level);
 bool Verbose(VerboseLevel level);
@@ -58,8 +59,17 @@ GLint GetUniLoc(GLuint program, const GLchar *name);
 
 float RandRange(float min, float max);
 
-unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv, const Vector3 &eye, const float far);
+unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv, const Vector3 &eye, const float zfar);
 void IntersectionLinePlane(Vector3 &intersection, const float *plane, const Vector3 &a, const Vector3 &b);
+
+// Note this will be column major as mandated by OpenGL
+Matrix4 ProjectionRH(const float fov, const float invAspect, const float znear, const float zfar);
+Matrix4 ProjectionRHInfinite(const float fov, const float invAspect, const float znear);
+Matrix4 InverseProjectionRH(const float fov, const float aspect, const float znear, const float zfar);
+Matrix4 InverseProjectionRHInfinite(const float fov, const float invAspect, const float znear);
+
+Matrix4 AlphaBetaRotation(const float alpha, const float beta);
+Matrix4 InverseMVP(const Matrix4 &invP, const Vector3 &T, const Matrix4 &R);
 
 extern const int permutation[3];
 

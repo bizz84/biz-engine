@@ -18,10 +18,12 @@
 #include <math.h>
 
 #include <stdio.h>
-
+#include <assert.h>
 
 
 const int permutation[3] = { 1, 2, 0 };
+static const float u = 1.0f;
+static const float z = 0.0f;
 
 static VerboseLevel AppVerboseLevel = VerboseInfo;
 
@@ -196,8 +198,8 @@ float RandRange(float min, float max)
 /*
 //
 if dot(plane, eye) < 0 then plane not visible, return 0
-// Calculate 4 vertexes of far clipping plane in world coordinates.
-(-1,-1), (1,-1), (1,1), (-1,1) * Inv * far
+// Calculate 4 vertexes of zfar clipping plane in world coordinates.
+(-1,-1), (1,-1), (1,1), (-1,1) * Inv * zfar
 // Loop
 clip = false
 for (vert = 5; vert; vert--)
@@ -228,7 +230,7 @@ void IntersectionLinePlane(Vector3 &intersection, const float *plane, const Vect
 	intersection = a - diff * (num / den);
 }
 
-unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv, const Vector3 &eye, const float far)
+unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv, const Vector3 &eye, const float zfar)
 {
 	//if ((eye[0] + plane[0] * plane[3]) * plane[0] +
 	//	(eye[1] + plane[1] * plane[3]) * plane[1] +
@@ -238,70 +240,58 @@ unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv
 	{
 		return 0;
 	}
-	Vector3 world0[5] = {
-		Vector3(-inv.at(0) - inv.at(4) + inv.at(8) + inv.at(12), 
-		        -inv.at(1) - inv.at(5) + inv.at(9) + inv.at(13),
-		        -inv.at(2) - inv.at(6) + inv.at(10) + inv.at(14)) * far,
 
-		Vector3( inv.at(0) - inv.at(4) + inv.at(8) + inv.at(12), 
-		         inv.at(1) - inv.at(5) + inv.at(9) + inv.at(13),
-		         inv.at(2) - inv.at(6) + inv.at(10) + inv.at(14)) * far,
-
-		Vector3( inv.at(0) + inv.at(4) + inv.at(8) + inv.at(12), 
-		         inv.at(1) + inv.at(5) + inv.at(9) + inv.at(13),
-		         inv.at(2) + inv.at(6) + inv.at(10) + inv.at(14)) * far,
-
-		Vector3(-inv.at(0) + inv.at(4) + inv.at(8) + inv.at(12), 
-		        -inv.at(1) + inv.at(5) + inv.at(9) + inv.at(13),
-		        -inv.at(2) + inv.at(6) + inv.at(10) + inv.at(14)) * far,
-
-		Vector3(-inv.at(0) - inv.at(4) + inv.at(8) + inv.at(12), 
-		        -inv.at(1) - inv.at(5) + inv.at(9) + inv.at(13),
-		        -inv.at(2) - inv.at(6) + inv.at(10) + inv.at(14)) * far,
-	};
-
+	// row-major version
 	Vector3 world[5] = {
+		Vector3(-inv.at(0) - inv.at(1) + inv.at(2) + inv.at(3), 
+		        -inv.at(4) - inv.at(5) + inv.at(6) + inv.at(7),
+		        -inv.at(8) - inv.at(9) + inv.at(10) + inv.at(11)) * zfar,
+
+		Vector3( inv.at(0) - inv.at(1) + inv.at(2) + inv.at(3), 
+		         inv.at(4) - inv.at(5) + inv.at(6) + inv.at(7),
+		         inv.at(8) - inv.at(9) + inv.at(10) + inv.at(11)) * zfar,
+
+		Vector3( inv.at(0) + inv.at(1) + inv.at(2) + inv.at(3), 
+		         inv.at(4) + inv.at(5) + inv.at(6) + inv.at(7),
+		         inv.at(8) + inv.at(9) + inv.at(10) + inv.at(11)) * zfar,
+
+		Vector3(-inv.at(0) + inv.at(1) + inv.at(2) + inv.at(3), 
+		        -inv.at(4) + inv.at(5) + inv.at(6) + inv.at(7),
+		        -inv.at(8) + inv.at(9) + inv.at(10) + inv.at(11)) * zfar,
+
+		Vector3(-inv.at(0) - inv.at(1) + inv.at(2) + inv.at(3), 
+		        -inv.at(4) - inv.at(5) + inv.at(6) + inv.at(7),
+		        -inv.at(8) - inv.at(9) + inv.at(10) + inv.at(11)) * zfar,
+
+	};
+	// Equivalent row-major version
+	/*Vector3 world1[5] = {
 		Vector3(-inv[0][0] - inv[0][1] + inv[0][2] + inv[0][3], 
 		        -inv[1][0] - inv[1][1] + inv[1][2] + inv[1][3],
-		        -inv[2][0] - inv[2][1] + inv[2][2] + inv[2][3]) * far,
+		        -inv[2][0] - inv[2][1] + inv[2][2] + inv[2][3]) * zfar,
 
 		Vector3( inv[0][0] - inv[0][1] + inv[0][2] + inv[0][3], 
 		         inv[1][0] - inv[1][1] + inv[1][2] + inv[1][3],
-		         inv[2][0] - inv[2][1] + inv[2][2] + inv[2][3]) * far,
+		         inv[2][0] - inv[2][1] + inv[2][2] + inv[2][3]) * zfar,
 
 		Vector3( inv[0][0] + inv[0][1] + inv[0][2] + inv[0][3], 
 		         inv[1][0] + inv[1][1] + inv[1][2] + inv[1][3],
-		         inv[2][0] + inv[2][1] + inv[2][2] + inv[2][3]) * far,
+		         inv[2][0] + inv[2][1] + inv[2][2] + inv[2][3]) * zfar,
 
 		Vector3(-inv[0][0] + inv[0][1] + inv[0][2] + inv[0][3], 
 		        -inv[1][0] + inv[1][1] + inv[1][2] + inv[1][3],
-		        -inv[2][0] + inv[2][1] + inv[2][2] + inv[2][3]) * far,
+		        -inv[2][0] + inv[2][1] + inv[2][2] + inv[2][3]) * zfar,
 
 		Vector3(-inv[0][0] - inv[0][1] + inv[0][2] + inv[0][3], 
 		        -inv[1][0] - inv[1][1] + inv[1][2] + inv[1][3],
-		        -inv[2][0] - inv[2][1] + inv[2][2] + inv[2][3]) * far
-	};
-	Vector3 world2[5] = {
-		Vector3(-inv[0][0] - inv[1][0] + inv[2][0] + inv[3][0], 
-		        -inv[0][1] - inv[1][1] + inv[2][1] + inv[3][1],
-		        -inv[0][2] - inv[1][2] + inv[2][2] + inv[3][2]) * far,
+		        -inv[2][0] - inv[2][1] + inv[2][2] + inv[2][3]) * zfar
+	};*/
 
-		Vector3( inv[0][0] - inv[1][0] + inv[2][0] + inv[3][0], 
-		         inv[0][1] - inv[1][1] + inv[2][1] + inv[3][1],
-		         inv[0][2] - inv[1][2] + inv[2][2] + inv[3][2]) * far,
-
-		Vector3( inv[0][0] + inv[1][0] + inv[2][0] + inv[3][0], 
-		         inv[0][1] + inv[1][1] + inv[2][1] + inv[3][1],
-		         inv[0][2] + inv[1][2] + inv[2][2] + inv[3][2]) * far,
-
-		Vector3(-inv[0][0] + inv[1][0] + inv[2][0] + inv[3][0], 
-		        -inv[0][1] + inv[1][1] + inv[2][1] + inv[3][1],
-		        -inv[0][2] + inv[1][2] + inv[2][2] + inv[3][2]) * far,
-
-		Vector3(-inv[0][0] - inv[1][0] + inv[2][0] + inv[3][0], 
-		        -inv[0][1] - inv[1][1] + inv[2][1] + inv[3][1],
-		        -inv[0][2] - inv[1][2] + inv[2][2] + inv[3][2]) * far
-	};
+	/*for (unsigned int i = 0; i < 4; i++)
+	{
+		poly[i] = world[i];
+	}
+	return 4;*/
 
 	float dot;
 	unsigned int count = 0;
@@ -311,7 +301,7 @@ unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv
 	{
 		vert--;
 		/*
-			Check which side of the Plane this corner of the far clipping
+			Check which side of the Plane this corner of the zfar clipping
 			plane is on. [A,B,C] of plane equation is the plane normal, D is
 			distance from origin; hence [pvPlane->x * -pvPlane->w,
 										 pvPlane->y * -pvPlane->w,
@@ -356,6 +346,88 @@ unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv
 		}
 
 	}
+	assert(count <= 5);
+	assert(count != 2);
+	assert(count != 1);
 	
 	return count;
+}
+
+
+// To be used instead of gluPerspective
+// NOTE: For consistency, should use the row major version and call glLoadTransposeMatrixf!!
+Matrix4 ProjectionRH(const float fov, const float invAspect, const float znear, const float zfar)
+{
+	float e = u / tan(0.5f * fov);
+	float f1 = -(zfar + znear) / (zfar - znear);
+	float f2 = -(0.5f * zfar * znear) / (zfar - znear);
+
+	// row major version
+	return Matrix4(
+		e, z,          z, z,
+		z, e * invAspect, z, z,
+		z, z,          f1, f2,
+		z, z,          -u, z);
+}
+
+// To be used instead of gluPerspective
+// NOTE: For consistency, should use the row major version and call glLoadTransposeMatrixf!!
+Matrix4 ProjectionRHInfinite(const float fov, const float invAspect, const float znear)
+{
+	float e = u / tan(0.5f * fov);
+
+	// row major version
+	return Matrix4(
+		e, z,          z, z,
+		z, e * invAspect, z, z,
+		z, z,          -u, -2.0f * znear,
+		z, z,          -u, z);
+}
+
+// NOTE: This is the inverse of the row-major version
+Matrix4 InverseProj(const float e, const float a, const float znear, const float zfar)
+{
+	float f1 = -(zfar + znear) / (zfar - znear);
+	float f2 = -(0.5f * zfar * znear) / (zfar - znear);
+	return Matrix4(
+		u/e,   z,     z,    z,
+		  z, a/e,     z,    z,
+		  z,   z,     z,   -u,
+		  z,   z,  u/f2, f1/f2);
+}
+
+
+// NOTE: This is the inverse of the row-major version
+Matrix4 InverseInfProj(const float e, const float a, const float znear)
+{
+	const float n2 = 2.0f * znear;
+	return Matrix4(
+		u/e,   z,     z,    z,
+		  z, a/e,     z,    z,
+		  z,   z,     z,   -u,
+		  z,   z, -u/n2, u/n2);
+}
+
+Matrix4 InverseProjectionRHInfinite(const float fov, const float aspect, const float znear)
+{
+	return InverseInfProj(1.0f / tan(0.5f * fov), 1.0f / aspect, znear);
+}
+
+Matrix4 InverseProjectionRH(const float fov, const float aspect, const float znear, const float zfar)
+{
+	return Matrix4();//InverseProj(1.0f / tan(0.5f * fo;v), 1.0f / aspect, znear, zfar);
+}
+
+Matrix4 InverseMVP(const Matrix4 &invP, const Vector3 &T, const Matrix4 &R)
+{
+	return R.Transpose() * Matrix4::Translation(T).Transpose() * invP;
+}
+
+
+Matrix4 AlphaBetaRotation(const float alpha, const float beta)
+{
+	// The constructor for Matrix4 automatically adds the fourth identity
+	// row and column
+	return Matrix4(Matrix3::RotationX(beta * M_PI / 180.0f) *
+		           Matrix3::RotationY(alpha * M_PI / 180.0f));
 }
