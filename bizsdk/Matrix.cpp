@@ -16,58 +16,62 @@
 #include <math.h>
 #include <stdio.h>
 
+static const float z = 0.0f;
+static const float u = 1.0f;
 /*****************************************************************************
  * Matrix3 implementation
  *****************************************************************************/
 
 Matrix3::Matrix3()
 {
-	s[0] = 1.0f; s[1] = 0.0f; s[2] = 0.0f;
-	s[3] = 0.0f; s[4] = 1.0f; s[5] = 0.0f;
-	s[6] = 0.0f; s[7] = 1.0f; s[8] = 0.0f;
+	s[0] = u; s[1] = z; s[2] = z;
+	s[3] = z; s[4] = u; s[5] = z;
+	s[6] = z; s[7] = z; s[8] = u;
 }
-
+// TODO: memcpy?
 Matrix3::Matrix3(const float *f)
 {
 	float *p = s;
 	for (unsigned int i = 0; i < 9; i++)
 		*p++ = *f++;
 }
+Matrix3::Matrix3(const float f00, const float f01, const float f02, 
+        const float f10, const float f11, const float f12, 
+        const float f20, const float f21, const float f22)
+{
+	s[0] = f00; s[1] = f01; s[2] = f02;
+	s[3] = f10; s[4] = f11; s[5] = f12;
+	s[6] = f20; s[7] = f21; s[8] = f22;
+}
 
 const Matrix3 Matrix3::RotationX(const float angle)
 {
 	float c = cos(angle);
 	float s = sin(angle);
-	const float f[] = {
-		1.0f, 0.0f, 0.0f,
-		0.0f,    c,   -s,
-		0.0f,    s,    c
-	};
-	return Matrix3(f);
+	return Matrix3(
+		u, z,  z,
+		z, c, -s,
+		z, s,  c);
 }
 
 const Matrix3 Matrix3::RotationY(const float angle)
 {
 	float c = cos(angle);
 	float s = sin(angle);
-	const float f[] = {
-		   c, 0.0f,    s,
-		0.0f, 1.0f, 0.0f,
-		  -s, 0.0f,    c
-	};
-	return Matrix3(f);
+	return Matrix3(
+		 c, z, s,
+		 z, u, z,
+		-s, z, c);
 }
 
 const Matrix3 Matrix3::RotationZ(const float angle)
 {
 	float c = cos(angle);
 	float s = sin(angle);
-	const float f[] = {
-		   c,   -s, 0.0f,
-		   s,    c, 0.0f,
-		0.0f, 0.0f, 1.0f
-	};
-	return Matrix3(f);
+	return Matrix3(
+		c, -s, z,
+		s,  c, z,
+		z,  z, u);
 }
 
 const Vector3 Matrix3::operator*(const Vector3 &v) const
@@ -104,10 +108,22 @@ ostream &operator<<(ostream &stream, const Matrix3 &m)
  *****************************************************************************/
 Matrix4::Matrix4()
 {
-	s[0]  = 1.0f; s[1]  = 0.0f; s[2]  = 0.0f; s[3]  = 0.0f;
-	s[4]  = 0.0f; s[5]  = 1.0f; s[6]  = 0.0f; s[7]  = 0.0f;
-	s[8]  = 0.0f; s[9]  = 0.0f; s[10] = 1.0f; s[11] = 0.0f;
-	s[12] = 0.0f; s[13] = 1.0f; s[14] = 0.0f; s[15] = 1.0f;
+	s[0]  = u; s[1]  = z; s[2]  = z; s[3]  = z;
+	s[4]  = z; s[5]  = u; s[6]  = z; s[7]  = z;
+	s[8]  = z; s[9]  = z; s[10] = u; s[11] = z;
+	s[12] = z; s[13] = z; s[14] = z; s[15] = u;
+}
+
+Matrix4::Matrix4(
+		const float f00, const float f01, const float f02, const float f03,
+	    const float f10, const float f11, const float f12, const float f13,  
+	    const float f20, const float f21, const float f22, const float f23,  
+	    const float f30, const float f31, const float f32, const float f33)
+{
+	s[0]  = f00; s[1]  = f01; s[2]  = f02; s[3]  = f03;
+	s[4]  = f10; s[5]  = f11; s[6]  = f12; s[7]  = f13;
+	s[8]  = f20; s[9]  = f21; s[10] = f22; s[11] = f23;
+	s[12] = f30; s[13] = f31; s[14] = f32; s[15] = f33;
 }
 
 Matrix4::Matrix4(const float *f)
@@ -115,8 +131,16 @@ Matrix4::Matrix4(const float *f)
 	float *p = s;
 	for (unsigned int i = 0; i < 16; i++)
 		*p++ = *f++;
-
 }
+
+Matrix4::Matrix4(const Matrix3 &mat3)
+{
+	s[0] = mat3[0][0]; s[1] = mat3[0][1]; s[ 2] = mat3[0][2]; s[ 3] = z;
+	s[4] = mat3[1][0]; s[5] = mat3[1][1]; s[ 6] = mat3[1][2]; s[ 7] = z;
+	s[8] = mat3[2][0]; s[9] = mat3[2][1]; s[10] = mat3[2][2]; s[11] = z;
+	s[12] = z;         s[13] = z;         s[14] = z;          s[15] = u;
+}
+
 
 Matrix4 Matrix4::Zero()
 {
@@ -124,6 +148,16 @@ Matrix4 Matrix4::Zero()
 	memset(m.s, '\0', sizeof(float) * 16);
 	return m;
 }
+
+const Matrix4 Matrix4::operator-() const
+{
+	return Matrix4(
+		-s[0], -s[1], -s[2], -s[3],
+		-s[4], -s[5], -s[6], -s[7],
+		-s[8], -s[9], -s[10], -s[11],
+		-s[12], -s[13], -s[14], -s[15]);
+}
+
 
 Matrix4 Matrix4::operator*(const Matrix4 &m) const
 {
@@ -141,7 +175,7 @@ Matrix4 Matrix4::operator*(const Matrix4 &m) const
 }
 
 
-Matrix4 Matrix4::Transpose()
+const Matrix4 Matrix4::Transpose() const
 {
 	Matrix4 m;
 	m[0][0] = s[0]; m[0][1] = s[4]; m[0][2] = s[8]; m[0][3] = s[12];
@@ -151,7 +185,8 @@ Matrix4 Matrix4::Transpose()
 	return m;
 }
 
-Matrix4 Matrix4::Inverse(const float epsilon)
+
+const Matrix4 Matrix4::Inverse(const float epsilon) const
 {
 	float a0 = s[ 0]*s[ 5] - s[ 1]*s[ 4];
     float a1 = s[ 0]*s[ 6] - s[ 2]*s[ 4];
@@ -210,6 +245,15 @@ Matrix4 Matrix4::Inverse(const float epsilon)
 
     return Zero();
 }
+
+Matrix4 Matrix4::Translation(const Vector3 &t)
+{
+	return Matrix4(u, z, z, t[0],
+	               z, u, z, t[1],
+				   z, z, u, t[2],
+				   z, z, z, u);
+}
+
 
 ostream &operator<<(ostream &stream, const Matrix4 &m)
 {
