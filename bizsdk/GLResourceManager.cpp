@@ -432,11 +432,24 @@ bool GLResourceManager::LoadTextureFromFile(const char *textureFile,
 		// Set the texture's stretching properties
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter );
-	 
-		// Edit the texture object's image data using the information
-		// SDL_Surface gives us
-		glTexImage2D( GL_TEXTURE_2D, 0, nOfColors, surface->w, surface->h, 0,
-		                  texture_format, GL_UNSIGNED_BYTE, surface->pixels );
+
+		// If mipmaps are required, generated mipmapped version, otherwise
+		// load normal texture
+		if (minFilter == GL_LINEAR_MIPMAP_LINEAR ||
+			magFilter == GL_LINEAR_MIPMAP_LINEAR)
+		{
+			// Generate fully mipmapped texture
+			gluBuild2DMipmaps( GL_TEXTURE_2D, nOfColors, surface->w, surface->h,
+				texture_format, GL_UNSIGNED_BYTE, surface->pixels );
+		}
+		else
+		{
+			// Edit the texture object's image data using the information
+			// SDL_Surface gives us
+			glTexImage2D( GL_TEXTURE_2D, 0, nOfColors, surface->w, surface->h,
+				0, texture_format, GL_UNSIGNED_BYTE, surface->pixels );
+		}
+
 
 		SDL_FreeSurface( surface );
 	
