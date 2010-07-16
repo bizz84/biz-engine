@@ -40,14 +40,18 @@
 #include "SkyBox.h"
 #include "Ground.h"
 
+
 class BigHeadScreamers : public SDLShell
 {
-	enum Shaders {
+	enum EShaders {
 		E_LOOKUP,		// used for font
 		E_LOOKUP_COLOR, // used for grenades
 		E_COLOR_OFFSET, // used for coordinate frame
-		E_NUM_PROGRAMS 
+		NUM_PROGRAMS 
 	};
+
+	enum { NUM_TEXTURES = 2 };
+	enum { NUM_CUBEMAPS = 5 };
 
 	Pointer *NewPointer() { return new FPSPointer(this); }
 protected:
@@ -56,20 +60,35 @@ protected:
 
 	// POD part of the file
 	int iShowInfo;
-	GLuint uiBGTexture;
+
+	// Ground texture data
+	unsigned int uiCurTexture;
+	GLuint uiTexture[NUM_TEXTURES];
+	GLuint CurrentTexture() { return uiTexture[uiCurTexture]; }
+	void NextTexture() { uiCurTexture = Next(uiCurTexture, NUM_TEXTURES); }
+	void PrevTexture() { uiCurTexture = Prev(uiCurTexture, NUM_TEXTURES); }
+
+	// Cubemaps data
+	unsigned int uiCurCubemap;
+	CubeMap cubemap[NUM_CUBEMAPS];
+	const CubeMap &CurrentCubemap() const { return cubemap[uiCurCubemap]; }
+	void NextCubemap() { uiCurCubemap = Next(uiCurCubemap, NUM_CUBEMAPS); }
+	void PrevCubemap() { uiCurCubemap = Prev(uiCurCubemap, NUM_CUBEMAPS); }
 
 	IndexedVBO *pTetraVBO;
 	
 	FBO *pReflectionFBO;
 
 	// Shader program files
-	GLuint uiProgram[E_NUM_PROGRAMS];
+	GLuint uiProgram[NUM_PROGRAMS];
 
 	Timer timer;
+	float fSetTime;
+	float fRandomTime;
 
 	TTFont ttFont;
 
-	CubeMap alpinCubeMap;
+
 	// Inverted projection matrix (needed by infinite plane rendering)
 	Matrix4 mInvProj;
 	Ground ground;
@@ -78,19 +97,35 @@ protected:
 	FPSCamera fpsCamera;
 
 protected:
+	// Resource loading
 	bool LoadShaders();
+	bool LoadTextures();
+	bool LoadCubemaps();
 	
+	
+	// All input is processed here
+	// TODO: move calculation of infinite plane here
 	void Input();
+
+	// Simple utility functions
+	inline unsigned int Next(unsigned int n, unsigned int mod)
+	{
+		return n < mod - 1 ? n + 1 : 0;
+	}
+	inline unsigned int Prev(unsigned int n, unsigned int mod)
+	{
+		return n > 0 ? n - 1 : mod - 1;
+	}
 	
 	void SkyBoxRotate() const ;
 
+	// Rendering methods
 	void DrawCoordinateFrame() const;
 	void RenderGrenades() const;	
 	void RenderSkyBox() const;
 	void RenderReflection() const;
 	void RenderGround();
 	void ShowInfo();
-
 	void RenderReflectionFBO();
 	
 	// Virtuals

@@ -16,7 +16,12 @@
 #include "Misc.h"
 #include <iostream>
 
+// Near, Far values for projection matrix and distance from plane
+static const float Near = 1.0f;
+static const float Far = 100000.0f;
+static const float Height = 20.0f;
 
+// Object representing a tetrahedron
 static const float TetraVertices[20] = {
 	 0.0f    ,  1.0f    ,  0.0     , 0.5f, 1.0f,
 	 0.0f    , -0.33333f,  0.94281f, 0.5f, 0.0f, 
@@ -31,37 +36,91 @@ static const int TetraIndices[12] = {
 	1, 2, 3
 };
 
+// Credit for cubemaps:
+// http://www.alusion-fr.com/
+static const char *CubemapAlpine[] = {
+	"data/textures/Skybox_alpine/alpine_east.bmp",
+	"data/textures/Skybox_alpine/alpine_west.bmp",
+	"data/textures/Skybox_alpine/alpine_up.bmp",
+	"data/textures/Skybox_alpine/alpine_down.bmp",
+	"data/textures/Skybox_alpine/alpine_north.bmp",
+	"data/textures/Skybox_alpine/alpine_south.bmp",
+};
 
-static const float Near = 1.0f;
-static const float Far = 100000.0f;
-static const float Height = 20.0f;
+static const char *CubemapCanyon[] = {
+	"data/textures/Skybox_canyon/lnhcanyons1_fr.bmp",
+	"data/textures/Skybox_canyon/lnhcanyons1_bk.bmp",
+	"data/textures/Skybox_canyon/lnhcanyons1_up.bmp",
+	"data/textures/Skybox_canyon/lnhcanyons1_dn.bmp",
+	"data/textures/Skybox_canyon/lnhcanyons1_rt.bmp",
+	"data/textures/Skybox_canyon/lnhcanyons1_lt.bmp",
+};
 
-static const char *szSkybox[] = {
-	"data/textures/alpine_east.bmp",
-	"data/textures/alpine_west.bmp",
-	"data/textures/alpine_up.bmp",
-	"data/textures/alpine_down.bmp",
-	"data/textures/alpine_north.bmp",
-	"data/textures/alpine_south.bmp",
+static const char *CubemapFaesky[] = {
+	"data/textures/Skybox_faesky/faesky02left.bmp",
+	"data/textures/Skybox_faesky/faesky02right.bmp",
+	"data/textures/Skybox_faesky/faesky02up.bmp",
+	"data/textures/Skybox_faesky/faesky02down.bmp",
+	"data/textures/Skybox_faesky/faesky02back.bmp",
+	"data/textures/Skybox_faesky/faesky02front.bmp",
+};
+
+static const char *CubemapTaosky[] = {
+	"data/textures/Skybox_taosky/skybox3_right.bmp",
+	"data/textures/Skybox_taosky/skybox3_back.bmp",
+	"data/textures/Skybox_taosky/skybox3_top.bmp",
+	"data/textures/Skybox_taosky/skybox3_bottom.bmp",
+	"data/textures/Skybox_taosky/skybox3_front.bmp",
+	"data/textures/Skybox_taosky/skybox3_left.bmp",
+};
+
+static const char *CubemapMntsea[] = {
+	"data/textures/Skybox_mntsea/lnhmtns1_fr.bmp",
+	"data/textures/Skybox_mntsea/lnhmtns1_bk.bmp",
+	"data/textures/Skybox_mntsea/lnhmtns1_up.bmp",
+	"data/textures/Skybox_mntsea/lnhmtns1_dn.bmp",
+	"data/textures/Skybox_mntsea/lnhmtns1_rt.bmp",
+	"data/textures/Skybox_mntsea/lnhmtns1_lt.bmp",
 };
 
 
-static const char *shaders[] = {
+static const char **Cubemaps[6] = {
+	CubemapAlpine,
+	CubemapCanyon,
+	CubemapFaesky,
+	CubemapTaosky,
+	CubemapMntsea,
+};
+
+// Shaders
+static const char *Shaders[] = {
 	"data/shaders/Lookup.vert", "data/shaders/Lookup.frag",
 	"data/shaders/LookupColor.vert", "data/shaders/LookupColor.frag",
-	"data/shaders/ColorOffset.vert", "data/shaders/ColorOffset.frag",
+	"data/shaders/ColorOffset.vert", "data/shaders/ColorOffset.frag"
 };
+
+// Credit for textures (licensed under Creative Commons):
+// http://www.marcchehab.org/frozenmist
+static const char *Textures[] = {
+	"data/textures/Rore_floor-tiles2.bmp",
+	"data/textures/TiZeta_pav2.bmp"
+};
+
 
 
 BigHeadScreamers::BigHeadScreamers()
 	: ground(this),
 	launcher(0.1f),
 	iShowInfo(0),
-	uiBGTexture(~0),
+	uiCurTexture(0),
+	uiCurCubemap(0),
+	fSetTime(0.0f),
+	fRandomTime(0.0f),
 	pTetraVBO(NULL),
 	pReflectionFBO(NULL)
 {
-
+	// initialize random number generator
+	Timer::InitRand();
 }
 
 BigHeadScreamers::~BigHeadScreamers()
@@ -85,21 +144,43 @@ bool BigHeadScreamers::InitApp()
 		}
 	}	
 
-	//UnitTestRun();
-
 	return true;
 }
 
 bool BigHeadScreamers::LoadShaders()
 {
 	GLResourceManager &loader = GLResourceManager::Instance();
-	for (unsigned int i = 0; i < E_NUM_PROGRAMS; i++)
+	for (unsigned int i = 0; i < NUM_PROGRAMS; i++)
 	{
-		if (!loader.LoadShaderFromFile(shaders[i*2+0], shaders[i*2+1],
+		if (!loader.LoadShaderFromFile(Shaders[i<<1], Shaders[(i<<1)+1],
 			uiProgram[i]))
 			return false;
 	}
 	return true;
+}
+
+bool BigHeadScreamers::LoadTextures()
+{
+	GLResourceManager &loader = GLResourceManager::Instance();
+
+	for (unsigned int i = 0; i < NUM_TEXTURES; i++)
+	{
+		// Load texture for ground
+		if (!loader.LoadTextureFromFile(Textures[i],
+			uiTexture[i], GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
+			return false;
+	}
+}
+
+bool BigHeadScreamers::LoadCubemaps()
+{
+	GLResourceManager &loader = GLResourceManager::Instance();
+
+	for (unsigned int i = 0; i < NUM_CUBEMAPS; i++)
+	{
+		if (!cubemap[i].Init(Cubemaps[i]))
+			return false;
+	}
 }
 
 bool BigHeadScreamers::InitGL()
@@ -113,14 +194,17 @@ bool BigHeadScreamers::InitGL()
 	if (!LoadShaders())
 		return false;
 
+	if (!LoadTextures())
+		return false;
+
+	if (!LoadCubemaps())
+		return false;
+
 	// Load font used for overlay rendering
 	if (!ttFont.LoadFont("data/fonts/LucidaBrightDemiBold.ttf", 20))
 		return false;	
 
-	// Load texture for ground
-	if (!loader.LoadTextureFromFile("data/textures/crate-base.bmp",
-		uiBGTexture, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
-		return false;
+
 	
 	// Initialize FPS graph
 	if (!fpsGraph.Init(4.0f, 3000, -0.98f, 0.60f, -0.6f, 0.95f, false))
@@ -129,11 +213,6 @@ bool BigHeadScreamers::InitGL()
 	// Initialize skybox singleton
 	if (!SkyBox::Instance().Init())
 		return false;
-
-	// Load cubemap for skybox
-	if (!alpinCubeMap.Init(szSkybox))
-		return false;
-
 
 	// Initialize coordinate frame
 	CoordinateFrame::Instance().Make(400);
@@ -184,6 +263,7 @@ bool BigHeadScreamers::Resize(unsigned int width, unsigned int height)
 	return true;
 }
 
+
 void BigHeadScreamers::Input()
 {
 	/* Input - timer and fps graph */
@@ -199,6 +279,35 @@ void BigHeadScreamers::Input()
 		launcher.Fire(fpsCamera);
 	}
 	fpsCamera.Update(this, timer.GetDeltaTime());
+
+	if (KeyPressed(KEY_1))
+		uiCurTexture = Prev(uiCurTexture, NUM_TEXTURES);
+	if (KeyPressed(KEY_2))
+		uiCurTexture = Next(uiCurTexture, NUM_TEXTURES);
+
+	if (KeyPressed(KEY_3))
+		uiCurCubemap = Prev(uiCurCubemap, NUM_CUBEMAPS);
+	if (KeyPressed(KEY_4))
+		uiCurCubemap = Next(uiCurCubemap, NUM_CUBEMAPS);
+
+
+	// Ground input
+	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
+	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
+	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
+	ground.Input(projViewInv, -fpsCamera.GetTranslation(), Far);
+
+	// Some randomisation
+	if (timer.GetTime() - fSetTime > fRandomTime)
+	{
+		fSetTime = timer.GetTime();
+		fRandomTime = RandRange(5.0f, 15.0f);
+		if ((rand() % 4) == 0)
+			NextTexture();
+		else
+			NextCubemap();
+	}
+	
 }
 
 
@@ -317,7 +426,7 @@ void BigHeadScreamers::RenderSkyBox() const
 	
 	SkyBoxRotate();
 
-	SkyBox::Instance().Render(alpinCubeMap);
+	SkyBox::Instance().Render(CurrentCubemap());
 		
 	glPopMatrix();
 }
@@ -334,17 +443,17 @@ void BigHeadScreamers::RenderReflection() const
 	Matrix4 mirror;
 	// Note: treat this matrix as column major since it is then added
 	// to the gl stack
-	mirror[0][1] = 0.0f;
+	//mirror[0][1] = 0.0f;
 	mirror[1][1] = -1.0f;
-	mirror[2][1] = 0.0f;
-	mirror[3][1] = 0.0f; // -2.0f * 0.0f
+	//mirror[2][1] = 0.0f;
+	//mirror[3][1] = 0.0f; // -2.0f * 0.0f
 	
 	SkyBoxRotate();
 	glMultMatrixf(mirror.data());
 
 
 
-	SkyBox::Instance().Render(alpinCubeMap);
+	SkyBox::Instance().Render(CurrentCubemap());
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -356,27 +465,14 @@ void BigHeadScreamers::RenderGround()
 	fpsCamera.LoadMatrixNoXZ();
 
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, uiBGTexture);
-
-	// Use this to query matrices and check the inverse is calculated
-	//correctly
-	/*float p[16], m[16];
-	glGetFloatv(GL_PROJECTION_MATRIX, p);
-	glGetFloatv(GL_MODELVIEW_MATRIX, m);
-	Matrix4 P = Matrix4(p).Transpose();
-	Matrix4 M = Matrix4(m).Transpose();*/
-
-	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
-	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
-	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
-
+	glBindTexture(GL_TEXTURE_2D, CurrentTexture());
 
 	// Set reflection texture (the shader in Ground expects it)
 	glActiveTexture(GL_TEXTURE1);
 	pReflectionFBO->BindTexture();
 	glActiveTexture(GL_TEXTURE0);
 
-	ground.Render(projViewInv, rot, -fpsCamera.GetTranslation(), Far);
+	ground.Render(-fpsCamera.GetTranslation(), Far);
 }
 
 
