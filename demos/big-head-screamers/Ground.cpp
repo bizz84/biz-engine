@@ -43,8 +43,8 @@ bool Ground::Init()
 	return true;
 }
 
-void Ground::Render(const Matrix4 &invProjView, const Matrix4 &view,
-					const Vector3 &eyePos, const float zfar)
+void Ground::Input(const Matrix4 &invProjView,
+		const Vector3 &eyePos, const float zfar)
 {
 	// Only a "fake" position is passed to the InfinitePlane() function
 	// The actual xz position is simulated in the vertex shader by
@@ -54,7 +54,10 @@ void Ground::Render(const Matrix4 &invProjView, const Matrix4 &view,
 	const float plane[] = { 0.0f, 1.0f, 0.0f, 0.0f };
 	uiInfPlaneVertices = InfinitePlane(vGround, plane, invProjView,
 		fakePos, zfar);
+}
 
+void Ground::Render(const Vector3 &eyePos, const float zfar)
+{
 	// Additional value for mix computation can be passed to the vertex shader
 	/*float arg[5];
 	for (unsigned int i = 0; i < uiInfPlaneVertices; i++)

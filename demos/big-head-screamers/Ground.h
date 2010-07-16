@@ -34,8 +34,12 @@ public:
 
 	bool Init();
 
-	void Render(const Matrix4 &invProjView, const Matrix4 &view,
+	// Conceptually Input() and Render() are distinct since one
+	// updates the state, the other renders
+	void Input(const Matrix4 &invProjView,
 		const Vector3 &eyePos, const float zfar);
+
+	void Render(const Vector3 &eyePos, const float zfar);
 
 	const unsigned int VisibleVertices() const { return uiInfPlaneVertices; }
 
