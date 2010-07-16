@@ -91,25 +91,18 @@ bool SkyBox::Init()
 	return (init = true);
 }
 
-void SkyBox::Render(const CubeMap &cubemap, const float alpha, const float beta, const float scale/* = 1.0*/)
+void SkyBox::Render(const CubeMap &cubemap) const
 {
 	assert(init);
 
 	glDepthMask(0);
 	glUseProgram(uiProgram);
+	glEnable(GL_TEXTURE_CUBE_MAP_EXT);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.Get());
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 
 	glDisable(GL_CULL_FACE);
-	glPushMatrix();
-	glLoadIdentity();
-	// first rotate beta angle to avoid spin
-	glRotatef(beta, 1.0, 0.0, 0.0);
-	// then rotate alpha angle to orient
-	glRotatef(alpha, 0.0, 1.0, 0.0);
-
-	glScalef(scale, scale, scale);
 
 	vboCube->Render(GL_QUADS);
 
@@ -117,6 +110,7 @@ void SkyBox::Render(const CubeMap &cubemap, const float alpha, const float beta,
 
 	glPopMatrix();
 
+	glDisable(GL_TEXTURE_CUBE_MAP_EXT);
 	glDepthMask(1);
 
 }

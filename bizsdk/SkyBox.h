@@ -47,8 +47,7 @@ protected:
 public:
 	static SkyBox &Instance();
 	bool Init();
-	void Render(const CubeMap &cubemap, const float alpha, const float beta,
-		const float scale = 1.0);
+	void Render(const CubeMap &cubemap) const;
 };
 
 #endif
