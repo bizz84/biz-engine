@@ -18,6 +18,7 @@
 #include "Extensions.h"
 #include "Vector.h"
 #include "Matrix.h"
+#include "SDLShell.h"
 
 class Ground
 {
@@ -27,12 +28,14 @@ class Ground
 	enum { 	E_INFINITE, NUM_SHADERS };
 	GLuint uiProgram[NUM_SHADERS];
 
+	SDLShell *pShell;
 public:
-	Ground();
+	Ground(SDLShell *shell);
 
 	bool Init();
 
-	void Render(const Matrix4 &invProjView, const Vector3 &eyePos, const float zfar);
+	void Render(const Matrix4 &invProjView, const Matrix4 &view,
+		const Vector3 &eyePos, const float zfar);
 
 	const unsigned int VisibleVertices() const { return uiInfPlaneVertices; }
 
