@@ -48,7 +48,7 @@ void CoordinateFrame::Make(const float scale)
 	bLoaded = true;
 }
 
-void CoordinateFrame::Render()
+void CoordinateFrame::Render() const
 {
 	assert(bLoaded);
 

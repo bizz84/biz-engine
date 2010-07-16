@@ -31,7 +31,7 @@ public:
 	static CoordinateFrame &Instance();
 
 	void Make(const float scale);
-	void Render();
+	void Render() const;
 	void Unload();
 };
 
