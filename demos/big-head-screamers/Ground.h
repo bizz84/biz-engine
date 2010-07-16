@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Filename			BigHeadScreamers.cpp
+ * Filename			Ground.h
  * 
  * License			LGPL
  *
@@ -16,19 +16,16 @@
 
 
 #include "Extensions.h"
-#include "SDLShell.h"
-#include "Misc.h"
+#include "Vector.h"
+#include "Matrix.h"
 
 class Ground
 {
 	unsigned int uiInfPlaneVertices;
 	Vector3 vGround[5];
 
-	enum { 	E_LOOKUP, E_IDENTITY, E_INFINITE, NUM_SHADERS };
+	enum { 	E_INFINITE, NUM_SHADERS };
 	GLuint uiProgram[NUM_SHADERS];
-
-	void Projection(Vector4 &u, const float *proj, const float *mview, const Vector4 &v);
-	void ZeroZ(Vector4 &w, const Vector4 &u);
 
 public:
 	Ground();
