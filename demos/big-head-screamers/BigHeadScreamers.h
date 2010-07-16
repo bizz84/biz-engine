@@ -29,6 +29,7 @@
 
 #include "GLResourceManager.h"
 #include "VBO.h"
+#include "FBO.h"
 #include "CoordinateFrame.h"
 
 #include "BaseGraph.h"
@@ -42,10 +43,9 @@
 class BigHeadScreamers : public SDLShell
 {
 	enum Shaders {
-		E_LOOKUP, 
-		E_LOOKUP_COLOR, 
-		E_COLOR_OFFSET,
-		E_UNIFORM,
+		E_LOOKUP,		// used for font
+		E_LOOKUP_COLOR, // used for grenades
+		E_COLOR_OFFSET, // used for coordinate frame
 		E_NUM_PROGRAMS 
 	};
 
@@ -59,6 +59,8 @@ protected:
 	GLuint uiBGTexture;
 
 	IndexedVBO *pTetraVBO;
+	
+	FBO *pReflectionFBO;
 
 	// Shader program files
 	GLuint uiProgram[E_NUM_PROGRAMS];
@@ -77,11 +79,18 @@ protected:
 
 protected:
 	bool LoadShaders();
+	
+	void Input();
+	
+	void SkyBoxRotate() const ;
 
 	void DrawCoordinateFrame() const;
-
-	void RenderGrenades() const;
-
+	void RenderGrenades() const;	
+	void RenderSkyBox() const;
+	void RenderReflection() const;
+	void RenderGround();
+	void ShowInfo();
+	
 	// Virtuals
 	virtual bool InitApp();
 	virtual bool InitGL();
@@ -98,6 +107,7 @@ protected:
 
 public:
 	BigHeadScreamers();
+	~BigHeadScreamers();
 };
 
 #endif

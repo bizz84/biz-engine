@@ -50,7 +50,6 @@ static const char *shaders[] = {
 	"data/shaders/Lookup.vert", "data/shaders/Lookup.frag",
 	"data/shaders/LookupColor.vert", "data/shaders/LookupColor.frag",
 	"data/shaders/ColorOffset.vert", "data/shaders/ColorOffset.frag",
-	"data/shaders/UniformColor.vert", "data/shaders/UniformColor.frag",
 };
 
 
@@ -58,10 +57,18 @@ BigHeadScreamers::BigHeadScreamers()
 	: launcher(0.1f),
 	iShowInfo(0),
 	uiBGTexture(~0),
-	pTetraVBO(NULL)
+	pTetraVBO(NULL),
+	pReflectionFBO(NULL)
 {
 
 }
+
+BigHeadScreamers::~BigHeadScreamers()
+{
+
+
+}
+
 
 bool BigHeadScreamers::InitApp()
 {
@@ -126,19 +133,25 @@ bool BigHeadScreamers::InitGL()
 	if (!alpinCubeMap.Init(szSkybox))
 		return false;
 
+
+	// Initialize coordinate frame
 	CoordinateFrame::Instance().Make(400);
 
+	// Initialize vbo used for tetrahedron
 	pTetraVBO = new IndexedVBO((void *)TetraVertices, sizeof(float) * 5, 4,
 	                           (void *)TetraIndices, 12);
 	pTetraVBO->SetTexCoordData(sizeof(float) * 3);
 
-
+	// Initialize fbo used for drawing reflection
+	pReflectionFBO = new FBO(GL_RGB, GL_UNSIGNED_SHORT_5_6_5, ShellGet(SHELL_WIDTH),
+		ShellGet(SHELL_HEIGHT), true);
 
 
 	glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
 
 	Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 
+	// As first element to be drawn is always the skybox
 	glDisable(GL_DEPTH_TEST);
 
 
@@ -165,13 +178,12 @@ bool BigHeadScreamers::Resize(unsigned int width, unsigned int height)
 	// Alternatively use standard gluPerspective method
 	//glLoadIdentity();
 	//gluPerspective( 65.0f, (GLfloat)width/(GLfloat)height, Near, Far);
-
+	// Select and setup the modelview matrix
+	glMatrixMode( GL_MODELVIEW );
 	return true;
 }
 
-
-
-bool BigHeadScreamers::Render()
+void BigHeadScreamers::Input()
 {
 	/* Input - timer and fps graph */
 	timer.Update();
@@ -185,56 +197,45 @@ bool BigHeadScreamers::Render()
 	{
 		launcher.Fire(fpsCamera);
 	}
+	fpsCamera.Update(this, timer.GetDeltaTime());
+}
 
 
+bool BigHeadScreamers::Render()
+{
+	Input();	
+	
 	/* Rendering */
 	// Clear color and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	// Render skybox to framebuffer
+	RenderSkyBox();
+
 	glEnable(GL_DEPTH_TEST);
 
-	// Select and setup the modelview matrix
-	glMatrixMode( GL_MODELVIEW );
+	// TODO: add code for rendering reflection to fbo
+	RenderReflection();
+	
+	// sets modelview matrix to LoadMatrixNoXZ()
+	RenderGround();
 
-	glEnable(GL_TEXTURE_CUBE_MAP_EXT); 
-	//glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, uiBGTexture);
-	//glUseProgram(uiProgram[E_LOOKUP]);
-
-	SkyBox::Instance().Render(alpinCubeMap, fpsCamera.GetAlpha(),
-		fpsCamera.GetBeta(), Far / 10.0f);
-
-	fpsCamera.Update(this, timer.GetDeltaTime());
-	fpsCamera.LoadMatrixNoXZ();
-
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, uiBGTexture);
-
-
-	// Use this to query matrices and check the inverse is calculated
-	//correctly
-	/*float p[16], m[16];
-	glGetFloatv(GL_PROJECTION_MATRIX, p);
-	glGetFloatv(GL_MODELVIEW_MATRIX, m);
-	Matrix4 P = Matrix4(p).Transpose();
-	Matrix4 M = Matrix4(m).Transpose();*/
-
-	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
-	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
-	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
-
-	ground.Render(projViewInv, -fpsCamera.GetTranslation(), Far);
-
-	fpsCamera.LoadMatrix();
+	// sets modelview matrix to LoadMatrix()
 	RenderGrenades();
 
-
-	//glDisable(GL_DEPTH_TEST);
-	glClear(GL_DEPTH_BUFFER_BIT);
-
+	// Clears depth buffer
 	DrawCoordinateFrame();
 
+	glDisable(GL_DEPTH_TEST);
+	
+	// Draws overlays
+	ShowInfo();
+	
+	return true;
+}
+
+void BigHeadScreamers::ShowInfo()
+{
 	if (iShowInfo)
 	{
 		fpsGraph.Draw();
@@ -289,13 +290,91 @@ bool BigHeadScreamers::Render()
 
 		TTFont::glDisable2D();
 		glDisable(GL_BLEND);
+		// TODO
+		//glBlendFunc(GL_ONE, GL_ONE);
 	}
-	
-	return true;
 }
+
+void BigHeadScreamers::SkyBoxRotate() const 
+{
+	glLoadIdentity();
+	// first rotate beta angle to avoid spin
+	glRotatef(fpsCamera.GetBeta(), 1.0, 0.0, 0.0);
+	// then rotate alpha angle to orient
+	glRotatef(fpsCamera.GetAlpha(), 0.0, 1.0, 0.0);
+
+	float scale = Far / 10.0f;
+	glScalef(scale, scale, scale);
+}
+
+
+void BigHeadScreamers::RenderSkyBox() const
+{
+	glPushMatrix();
+	
+	SkyBoxRotate();
+
+	SkyBox::Instance().Render(alpinCubeMap);
+		
+	glPopMatrix();
+}
+
+void BigHeadScreamers::RenderReflection() const
+{
+	pReflectionFBO->BindBuffer();
+	
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	Vector3 eye = -fpsCamera.GetTranslation();
+	eye[1] = -eye[1];
+
+	Matrix4 mirror;
+	// Note: treat this matrix as column major since it is then added
+	// to the gl stack
+	mirror[0][1] = 0.0f;
+	mirror[1][1] = -1.0f;
+	mirror[2][1] = 0.0f;
+	mirror[3][1] = 0.0f; // -2.0f * 0.0f
+	
+	SkyBoxRotate();
+	glMultMatrixf(mirror.data());
+
+	SkyBox::Instance().Render(alpinCubeMap);
+
+	glEnable(GL_DEPTH_TEST);
+
+	pReflectionFBO->UnbindBuffer();
+}
+
+void BigHeadScreamers::RenderGround()
+{
+	fpsCamera.LoadMatrixNoXZ();
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, uiBGTexture);
+
+	// Use this to query matrices and check the inverse is calculated
+	//correctly
+	/*float p[16], m[16];
+	glGetFloatv(GL_PROJECTION_MATRIX, p);
+	glGetFloatv(GL_MODELVIEW_MATRIX, m);
+	Matrix4 P = Matrix4(p).Transpose();
+	Matrix4 M = Matrix4(m).Transpose();*/
+
+	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
+	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
+	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
+
+	ground.Render(projViewInv, -fpsCamera.GetTranslation(), Far);
+}
+
+
+
 
 void BigHeadScreamers::RenderGrenades() const
 {
+	fpsCamera.LoadMatrix();
+	
 	float yellow[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 	GLuint shader = uiProgram[E_LOOKUP_COLOR];
 	glUseProgram(shader);
@@ -328,6 +407,8 @@ void BigHeadScreamers::RenderGrenades() const
 
 void BigHeadScreamers::DrawCoordinateFrame() const
 {
+	glClear(GL_DEPTH_BUFFER_BIT);
+	
 	float offset[] = { -0.9f, -0.9f };
 	glUseProgram(uiProgram[E_COLOR_OFFSET]);
 	glUniform2fv(GetUniLoc(uiProgram[E_COLOR_OFFSET], "Offset"), 1, offset);
@@ -348,7 +429,8 @@ bool BigHeadScreamers::ReleaseGL()
 	CoordinateFrame::Instance().Unload();
 
 	delete pTetraVBO;
-	//delete pRoomMesh;
+	
+	delete pReflectionFBO;
 
 	return GLResourceManager::Instance().Release();
 }
