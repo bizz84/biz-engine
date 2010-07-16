@@ -35,6 +35,8 @@ public:
 
 	const float GetTime() const { return fTimeCur; }
 	const float GetDeltaTime() const { return fTimeCur - fTimePrev; }
+
+	static void InitRand();
 };
 
 #endif

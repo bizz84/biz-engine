@@ -34,6 +34,7 @@ int gettimeofday(struct timeval *tp, void *tzp)
 }
 #endif
 
+
 Timer::Timer() : fTimeCur(0.0f), fTimePrev(0.0f)
 {
 	Start();
@@ -60,4 +61,11 @@ float Timer::Update()
 	fTimeCur = (float)(tv.tv_sec - start.tv_sec) +
 		0.000001f * (float)(tv.tv_usec - start.tv_usec);
 	return fTimeCur;
+}
+
+void Timer::InitRand()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	srand(tv.tv_usec);
 }
