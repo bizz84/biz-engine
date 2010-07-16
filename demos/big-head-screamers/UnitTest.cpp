@@ -121,6 +121,24 @@ void UnitTestRun()
 	cout << "x:" << x << "y:" << y << "z:" << z;
 	//cout.precision(5);
 
+
+	//matrix = [0.55 0 0 0, 0 0.4 -0.08 0, 0 12.3 -34.32 -0.05, 0 12.19 33.35 0.05]
+	//matrxx = [0.55 0 0 0, 0 0.4 -12.3 12.2, 0 -0.08 -34.32 33.33 0 0 -0.05 0.05]
+	//matrxx = [0.55 0 0 0, 0 0.4 -0.08 0, 0 -12.3 -34.32 -0.05, 0 12.20 33.33 0.05]
+	float pvrp[] = {
+		1.81, 0, 0, 0,
+		0, 2.414, 0, 0,
+		0, 0, -1, -20,
+		0, 0, -1, 0
+	};
+	float pvrm[] = {
+		1, 0, 0, 0,
+		0, 0.98, -0.195, -109,
+		0, 0.195, 0.98, -721,
+		0, 0, 0, 1,
+	};
+	Matrix4 inv = (Matrix4(pvrp) * Matrix4(pvrm)).Inverse(0.1);
+
   double f = 3.14159;
   cout.setf(0,ios::floatfield);            // floatfield not set
   cout.precision(5);
@@ -129,6 +147,48 @@ void UnitTestRun()
   cout << f << endl;
   cout.setf(ios::fixed,ios::floatfield);   // floatfield set to fixed
   cout << f << endl;
+
+
+  	/*float proj[16], mview[16];
+
+	Vector4 v[4];
+
+	float t = 100.0f;
+	float w = 0.0001f;
+	v[0] = Vector4(1.0f, 0.0f, 1.0f, w);
+	v[1] = Vector4(-1.0f, 0.0f, 1.0f, w);
+	v[2] = Vector4(-1.0f, 0.0f, -1.0f, w);
+	v[3] = Vector4(1.0f, 0.0f, -1.0f, w);
+
+
+  	glGetFloatv(GL_PROJECTION_MATRIX, proj);
+	glGetFloatv(GL_MODELVIEW_MATRIX, mview);
+	Matrix4 projView = Matrix4(proj) * Matrix4(mview);
+
+	Vector4 u[4];
+	Vector4 x[4];
+	for (unsigned int i = 0; i < 4; i++)
+	{
+		Projection(u[i], proj, mview, v[i]);
+		ZeroZ(x[i], u[i]);
+	}*/
+
+	/*if (KeyPressed(KEY_1))
+	{
+		cout << "Modelview matrix\n";
+		DebugMatrix4::GLPrint(mview, "%5.2f");
+		cout << "Projection matrix\n";
+		DebugMatrix4::GLPrint(proj, "%5.2f");
+
+		for (unsigned int i = 0; i < 4; i++)
+		{
+			printf("Projection of [%.1f, %.1f, %.1f, %.1f] is "\
+				"[%.1f, %.1f, %.1f, %.1f]\n",
+				v[i][0], v[i][1], v[i][2], v[i][3],
+				u[i][0], u[i][1], u[i][2], u[i][3]);
+		}
+	}*/
+
 
 	Grenade g(Point3(0.0f, 0.0f, 0.0f), M_PI_2, 0.5 * M_PI_2, 1.0f);
 	return;
