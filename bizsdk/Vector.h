@@ -15,6 +15,7 @@
 
 #include "Extensions.h"
 #include <iostream>
+#include <math.h>
 
 using namespace std;
 
@@ -33,6 +34,40 @@ public:
 
 	float &operator[] (int i) { return s[i]; }
 	const float &operator[] (int i) const { return s[i]; }
+
+	const float Length() const { return sqrt(this->dot(*this)); }
+	const Vector2 Normalize() const { return *this / Length(); }
+
+	inline const float dot(const Vector2 &v) const
+	{
+		return s[0] * v[0] + s[1] * v[1];
+	}
+	inline const Vector2 operator *(const float scalar) const
+	{
+		return Vector2(s[0] * scalar, s[1] * scalar);
+	}
+	inline const Vector2 operator /(const float scalar) const
+	{
+		return Vector2(s[0] / scalar, s[1] / scalar);
+	}
+
+	inline const Vector2 operator +(const Vector2 &rhs) const
+	{
+		return Vector2(s[0] + rhs[0], s[1] + rhs[1]);
+	}
+
+	inline const Vector2 operator -(const Vector2 &rhs) const
+	{
+		return Vector2(s[0] - rhs[0], s[1] - rhs[1]);
+	}
+
+	inline Vector2 &operator +=(const Vector2 &v)
+	{
+		s[0] += v[0];
+		s[1] += v[1];
+		return *this;
+	}	
+
 };
 
 /*****************************************************************************
@@ -61,6 +96,10 @@ public:
 	inline const Vector3 operator *(const float scalar) const
 	{
 		return Vector3(s[0] * scalar, s[1] * scalar, s[2] * scalar);
+	}
+	inline const Vector3 operator /(const float scalar) const
+	{
+		return Vector3(s[0] / scalar, s[1] / scalar, s[2] / scalar);
 	}
 	//
 	inline const float dot(const Vector3 &v) const
@@ -97,6 +136,7 @@ public:
 	{
 		return !(*this != f);
 	}
+
 	inline void Translate(const float x, const float y, const float z)
 	{
 		s[0] += x;
@@ -117,6 +157,10 @@ public:
 	{
 		return Vector3(s[0] - rhs[0], s[1] - rhs[1], s[2] - rhs[2]);
 	}
+
+	const float Length() const { return sqrt(this->dot(*this)); }
+	const Vector3 Normalize() const { return *this / Length(); }
+
 
 	friend ostream &operator<<(ostream &stream, const Vector3 &v);
 
@@ -145,6 +189,11 @@ public:
 	{
 		return Vector4(s[0] * scalar, s[1] * scalar,
 		               s[2] * scalar, s[3] * scalar);
+	}
+	inline const Vector4 operator /(const float scalar) const
+	{
+		return Vector4(s[0] / scalar, s[1] / scalar,
+		               s[2] / scalar, s[3] / scalar);
 	}
 	//
 	inline const float dot(const Vector4 &v) const
@@ -191,6 +240,11 @@ public:
 		s[3] += v[3];
 		return *this;
 	}
+
+	const float Length() const { return sqrt(this->dot(*this)); }
+	const Vector4 Normalize() const { return *this / Length(); }
+
+
 	void AssignTo(float *f);
 
 	//friend ostream &operator<<(ostream &stream, const Vector4 &m);
