@@ -14,12 +14,15 @@
 #include "BigHeadScreamers.h"
 #include "UnitTest.h"
 #include "Misc.h"
+#include "Sprite2D.h"
 #include <iostream>
 
 // Near, Far values for projection matrix and distance from plane
 static const float Near = 1.0f;
 static const float Far = 100000.0f;
 static const float Height = 20.0f;
+static const float MinRandomCycle = 2.5f;
+static const float MaxRandomCycle = 5.0f;
 
 // Object representing a tetrahedron
 static const float TetraVertices[20] = {
@@ -95,6 +98,7 @@ static const char **Cubemaps[6] = {
 // Shaders
 static const char *Shaders[] = {
 	"data/shaders/Lookup.vert", "data/shaders/Lookup.frag",
+	"data/shaders/Sprite.vert", "data/shaders/Sprite.frag",
 	"data/shaders/LookupColor.vert", "data/shaders/LookupColor.frag",
 	"data/shaders/ColorOffset.vert", "data/shaders/ColorOffset.frag"
 };
@@ -106,6 +110,7 @@ static const char *Textures[] = {
 	"data/textures/TiZeta_pav2.bmp"
 };
 
+static const char TestSprite[] = { "data/textures/Sprites/berlusconi.bmp" };
 
 
 BigHeadScreamers::BigHeadScreamers()
@@ -117,7 +122,8 @@ BigHeadScreamers::BigHeadScreamers()
 	fSetTime(0.0f),
 	fRandomTime(0.0f),
 	pTetraVBO(NULL),
-	pReflectionFBO(NULL)
+	pReflectionFBO(NULL),
+	pAIManager(NULL)
 {
 	// initialize random number generator
 	Timer::InitRand();
@@ -183,6 +189,15 @@ bool BigHeadScreamers::LoadCubemaps()
 	}
 }
 
+bool BigHeadScreamers::LoadSprites()
+{
+	GLResourceManager &loader = GLResourceManager::Instance();
+	// Load texture for ground
+	if (!loader.LoadTextureFromFile(TestSprite,
+		uiSprite, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
+		return false;
+}
+
 bool BigHeadScreamers::InitGL()
 {
 	GLResourceManager &loader = GLResourceManager::Instance();
@@ -198,6 +213,9 @@ bool BigHeadScreamers::InitGL()
 		return false;
 
 	if (!LoadCubemaps())
+		return false;
+
+	if (!LoadSprites())
 		return false;
 
 	// Load font used for overlay rendering
@@ -227,6 +245,7 @@ bool BigHeadScreamers::InitGL()
 		ShellGet(SHELL_HEIGHT), true);
 
 
+
 	glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
 
 	Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
@@ -237,6 +256,9 @@ bool BigHeadScreamers::InitGL()
 
 	fpsCamera.Init(5.0f * Height, -Height);
 	//fpsCamera.Init(0.1 * Far, -Height);
+
+	// Initialize AI 
+	pAIManager = new AIManager(fpsCamera.GetPosition());
 
 	timer.Start();
 	return true;
@@ -269,8 +291,9 @@ void BigHeadScreamers::Input()
 	/* Input - timer and fps graph */
 	timer.Update();
 
+	float t = timer.GetTime();
 	float dt = timer.GetDeltaTime();
-	fpsGraph.Input(1.0f / dt, timer.GetTime());
+	fpsGraph.Input(1.0f / dt, t);
 
 	/* User input */
 	launcher.Update(dt);
@@ -278,7 +301,7 @@ void BigHeadScreamers::Input()
 	{
 		launcher.Fire(fpsCamera);
 	}
-	fpsCamera.Update(this, timer.GetDeltaTime());
+	fpsCamera.Update(this, dt);
 
 	if (KeyPressed(KEY_1))
 		uiCurTexture = Prev(uiCurTexture, NUM_TEXTURES);
@@ -295,18 +318,21 @@ void BigHeadScreamers::Input()
 	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
 	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
 	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
-	ground.Input(projViewInv, -fpsCamera.GetTranslation(), Far);
+	ground.Input(projViewInv, fpsCamera.GetPosition(), Far);
 
 	// Some randomisation
-	if (timer.GetTime() - fSetTime > fRandomTime)
+	if (t - fSetTime > fRandomTime)
 	{
 		fSetTime = timer.GetTime();
-		fRandomTime = RandRange(5.0f, 15.0f);
+		fRandomTime = RandRange(MinRandomCycle, MaxRandomCycle);
 		if ((rand() % 4) == 0)
 			NextTexture();
 		else
 			NextCubemap();
 	}
+
+	// AI input
+	pAIManager->Input(t, dt, fpsCamera.GetPosition());
 	
 }
 
@@ -318,6 +344,8 @@ bool BigHeadScreamers::Render()
 	/* Rendering */
 	// Clear color and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Render skybox to framebuffer
 	RenderSkyBox();
@@ -332,6 +360,8 @@ bool BigHeadScreamers::Render()
 
 	// sets modelview matrix to LoadMatrix()
 	RenderGrenades();
+
+	RenderSprites();
 
 	// Clears depth buffer
 	DrawCoordinateFrame();
@@ -386,7 +416,7 @@ void BigHeadScreamers::ShowInfo()
 			ttFont.SDL_GL_RenderText(color, &position, "beta=%.1f", fpsCamera.GetBeta());
 			position.y -= position.h * 1.2f;
 
-			const Vector3 tr = -fpsCamera.GetTranslation();
+			const Vector3 tr = fpsCamera.GetPosition();
 			ttFont.SDL_GL_RenderText(color, &position, "pos=[%.1f,%.1f,%.1f]", tr[0], tr[1], tr[2]);
 			position.y -= position.h * 1.2f;
 
@@ -403,7 +433,7 @@ void BigHeadScreamers::ShowInfo()
 		TTFont::glDisable2D();
 		glDisable(GL_BLEND);
 		// TODO
-		//glBlendFunc(GL_ONE, GL_ONE);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 }
 
@@ -437,7 +467,7 @@ void BigHeadScreamers::RenderReflection() const
 	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-	Vector3 eye = -fpsCamera.GetTranslation();
+	Vector3 eye = fpsCamera.GetPosition();
 	eye[1] = -eye[1];
 
 	Matrix4 mirror;
@@ -472,7 +502,7 @@ void BigHeadScreamers::RenderGround()
 	pReflectionFBO->BindTexture();
 	glActiveTexture(GL_TEXTURE0);
 
-	ground.Render(-fpsCamera.GetTranslation(), Far);
+	ground.Render(fpsCamera.GetPosition(), Far);
 }
 
 
@@ -534,6 +564,20 @@ void BigHeadScreamers::RenderReflectionFBO()
 	glPopMatrix();
 }
 
+void BigHeadScreamers::RenderSprites()
+{
+	// Note alpha mask is needed since the polygons z-fight otherwise
+	//glEnable(GL_BLEND);
+	GLuint shader = uiProgram[E_SPRITE];
+	glUseProgram(shader);
+	float offset[] = { 2.0f / 512.0f, 2.0f / 1024.0f };
+	glUniform2fv(GetUniLoc(shader, "NeighborOffset"), 1, offset);
+	glBindTexture(GL_TEXTURE_2D, uiSprite);
+
+	pAIManager->Render(Height, -fpsCamera.GetAlpha());
+
+	//glDisable(GL_BLEND);
+}
 
 
 void BigHeadScreamers::DrawCoordinateFrame() const
@@ -562,6 +606,8 @@ bool BigHeadScreamers::ReleaseGL()
 	delete pTetraVBO;
 	
 	delete pReflectionFBO;
+
+	delete pAIManager;
 
 	return GLResourceManager::Instance().Release();
 }

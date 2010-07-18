@@ -39,12 +39,14 @@
 #include "Weapon.h"
 #include "SkyBox.h"
 #include "Ground.h"
+#include "AIManager.h"
 
 
 class BigHeadScreamers : public SDLShell
 {
 	enum EShaders {
 		E_LOOKUP,		// used for font
+		E_SPRITE,		// used for sprites
 		E_LOOKUP_COLOR, // used for grenades
 		E_COLOR_OFFSET, // used for coordinate frame
 		NUM_PROGRAMS 
@@ -96,11 +98,16 @@ protected:
 	BaseGraph fpsGraph;
 	FPSCamera fpsCamera;
 
+	// TODO: Move to AI classes
+	GLuint uiSprite;
+	AIManager *pAIManager;
+
 protected:
 	// Resource loading
 	bool LoadShaders();
 	bool LoadTextures();
 	bool LoadCubemaps();
+	bool LoadSprites();
 	
 	
 	// All input is processed here
@@ -125,6 +132,7 @@ protected:
 	void RenderSkyBox() const;
 	void RenderReflection() const;
 	void RenderGround();
+	void RenderSprites();
 	void ShowInfo();
 	void RenderReflectionFBO();
 	
