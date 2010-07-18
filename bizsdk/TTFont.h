@@ -38,7 +38,7 @@ public:
 
 	void SDL_GL_RenderText(const char *text, 
                       SDL_Color color,
-                      SDL_Rect *location);
+                      SDL_Rect *location) const;
 
 	int SDL_GL_RenderText(SDL_Color color,
                       SDL_Rect *location,
