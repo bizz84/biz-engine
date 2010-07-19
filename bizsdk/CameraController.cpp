@@ -18,7 +18,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-const float ANG = 0.001f;
+const float ANG = 0.0003f;
 #define M_RAD (180.0 / M_PI)
 #define M_1_RAD (M_PI / 180.0)
 
