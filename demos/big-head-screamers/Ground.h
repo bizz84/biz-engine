@@ -39,7 +39,7 @@ public:
 	void Input(const Matrix4 &invProjView,
 		const Vector3 &eyePos, const float zfar);
 
-	void Render(const Vector3 &eyePos, const float zfar);
+	void Render(const Vector3 &eyePos, const float zfar) const;
 
 	const unsigned int VisibleVertices() const { return uiInfPlaneVertices; }
 

@@ -56,7 +56,7 @@ void Ground::Input(const Matrix4 &invProjView,
 		zfar);
 }
 
-void Ground::Render(const Vector3 &eyePos, const float zfar)
+void Ground::Render(const Vector3 &eyePos, const float zfar) const
 {
 	// Additional value for mix computation can be passed to the vertex shader
 	/*float arg[5];
