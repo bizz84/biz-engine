@@ -21,6 +21,7 @@
 static const float Near = 1.0f;
 static const float Far = 100000.0f;
 static const float Height = 20.0f;
+// Demo timing values for changing skybox and ground textures
 static const float MinRandomCycle = 2.5f;
 static const float MaxRandomCycle = 5.0f;
 
@@ -110,7 +111,7 @@ static const char *Textures[] = {
 	"data/textures/TiZeta_pav2.bmp"
 };
 
-static const char TestSprite[] = { "data/textures/Sprites/berlusconi.bmp" };
+
 
 
 BigHeadScreamers::BigHeadScreamers()
@@ -121,6 +122,7 @@ BigHeadScreamers::BigHeadScreamers()
 	uiCurCubemap(0),
 	fSetTime(0.0f),
 	fRandomTime(0.0f),
+	bReflectionFlag(false),
 	pTetraVBO(NULL),
 	pReflectionFBO(NULL),
 	pAIManager(NULL)
@@ -189,14 +191,6 @@ bool BigHeadScreamers::LoadCubemaps()
 	}
 }
 
-bool BigHeadScreamers::LoadSprites()
-{
-	GLResourceManager &loader = GLResourceManager::Instance();
-	// Load texture for ground
-	if (!loader.LoadTextureFromFile(TestSprite,
-		uiSprite, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
-		return false;
-}
 
 bool BigHeadScreamers::InitGL()
 {
@@ -213,9 +207,6 @@ bool BigHeadScreamers::InitGL()
 		return false;
 
 	if (!LoadCubemaps())
-		return false;
-
-	if (!LoadSprites())
 		return false;
 
 	// Load font used for overlay rendering
@@ -255,7 +246,6 @@ bool BigHeadScreamers::InitGL()
 
 
 	fpsCamera.Init(5.0f * Height, -Height);
-	//fpsCamera.Init(0.1 * Far, -Height);
 
 	// Initialize AI 
 	pAIManager = new AIManager(fpsCamera.GetPosition());
@@ -341,32 +331,17 @@ bool BigHeadScreamers::Render()
 {
 	Input();	
 	
-	/* Rendering */
-	// Clear color and depth buffer
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	// Render skybox to framebuffer
-	RenderSkyBox();
-
-	glEnable(GL_DEPTH_TEST);
-
-	// TODO: add code for rendering reflection to fbo
+	/* Rendering */
+	// First render mirrored content to FBO
 	RenderReflection();
-	
-	// sets modelview matrix to LoadMatrixNoXZ()
-	RenderGround();
 
-	// sets modelview matrix to LoadMatrix()
-	RenderGrenades();
-
-	RenderSprites();
+	// Then, render normally
+	RenderScene();
 
 	// Clears depth buffer
 	DrawCoordinateFrame();
-
-	glDisable(GL_DEPTH_TEST);
 
 	// Draws fps counter, fbos and overlays
 	ShowInfo();
@@ -374,10 +349,200 @@ bool BigHeadScreamers::Render()
 	return true;
 }
 
+void BigHeadScreamers::RenderScene()
+{
+	// Clear color and depth buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	glDisable(GL_DEPTH_TEST);
+	
+	// Render skybox to framebuffer
+	RenderSkyBox();
+
+	glEnable(GL_DEPTH_TEST);
+
+	if (!bReflectionFlag)
+	{
+		// Sets modelview matrix to LoadMatrixNoXZ()
+		RenderGround();
+	}
+	// sets modelview matrix to LoadMatrix()
+	RenderGrenades();
+	// Uses previous modelview matrix
+	RenderSprites();
+}
+
+
+void BigHeadScreamers::RenderReflection()
+{
+	// Causes all rendered objects to be premultiplied by the mirror matrix
+	bReflectionFlag = true;
+	pReflectionFBO->BindBuffer();
+	
+	RenderScene();
+	
+	pReflectionFBO->UnbindBuffer();
+	bReflectionFlag = false;
+}
+
+
+void BigHeadScreamers::SkyBoxRotate() const 
+{
+	glLoadIdentity();
+	// first rotate beta angle to avoid spin
+	glRotatef(fpsCamera.GetBeta(), 1.0, 0.0, 0.0);
+	// then rotate alpha angle to orient
+	glRotatef(fpsCamera.GetAlpha(), 0.0, 1.0, 0.0);
+
+	float scale = Far / 10.0f;
+	glScalef(scale, scale, scale);
+	
+	MultMirror();
+}
+
+void BigHeadScreamers::MultMirror() const
+{
+	if (bReflectionFlag)
+	{
+		Matrix4 mirror;
+		mirror[1][1] = -1.0f; // invert y axis
+		glMultMatrixf(mirror.data());	
+	}
+}
+
+	
+void BigHeadScreamers::RenderSkyBox() const
+{
+	glPushMatrix();
+	
+	SkyBoxRotate();	
+
+	SkyBox::Instance().Render(CurrentCubemap());
+		
+	glPopMatrix();
+}
+
+
+
+void BigHeadScreamers::RenderGround()
+{
+	fpsCamera.LoadMatrixNoXZ();
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, CurrentTexture());
+
+	// Set reflection texture (the shader in Ground expects it)
+	glActiveTexture(GL_TEXTURE1);
+	pReflectionFBO->BindTexture();
+	glActiveTexture(GL_TEXTURE0);
+
+	ground.Render(fpsCamera.GetPosition(), Far);
+}
+
+
+
+
+void BigHeadScreamers::RenderGrenades() const
+{
+	float yellow[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+	GLuint shader = uiProgram[E_LOOKUP_COLOR];
+	glUseProgram(shader);
+	glUniform4fv(GetUniLoc(shader, "Color"), 1, yellow);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	//glPushMatrix();
+	fpsCamera.LoadMatrix();
+	MultMirror();
+
+	//const list<Grenade> &list = launcher.GetGrenades();
+	list<Grenade>::const_iterator iter;
+	for (iter = launcher.GetGrenades().begin();
+		iter != launcher.GetGrenades().end(); iter++)
+	{
+		glPushMatrix();
+		const Point3 &pos = iter->GetPosition();
+		glTranslatef(pos[0], pos[1], pos[2]);
+		glScalef(10.0f, 10.0f, 10.0f);
+		pTetraVBO->Render(GL_TRIANGLES);
+		glPopMatrix();
+	}
+	//glPopMatrix();
+
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+}
+
+void BigHeadScreamers::RenderSprites()
+{
+	//fpsCamera.LoadMatrix();
+	//MultMirror();
+
+	// Note alpha mask is needed since the polygons z-fight otherwise
+	//glEnable(GL_BLEND);
+	GLuint shader = uiProgram[E_SPRITE];
+	glUseProgram(shader);
+	float offset[] = { 2.0f / 512.0f, 2.0f / 1024.0f };
+	glUniform2fv(GetUniLoc(shader, "NeighborOffset"), 1, offset);
+
+	pAIManager->Render(Height, -fpsCamera.GetAlpha());
+
+	//glDisable(GL_BLEND);
+}
+
+
+void BigHeadScreamers::DrawCoordinateFrame() const
+{
+	glClear(GL_DEPTH_BUFFER_BIT);
+	
+	float offset[] = { -0.9f, -0.9f };
+	glUseProgram(uiProgram[E_COLOR_OFFSET]);
+	glUniform2fv(GetUniLoc(uiProgram[E_COLOR_OFFSET], "Offset"), 1, offset);
+
+	glPushMatrix();
+	glLoadIdentity();
+
+	// FIXME: define translation for coordinate frame
+	glTranslatef(0.0f, 0.0f, -250);
+	glRotatef(fpsCamera.GetBeta(), 1.0f, 0.0f, 0.0f);
+	glRotatef(fpsCamera.GetAlpha(), 0.0f, 1.0f, 0.0f);
+
+	CoordinateFrame::Instance().Render();
+	glPopMatrix();
+}
+
+
+void BigHeadScreamers::RenderReflectionFBO()
+{
+
+	glMatrixMode( GL_MODELVIEW );
+	glPushMatrix();
+	glLoadIdentity();
+
+	glMatrixMode( GL_PROJECTION );
+	glPushMatrix();
+	glLoadIdentity();
+
+	glUseProgram(uiProgram[E_LOOKUP]);
+
+	pReflectionFBO->BindTexture();
+
+	RenderQuad2D(0.68f, -0.98f, 0.3f, 0.3f, 0.0f, 0.0f, 1.0f, 1.0f);
+
+	glPopMatrix();
+
+	glMatrixMode( GL_MODELVIEW );
+	glPopMatrix();
+}
+
+
 void BigHeadScreamers::ShowInfo()
 {
 	if (iShowInfo)
 	{
+		glDisable(GL_DEPTH_TEST);
+		
 		RenderReflectionFBO();
 
 		fpsGraph.Draw();
@@ -432,170 +597,9 @@ void BigHeadScreamers::ShowInfo()
 
 		TTFont::glDisable2D();
 		glDisable(GL_BLEND);
-		// TODO
+
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-}
-
-void BigHeadScreamers::SkyBoxRotate() const 
-{
-	glLoadIdentity();
-	// first rotate beta angle to avoid spin
-	glRotatef(fpsCamera.GetBeta(), 1.0, 0.0, 0.0);
-	// then rotate alpha angle to orient
-	glRotatef(fpsCamera.GetAlpha(), 0.0, 1.0, 0.0);
-
-	float scale = Far / 10.0f;
-	glScalef(scale, scale, scale);
-}
-
-
-void BigHeadScreamers::RenderSkyBox() const
-{
-	glPushMatrix();
-	
-	SkyBoxRotate();
-
-	SkyBox::Instance().Render(CurrentCubemap());
-		
-	glPopMatrix();
-}
-
-void BigHeadScreamers::RenderReflection() const
-{
-	pReflectionFBO->BindBuffer();
-	
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	Vector3 eye = fpsCamera.GetPosition();
-	eye[1] = -eye[1];
-
-	Matrix4 mirror;
-	// Note: treat this matrix as column major since it is then added
-	// to the gl stack
-	//mirror[0][1] = 0.0f;
-	mirror[1][1] = -1.0f;
-	//mirror[2][1] = 0.0f;
-	//mirror[3][1] = 0.0f; // -2.0f * 0.0f
-	
-	SkyBoxRotate();
-	glMultMatrixf(mirror.data());
-
-
-
-	SkyBox::Instance().Render(CurrentCubemap());
-
-	glEnable(GL_DEPTH_TEST);
-
-	pReflectionFBO->UnbindBuffer();
-}
-
-void BigHeadScreamers::RenderGround()
-{
-	fpsCamera.LoadMatrixNoXZ();
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, CurrentTexture());
-
-	// Set reflection texture (the shader in Ground expects it)
-	glActiveTexture(GL_TEXTURE1);
-	pReflectionFBO->BindTexture();
-	glActiveTexture(GL_TEXTURE0);
-
-	ground.Render(fpsCamera.GetPosition(), Far);
-}
-
-
-
-
-void BigHeadScreamers::RenderGrenades() const
-{
-	fpsCamera.LoadMatrix();
-	
-	float yellow[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-	GLuint shader = uiProgram[E_LOOKUP_COLOR];
-	glUseProgram(shader);
-	glUniform4fv(GetUniLoc(shader, "Color"), 1, yellow);
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glPushMatrix();
-	fpsCamera.LoadMatrix();
-
-	//const list<Grenade> &list = launcher.GetGrenades();
-	list<Grenade>::const_iterator iter;
-	for (iter = launcher.GetGrenades().begin();
-		iter != launcher.GetGrenades().end(); iter++)
-	{
-		glPushMatrix();
-		const Point3 &pos = iter->GetPosition();
-		glTranslatef(pos[0], pos[1], pos[2]);
-		glScalef(10.0f, 10.0f, 10.0f);
-		pTetraVBO->Render(GL_TRIANGLES);
-		glPopMatrix();
-	}
-	glPopMatrix();
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-}
-
-void BigHeadScreamers::RenderReflectionFBO()
-{
-
-	glMatrixMode( GL_MODELVIEW );
-	glPushMatrix();
-	glLoadIdentity();
-
-	glMatrixMode( GL_PROJECTION );
-	glPushMatrix();
-	glLoadIdentity();
-
-	glUseProgram(uiProgram[E_LOOKUP]);
-
-	pReflectionFBO->BindTexture();
-
-	RenderQuad2D(0.68f, -0.98f, 0.3f, 0.3f, 0.0f, 0.0f, 1.0f, 1.0f);
-
-	glPopMatrix();
-
-	glMatrixMode( GL_MODELVIEW );
-	glPopMatrix();
-}
-
-void BigHeadScreamers::RenderSprites()
-{
-	// Note alpha mask is needed since the polygons z-fight otherwise
-	//glEnable(GL_BLEND);
-	GLuint shader = uiProgram[E_SPRITE];
-	glUseProgram(shader);
-	float offset[] = { 2.0f / 512.0f, 2.0f / 1024.0f };
-	glUniform2fv(GetUniLoc(shader, "NeighborOffset"), 1, offset);
-	glBindTexture(GL_TEXTURE_2D, uiSprite);
-
-	pAIManager->Render(Height, -fpsCamera.GetAlpha());
-
-	//glDisable(GL_BLEND);
-}
-
-
-void BigHeadScreamers::DrawCoordinateFrame() const
-{
-	glClear(GL_DEPTH_BUFFER_BIT);
-	
-	float offset[] = { -0.9f, -0.9f };
-	glUseProgram(uiProgram[E_COLOR_OFFSET]);
-	glUniform2fv(GetUniLoc(uiProgram[E_COLOR_OFFSET], "Offset"), 1, offset);
-
-	glLoadIdentity();
-
-	glTranslatef(0.0f, 0.0f, -250);
-	//glTranslatef(0.0f, 0.0f, -fDefDistance);
-	glRotatef(fpsCamera.GetBeta(), 1.0f, 0.0f, 0.0f);
-	glRotatef(fpsCamera.GetAlpha(), 0.0f, 1.0f, 0.0f);
-
-	CoordinateFrame::Instance().Render();
 }
 
 

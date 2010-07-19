@@ -55,12 +55,12 @@ class BigHeadScreamers : public SDLShell
 	enum { NUM_TEXTURES = 2 };
 	enum { NUM_CUBEMAPS = 5 };
 
+
 	Pointer *NewPointer() { return new FPSPointer(this); }
 protected:
 	// Game Data
 	GrenadeLauncher launcher;
 
-	// POD part of the file
 	int iShowInfo;
 
 	// Ground texture data
@@ -80,10 +80,13 @@ protected:
 	IndexedVBO *pTetraVBO;
 	
 	FBO *pReflectionFBO;
+	
+	bool bReflectionFlag;
 
 	// Shader program files
 	GLuint uiProgram[NUM_PROGRAMS];
 
+	// Timing related variables
 	Timer timer;
 	float fSetTime;
 	float fRandomTime;
@@ -98,8 +101,6 @@ protected:
 	BaseGraph fpsGraph;
 	FPSCamera fpsCamera;
 
-	// TODO: Move to AI classes
-	GLuint uiSprite;
 	AIManager *pAIManager;
 
 protected:
@@ -107,11 +108,9 @@ protected:
 	bool LoadShaders();
 	bool LoadTextures();
 	bool LoadCubemaps();
-	bool LoadSprites();
-	
+
 	
 	// All input is processed here
-	// TODO: move calculation of infinite plane here
 	void Input();
 
 	// Simple utility functions
@@ -124,17 +123,20 @@ protected:
 		return n > 0 ? n - 1 : mod - 1;
 	}
 	
-	void SkyBoxRotate() const ;
+	void SkyBoxRotate() const;
+	void MultMirror() const;
+
 
 	// Rendering methods
 	void DrawCoordinateFrame() const;
 	void RenderGrenades() const;	
 	void RenderSkyBox() const;
-	void RenderReflection() const;
+	void RenderReflection();
 	void RenderGround();
 	void RenderSprites();
 	void ShowInfo();
 	void RenderReflectionFBO();
+	void RenderScene();
 	
 	// Virtuals
 	virtual bool InitApp();
