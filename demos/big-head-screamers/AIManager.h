@@ -7,7 +7,8 @@
  *
  * Platform			LinuxX11 / OpenGL
  * 
- * Description		AIManager
+ * Description		AIManager defines the logic for the enemies and (currently)
+ *                  the rendering code as well.
  *
  *****************************************************************************/
 #ifndef _AI_MANAGER_H_
@@ -20,9 +21,24 @@
 
 using namespace std;
 
+// AIManager defines the logic for the enemies and (currently) the rendering
+// code as well (move this somewhere else?)
 class AIManager
 {
-	vector<Vector2> data;
+	enum { NUM_SPRITES = 2 };
+	GLuint uiSprite[NUM_SPRITES];
+
+	struct SpriteData
+	{
+		Vector2 pos;
+		int texIndex;
+
+		SpriteData(const Vector2 &p, const int index)
+			: pos(p), texIndex(index) { }
+	};
+	vector<SpriteData> data;
+
+	bool LoadSprites();
 public:
 	AIManager(const Vector3 &player);
 
@@ -33,6 +49,7 @@ public:
 	static const float ImpactDistance;
 	static const float InitialMinDistance;
 	static const unsigned int NumEnemies;
+	static const float MaxDistance;
 };
 
 #endif
