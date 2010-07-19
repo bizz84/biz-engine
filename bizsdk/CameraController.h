@@ -52,6 +52,7 @@ public:
 	const float GetAlpha() const { return alpha; }
 	const float GetBeta() const { return beta; }
 	const Vector3 &GetTranslation() const { return translation; }
+	const Vector3 GetPosition() const { return -translation; }
 };
 
 class SpinCamera : public CameraController
