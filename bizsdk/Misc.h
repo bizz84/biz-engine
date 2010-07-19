@@ -56,7 +56,6 @@ float Inertia(float t, float tau);
 void PrintOpenGLError();
 GLint GetUniLoc(GLuint program, const GLchar *name);
 
-
 float RandRange(float min, float max);
 
 unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv, const Vector3 &eye, const float zfar);
@@ -70,6 +69,9 @@ Matrix4 InverseProjectionRHInfinite(const float fov, const float invAspect, cons
 
 Matrix4 AlphaBetaRotation(const float alpha, const float beta);
 Matrix4 InverseMVP(const Matrix4 &invP, const Vector3 &T, const Matrix4 &R);
+
+// Collision detection routines
+bool CollisionSegmentSphere(const Vector3 &a, const Vector3 &b, const Vector3 &s, const float r);
 
 extern const int permutation[3];
 

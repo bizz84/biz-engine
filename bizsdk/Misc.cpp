@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-
 const int permutation[3] = { 1, 2, 0 };
 static const float u = 1.0f;
 static const float z = 0.0f;
@@ -181,7 +180,6 @@ GLint GetUniLoc(GLuint program, const GLchar *name)
 	PrintOpenGLError();	
 	return loc;
 }
-
 
 float RandRange(float min, float max)
 {
@@ -430,4 +428,25 @@ Matrix4 AlphaBetaRotation(const float alpha, const float beta)
 	// row and column
 	return Matrix4(Matrix3::RotationX(beta * M_PI / 180.0f) *
 		           Matrix3::RotationY(alpha * M_PI / 180.0f));
+}
+
+
+// Collision detection routines
+bool CollisionSegmentSphere(const Vector3 &a, const Vector3 &b, const Vector3 &s, const float r)
+{
+	Vector3 bs = s - b;
+	if (bs.Length() < r)
+		return true;
+	// test with old value (can skip this?)
+	Vector3 as = s - a;
+	if (as.Length() < r)
+		return true;
+		
+	Vector3 ab = b - a;
+	
+	float lambda = ab.dot(as) / ab.dot(ab);
+	if (lambda <= 0.0f || lambda > 1.0f)
+		return false;
+		
+	return (a + ab * lambda - s).Length() < r;	
 }
