@@ -1,4 +1,5 @@
 /*****************************************************************************
+/*****************************************************************************
  * Filename			GlResourceManager.cpp
  * 
  * License			LGPL
@@ -38,11 +39,10 @@
 
 GLResourceManager::Shader::Shader(const char *vertexShader,
 	const char *fragmentShader, GLuint vs, GLuint fs, GLuint program)
-	: uiVS(vs), uiFS(fs), uiProgram(program)
+	: sVertShader(vertexShader), sFragShader(fragmentShader),
+	  uiVS(vs), uiFS(fs), uiProgram(program)
 {
-	strcpy(szVertShader, vertexShader);
-	strcpy(szFragShader, fragmentShader);
-
+	
 }
 
 GLResourceManager::Shader::~Shader()
@@ -57,8 +57,8 @@ GLResourceManager::Shader::~Shader()
 bool GLResourceManager::Shader::SameAs(const char *vertexShader,
 	const char *fragmentShader)
 {
-	return !strcmp(szVertShader, vertexShader) &&
-	       !strcmp(szFragShader, fragmentShader);
+	return sVertShader == vertexShader &&
+	       sFragShader == fragmentShader;
 }
 
 /*****************************************************************************
@@ -66,9 +66,9 @@ bool GLResourceManager::Shader::SameAs(const char *vertexShader,
  *****************************************************************************/
 
 GLResourceManager::Texture::Texture(const char *textureFile, GLuint texture)
-	: uiTexture(texture)
+	: sTextureFile(textureFile), uiTexture(texture)
 {
-	strcpy(szTextureFile, textureFile);
+
 }
 
 GLResourceManager::Texture::~Texture()
@@ -78,7 +78,7 @@ GLResourceManager::Texture::~Texture()
 
 bool GLResourceManager::Texture::SameAs(const char *textureFile)
 {
-	return !strcmp(szTextureFile, textureFile);
+	return sTextureFile == textureFile;
 }
 
 /*****************************************************************************
@@ -87,9 +87,9 @@ bool GLResourceManager::Texture::SameAs(const char *textureFile)
 
 
 GLResourceManager::File3DS::File3DS(const char *file, Lib3dsFile *obj)
-	: f(obj)
+	: s3DSFile(file), f(obj)
 {
-	strcpy(sz3DSFile, file);
+
 }
 
 GLResourceManager::File3DS::~File3DS()
@@ -99,7 +99,7 @@ GLResourceManager::File3DS::~File3DS()
 
 bool GLResourceManager::File3DS::SameAs(const char *file)
 {
-	return !strcmp(sz3DSFile, file);
+	return s3DSFile == file;
 }
 
 

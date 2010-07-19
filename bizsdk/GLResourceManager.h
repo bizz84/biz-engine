@@ -32,8 +32,8 @@ class GLResourceManager
 	class Shader
 	{
 	private:
-		char szVertShader[MAX_PATH_LENGTH];
-		char szFragShader[MAX_PATH_LENGTH];
+		string sVertShader;
+		string sFragShader;
 
 		GLuint uiVS;
 		GLuint uiFS;
@@ -56,7 +56,7 @@ class GLResourceManager
 	class Texture
 	{
 	private:
-		char szTextureFile[MAX_PATH_LENGTH];
+		string sTextureFile;
 
 		GLuint uiTexture;
 
@@ -76,7 +76,7 @@ class GLResourceManager
 	 *************************************************************************/
 	class File3DS
 	{
-		char sz3DSFile[MAX_PATH_LENGTH];
+		string s3DSFile;
 
 		Lib3dsFile *f;
 	public:
@@ -112,6 +112,7 @@ public:
 
 	bool Release();
 
+	// TODO: Add defines to shaders
 	/* Shader related members */
 	bool LoadShaderFromMemory(const char *vertexShader,
 		const char *fragmentShader, GLuint &program);
