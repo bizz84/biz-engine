@@ -15,7 +15,7 @@
 #include "Ground.h"
 #include "Misc.h"
 
-static const char *shaders[] = {
+static const char *Shaders[] = {
 	"data/shaders/Infinite.vert", "data/shaders/Infinite.frag",
 };
 
@@ -32,7 +32,7 @@ bool Ground::Init()
 	GLResourceManager &loader = GLResourceManager::Instance();
 	for (unsigned int i = 0; i < NUM_SHADERS; i++)
 	{
-		if (!loader.LoadShaderFromFile(shaders[i*2+0], shaders[i*2+1],
+		if (!loader.LoadShaderFromFile(Shaders[i<<1], Shaders[(i<<1)+1],
 			uiProgram[i]))
 			return false;
 
@@ -52,8 +52,8 @@ void Ground::Input(const Matrix4 &invProjView,
 	Vector3 fakePos = Vector3(0.0f, eyePos[1], 0.0f);
 
 	const float plane[] = { 0.0f, 1.0f, 0.0f, 0.0f };
-	uiInfPlaneVertices = InfinitePlane(vGround, plane, invProjView,
-		fakePos, zfar);
+	uiInfPlaneVertices = InfinitePlane(vGround, plane, invProjView, fakePos,
+		zfar);
 }
 
 void Ground::Render(const Vector3 &eyePos, const float zfar)
@@ -72,7 +72,7 @@ void Ground::Render(const Vector3 &eyePos, const float zfar)
 	glUseProgram(shader);
 
 	float screeninv[] = { 1.0f / pShell->ShellGet(SDLShell::SHELL_WIDTH),
-		1.0f / pShell->ShellGet(SDLShell::SHELL_HEIGHT) };
+	                      1.0f / pShell->ShellGet(SDLShell::SHELL_HEIGHT) };
 	float texoffset[] = { eyePos[0], eyePos[2] };
 	glUniform1f(GetUniLoc(shader, "ZFar"), zfar);
 	glUniform1f(GetUniLoc(shader, "TexRepeat"), zfar / 100.0f);
