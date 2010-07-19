@@ -66,7 +66,7 @@ protected:
 	// Ground texture data
 	unsigned int uiCurTexture;
 	GLuint uiTexture[NUM_TEXTURES];
-	GLuint CurrentTexture() { return uiTexture[uiCurTexture]; }
+	const GLuint CurrentTexture() const { return uiTexture[uiCurTexture]; }
 	void NextTexture() { uiCurTexture = Next(uiCurTexture, NUM_TEXTURES); }
 	void PrevTexture() { uiCurTexture = Prev(uiCurTexture, NUM_TEXTURES); }
 
@@ -81,7 +81,9 @@ protected:
 	
 	FBO *pReflectionFBO;
 	
-	bool bReflectionFlag;
+	// mutable since it's changed by RenderReflection() but restored at the end
+	// aka logical constness
+	mutable bool bReflectionFlag;
 
 	// Shader program files
 	GLuint uiProgram[NUM_PROGRAMS];
@@ -123,20 +125,20 @@ protected:
 		return n > 0 ? n - 1 : mod - 1;
 	}
 	
+	// Auxiliary methods to Render functions
 	void SkyBoxRotate() const;
 	void MultMirror() const;
 
-
 	// Rendering methods
-	void DrawCoordinateFrame() const;
-	void RenderGrenades() const;	
+	void RenderReflection() const;
+	void RenderScene() const;
 	void RenderSkyBox() const;
-	void RenderReflection();
-	void RenderGround();
-	void RenderSprites();
-	void ShowInfo();
+	void RenderGround() const;
+	void RenderGrenades() const;	
+	void RenderSprites() const;
+	void DrawCoordinateFrame() const;
 	void RenderReflectionFBO();
-	void RenderScene();
+	void ShowInfo();
 	
 	// Virtuals
 	virtual bool InitApp();

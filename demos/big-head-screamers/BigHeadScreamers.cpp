@@ -349,7 +349,7 @@ bool BigHeadScreamers::Render()
 	return true;
 }
 
-void BigHeadScreamers::RenderScene()
+void BigHeadScreamers::RenderScene() const
 {
 	// Clear color and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -372,8 +372,17 @@ void BigHeadScreamers::RenderScene()
 	RenderSprites();
 }
 
+void BigHeadScreamers::MultMirror() const
+{
+	if (bReflectionFlag)
+	{
+		Matrix4 mirror;
+		mirror[1][1] = -1.0f; // invert y axis
+		glMultMatrixf(mirror.data());	
+	}
+}
 
-void BigHeadScreamers::RenderReflection()
+void BigHeadScreamers::RenderReflection() const
 {
 	// Causes all rendered objects to be premultiplied by the mirror matrix
 	bReflectionFlag = true;
@@ -400,15 +409,6 @@ void BigHeadScreamers::SkyBoxRotate() const
 	MultMirror();
 }
 
-void BigHeadScreamers::MultMirror() const
-{
-	if (bReflectionFlag)
-	{
-		Matrix4 mirror;
-		mirror[1][1] = -1.0f; // invert y axis
-		glMultMatrixf(mirror.data());	
-	}
-}
 
 	
 void BigHeadScreamers::RenderSkyBox() const
@@ -424,7 +424,7 @@ void BigHeadScreamers::RenderSkyBox() const
 
 
 
-void BigHeadScreamers::RenderGround()
+void BigHeadScreamers::RenderGround() const
 {
 	fpsCamera.LoadMatrixNoXZ();
 
@@ -456,7 +456,6 @@ void BigHeadScreamers::RenderGrenades() const
 	fpsCamera.LoadMatrix();
 	MultMirror();
 
-	//const list<Grenade> &list = launcher.GetGrenades();
 	list<Grenade>::const_iterator iter;
 	for (iter = launcher.GetGrenades().begin();
 		iter != launcher.GetGrenades().end(); iter++)
@@ -474,7 +473,7 @@ void BigHeadScreamers::RenderGrenades() const
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void BigHeadScreamers::RenderSprites()
+void BigHeadScreamers::RenderSprites() const
 {
 	//fpsCamera.LoadMatrix();
 	//MultMirror();
