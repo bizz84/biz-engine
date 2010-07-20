@@ -7,7 +7,7 @@
  *
  * Platform			LinuxX11 / OpenGL
  * 
- * Description		NBody Simulation
+ * Description		Version for BigHeadScreamers
  *
  *****************************************************************************/
 
@@ -19,14 +19,24 @@
 - Crosshair
 - OpenAL integration
 - Big Head meshes
+- Jumping. Space bar calls for it!
 
 */
 
-/* Version History 
+/* Version History
+V0.0.6
+- Collision detection between enemies
+- Formalized Weapon and AI subsystems
+V0.0.5
+- Added Enemies as sprites
+- Rearranged rendering code
+V0.0.4
+- Working reflection shader on Ground
+V0.0.3
+- More code cleanup
 V0.0.2
 - Working infinite plane
 - Working SkyBox
-
 V0.0.1
 - Working grenades
 - Plane rendering + projection functions
@@ -35,7 +45,7 @@ V0.0.1
 */
 
 
-const char szAppVersion[] = "0.0.2";
+const char szAppVersion[] = "0.0.6";
 const char szAppName[] = "Big Head Screamers";
 
 
