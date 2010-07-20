@@ -32,7 +32,7 @@ protected:
 	// store previous and current (needed for collision detection)
 	Point3 pos[2];
 	Vector3 vel;
-	bool hit;
+	bool impact;
 public:
 	Bullet(const Point3 &p, const float yRot, const float xRot,
 		const float speed);
@@ -40,11 +40,13 @@ public:
 		
 	virtual bool Update(const float dt) = 0;
 
-	const bool Impact() const { return hit; }
+	const bool Impact() const { return impact; }
 
 	const Point3 GetPosition() const { return pos[1]; }
 	const Point3 GetPrevPosition() const { return pos[0]; }
 	
+	void SetImpact() { impact = true; }
+
 	virtual const unsigned int Damage() const = 0;
 };
 
@@ -117,21 +119,21 @@ private:
 
 	WeaponType eCurrWeapon;
 
-	// TODO: this should be a list of <Bullet *>
+
 	list<Bullet *> bullets;
-	// TODO: this should be a list of <Explosion *>
 	list<BulletExplosion *> explosions;
 public:
 	WeaponSystem(const float reloadTime)
 		: reloadTime(reloadTime), time(0.0f), canFire(true), eCurrWeapon(TypeGrenade) { }
 	~WeaponSystem();
 
+	// Factory method
 	Bullet *NewBullet(const Point3 &p, const float yRot, const float xRot,
 		const float speed);
 
-	// handles fire request
-	bool Fire(const FPSCamera &cameraPos);
-	void Update(const float dt);
+	// handles input
+	void Input(const float dt, const FPSCamera &cameraPos, const bool fire);
+	void UpdateState();
 
 	const list<Bullet *> &GetBullets() const { return bullets; }
 	

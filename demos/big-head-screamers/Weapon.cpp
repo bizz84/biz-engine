@@ -25,7 +25,7 @@
  Bullet::Bullet(const Point3 &p, const float yRot, const float xRot,
 		const float speed)
 {
-	hit = false;
+	impact = false;
 	pos[1] = -p;
 	pos[1][1] -= 10.0f;
 	pos[0] = pos[1];
@@ -65,7 +65,7 @@ bool Grenade::Update(float dt)
 		vel[2] *= 0.5f;
 	}
 	if (bounces >= MAX_BOUNCES)
-		hit = true;
+		impact = true;
 	
 	return !Impact();
 
@@ -90,20 +90,6 @@ Bullet *WeaponSystem::NewBullet(const Point3 &p, const float yRot,
 	return new Grenade(p, yRot, xRot, speed);
 }
 
-bool WeaponSystem::Fire(const FPSCamera &cameraPos)
-{
-	if (canFire)
-	{
-		canFire = false;
-		time = 0.0f;
-		// add
-		bullets.push_back(NewBullet(cameraPos.GetTranslation(),
-			cameraPos.GetAlpha() * M_1_RAD, cameraPos.GetBeta() * M_1_RAD, 50.0f));
-		return true;
-	}
-	return false;
-}
-
 bool ImpactCondition(const Bullet *bullet)
 {
 	return bullet->Impact();
@@ -114,12 +100,22 @@ bool ExplosionCondition(const BulletExplosion *explosion)
 	return explosion->Ended();
 }
 
-void WeaponSystem::Update(const float dt)
+void WeaponSystem::Input(const float dt, const FPSCamera &cameraPos, const bool fire)
 {
 	if ((time += dt) >= reloadTime && canFire == false)
 	{
 		canFire = true;
 	}
+	// User requested fire:
+	if (fire && canFire)
+	{
+		canFire = false;
+		time = 0.0f;
+		// add
+		bullets.push_back(NewBullet(cameraPos.GetTranslation(),
+			cameraPos.GetAlpha() * M_1_RAD, cameraPos.GetBeta() * M_1_RAD, 50.0f));
+	}
+
 	// Update grenades
 	// TODO: should be a generic Bullet * routine
 	list<Bullet *>::iterator b;
@@ -127,8 +123,7 @@ void WeaponSystem::Update(const float dt)
 	{
 		(*b)->Update(dt);
 	}
-	// TODO: perform this after collision detection
-	bullets.remove_if(ImpactCondition);
+
 	
 	// Update explosions
 	// TODO: should be a generic Explosion * routine
@@ -137,6 +132,12 @@ void WeaponSystem::Update(const float dt)
 	{
 		(*e)->Update(dt);
 	}
+
+}
+
+void WeaponSystem::UpdateState()
+{
+	// This is called after collision detection
+	bullets.remove_if(ImpactCondition);
 	explosions.remove_if(ExplosionCondition);	
-	
 }
