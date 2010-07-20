@@ -22,16 +22,17 @@
 // Generic collision detector
 class CollisionDetector
 {
-public:
-	CollisionDetector();
-	virtual ~CollisionDetector() { }
-
+protected:
 	// Implemented by derived classes to write the operand arrays before computation
-	virtual void Write() = 0;
+	virtual bool Write() = 0;
 	// Actual processing
-	virtual void Execute();
+	virtual void Execute() = 0;
 	// Implemented by derived classes to read results after computation
-	virtual void Read() = 0;
+	virtual bool Read() = 0;
+
+public:
+	CollisionDetector() { }
+	virtual ~CollisionDetector() { }
 	
 	void Run();
 };
@@ -47,38 +48,46 @@ public:
 // non-interleaved on OpenCL -> allocate on final class
 class GrenadeEnemyCollisionDetector : public SegmentSphereCollisionDetector
 {
-	GrenadeLauncher *pLauncher;
+	WeaponSystem *pWS;
 	AIManager *pAI;
+	unsigned int uiNumColliders;
+	unsigned int uiNumTargets;
 protected:
-	GrenadeLauncher *GetLauncher() { return pLauncher; }
-	AIManager *GetAIManager() { return pAI; }
+	WeaponSystem *GetWS() { return pWS; }
+	AIManager *GetAI() { return pAI; }
+	void SetNumTargets(const unsigned int targets) { uiNumTargets = targets; }
+	void SetNumColliders(const unsigned int colliders) { uiNumColliders = colliders; }
+	unsigned int GetNumColliders() const { return uiNumColliders; }
+	unsigned int GetNumTargets() const { return uiNumTargets; }
 public:
-	GrenadeEnemyCollisionDetector(GrenadeLauncher *launcher, AIManager *ai)
-		: pLauncher(launcher), pAI(ai) { }
+	GrenadeEnemyCollisionDetector(WeaponSystem *ws, AIManager *ai)
+		: pWS(ws), pAI(ai), uiNumColliders(0), uiNumTargets(0) { }
 		
 };
 
 class CPUGrenadeEnemyCollisionDetector : public GrenadeEnemyCollisionDetector
 {
-	struct PosState
+	struct BulletState
 	{
 		Vector3 prev;
 		Vector3 curr;
 		bool hit;
-	} *pos;
+	} *bullet;
 	
-	struct Target
+	struct EnemyState
 	{
 		Vector3 pos;
-		bool hit;
-	} *target;
-public:
-	CPUGrenadeEnemyCollisionDetector(GrenadeLauncher *launcher, AIManager *ai)
-		: GrenadeEnemyCollisionDetector(launcher, ai), pos(NULL), target(NULL) { }
-		
-	virtual void Write();
+		int health;
+	} *enemy;
+
+protected:
+	virtual bool Write();
 	virtual void Execute();
-	virtual void Read();
+	virtual bool Read();
+public:
+	CPUGrenadeEnemyCollisionDetector(WeaponSystem *ws, AIManager *ai)
+		: GrenadeEnemyCollisionDetector(ws, ai), bullet(NULL), enemy(NULL) { }
+		
 };
 
 /*class OpenCLGrenadeEnemyCollisionDetector : GrenadeEnemyCollisionDetector
@@ -88,21 +97,22 @@ public:
 	bool *hitpos;
 	Vector3 *target;
 	bool *hittarget;
-public:
-	OpenCLGrenadeEnemyCollisionDetector(GrenadeLauncher *launcher, AIManager *ai)
-		: GrenadeEnemyCollisionDetector(launcher, ai) { }
-
-	virtual void Write();
+protected:
+	virtual bool Write();
 	virtual void Execute();
-	virtual void Read();
+	virtual bool Read();
+public:
+	OpenCLGrenadeEnemyCollisionDetector(WeaponSystem *ws, AIManager *ai)
+		: GrenadeEnemyCollisionDetector(ws, ws) { }
+
 };*/
 
 class CollisionDetectorFactory
 {
 public:
-	static CollisionDetector *CreateCPU(GrenadeLauncher *launcher, AIManager *ai)
+	static CollisionDetector *CreateCPU(WeaponSystem *ws, AIManager *ai)
 	{
-		return new CPUGrenadeEnemyCollisionDetector(launcher, ai);
+		return new CPUGrenadeEnemyCollisionDetector(ws, ai);
 	}
 	
 };
