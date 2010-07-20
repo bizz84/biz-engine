@@ -37,6 +37,8 @@ public:
 	// public
 	Vector2 pos;
 	int health;
+
+	bool Dead() const { return health <= 0; }
 };
 
 // AIManager defines the logic for the enemies and (currently) the rendering
@@ -60,17 +62,20 @@ class AIManager
 			const int health = 100) { return new SpriteEnemy(p, index, health); }
 	};
 
-	enum { NUM_SPRITES = 2 };
+	enum { NUM_SPRITES = 8 };
 	GLuint uiSprite[NUM_SPRITES];
 
 	vector<Enemy *> data;
 
 	bool LoadSprites();
+	void Spawn(vector<Enemy *>::iterator &iter, const Vector2 &player);
 public:
 	AIManager(const Vector3 &player);
 	~AIManager();
 
 	void Input(const float t, const float dt, const Vector3 &player);
+	void UpdateState(const Vector3 &player);
+
 
 	void Render(const float angleCorr);
 	

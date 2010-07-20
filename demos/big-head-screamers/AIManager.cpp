@@ -18,7 +18,7 @@
 
 const float AIManager::ImpactDistance = 10.0f;
 const float AIManager::InitialMinDistance = 100.0f;
-const unsigned int AIManager::NumEnemies = 200;
+const unsigned int AIManager::NumEnemies = 50;
 const float AIManager::MaxDistance = 1000.0f;
 
 const float AIManager::EnemyHeight = 20.0f;
@@ -27,8 +27,14 @@ const float AIManager::EnemyRadius = 20.0f;
 
 
 static const char *Sprites[] = {
-	"data/textures/Sprites/berlusconi.bmp",
-	"data/textures/Sprites/obama.bmp"
+	"data/textures/Sprites/BER01.bmp",
+	"data/textures/Sprites/BER02.bmp",
+	"data/textures/Sprites/OBI01.bmp",
+	"data/textures/Sprites/OBI02.bmp",
+	"data/textures/Sprites/PUTIN01.bmp",
+	"data/textures/Sprites/PUTIN02.bmp",
+	"data/textures/Sprites/SARKO01.bmp",
+	"data/textures/Sprites/SARKO02.bmp",
 };
 
 AIManager::AIManager(const Vector3 &player)
@@ -67,9 +73,19 @@ bool AIManager::LoadSprites()
 			uiSprite[i], GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
 			return false;
 	}
+	return true;
 }
 
-
+void AIManager::Spawn(vector<Enemy *>::iterator &iter, const Vector2 &player)
+{
+	do
+	{
+		(*iter)->pos = player + Vector2(RandRange(-MaxDistance, MaxDistance),
+                                     RandRange(-MaxDistance, MaxDistance));
+	}
+	while (((*iter)->pos - player).Length() < InitialMinDistance);
+	(*iter)->health = 100;
+}
 
 
 void AIManager::Input(const float t, const float dt, const Vector3 &player)
@@ -85,15 +101,24 @@ void AIManager::Input(const float t, const float dt, const Vector3 &player)
 		// Check impact
 		if (((*iter)->pos - target).Length() < ImpactDistance)
 		{
-			do
-			{
-				(*iter)->pos = target + Vector2(RandRange(-MaxDistance, MaxDistance),
-		                                     RandRange(-MaxDistance, MaxDistance));
-			}
-			while (((*iter)->pos - target).Length() < InitialMinDistance);
+			Spawn(iter, target);
 		}
 	}
 }
+
+void AIManager::UpdateState(const Vector3 &player)
+{
+	const Vector2 target = Vector2(player[0], player[2]);
+	vector<Enemy *>::iterator iter;
+	for (iter = data.begin(); iter != data.end(); iter++)
+	{
+		if ((*iter)->Dead())
+		{
+			Spawn(iter, target);
+		}
+	}
+}
+
 
 void AIManager::Render(const float angleCorr)
 {
