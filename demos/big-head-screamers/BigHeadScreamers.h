@@ -40,7 +40,8 @@
 #include "SkyBox.h"
 #include "Ground.h"
 #include "AIManager.h"
-
+#include "WeaponRenderer.h"
+#include "CollisionDetector.h"
 
 class BigHeadScreamers : public SDLShell
 {
@@ -58,8 +59,6 @@ class BigHeadScreamers : public SDLShell
 
 	Pointer *NewPointer() { return new FPSPointer(this); }
 protected:
-	// Game Data
-	GrenadeLauncher launcher;
 
 	int iShowInfo;
 
@@ -77,7 +76,6 @@ protected:
 	void NextCubemap() { uiCurCubemap = Next(uiCurCubemap, NUM_CUBEMAPS); }
 	void PrevCubemap() { uiCurCubemap = Prev(uiCurCubemap, NUM_CUBEMAPS); }
 
-	IndexedVBO *pTetraVBO;
 	
 	FBO *pReflectionFBO;
 	
@@ -103,7 +101,12 @@ protected:
 	BaseGraph fpsGraph;
 	FPSCamera fpsCamera;
 
+	// Game Data
+	WeaponSystem *pWS;
+	WeaponRenderer *pWR;
 	AIManager *pAIManager;
+
+	CollisionDetector *pDetector;
 
 protected:
 	// Resource loading
@@ -134,7 +137,7 @@ protected:
 	void RenderScene() const;
 	void RenderSkyBox() const;
 	void RenderGround() const;
-	void RenderGrenades() const;	
+	void RenderFire() const;	
 	void RenderSprites() const;
 	void DrawCoordinateFrame() const;
 	void RenderReflectionFBO();

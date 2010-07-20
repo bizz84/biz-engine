@@ -20,25 +20,11 @@
 // Near, Far values for projection matrix and distance from plane
 static const float Near = 1.0f;
 static const float Far = 100000.0f;
-static const float Height = 20.0f;
+
 // Demo timing values for changing skybox and ground textures
 static const float MinRandomCycle = 2.5f;
 static const float MaxRandomCycle = 5.0f;
 
-// Object representing a tetrahedron
-static const float TetraVertices[20] = {
-	 0.0f    ,  1.0f    ,  0.0     , 0.5f, 1.0f,
-	 0.0f    , -0.33333f,  0.94281f, 0.5f, 0.0f, 
-	-0.81650f, -0.33333f, -0.47140f, 0.0f, 0.0f,
-	 0.81650f, -0.33333f, -0.47140f, 1.0f, 0.0f,
-};
-
-static const int TetraIndices[12] = {
-	0, 1, 2,
-	0, 2, 3,
-	0, 3, 1,
-	1, 2, 3
-};
 
 // Credit for cubemaps:
 // http://www.alusion-fr.com/
@@ -116,16 +102,17 @@ static const char *Textures[] = {
 
 BigHeadScreamers::BigHeadScreamers()
 	: ground(this),
-	launcher(0.1f),
 	iShowInfo(0),
 	uiCurTexture(0),
 	uiCurCubemap(0),
 	fSetTime(0.0f),
 	fRandomTime(0.0f),
 	bReflectionFlag(false),
-	pTetraVBO(NULL),
 	pReflectionFBO(NULL),
-	pAIManager(NULL)
+	pAIManager(NULL),
+	pWS(NULL),
+	pWR(NULL),
+	pDetector(NULL)
 {
 	// initialize random number generator
 	Timer::InitRand();
@@ -178,6 +165,7 @@ bool BigHeadScreamers::LoadTextures()
 			uiTexture[i], GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
 			return false;
 	}
+	return true;
 }
 
 bool BigHeadScreamers::LoadCubemaps()
@@ -189,6 +177,7 @@ bool BigHeadScreamers::LoadCubemaps()
 		if (!cubemap[i].Init(Cubemaps[i]))
 			return false;
 	}
+	return true;
 }
 
 
@@ -226,11 +215,6 @@ bool BigHeadScreamers::InitGL()
 	// Initialize coordinate frame
 	CoordinateFrame::Instance().Make(400);
 
-	// Initialize vbo used for tetrahedron
-	pTetraVBO = new IndexedVBO((void *)TetraVertices, sizeof(float) * 5, 4,
-	                           (void *)TetraIndices, 12);
-	pTetraVBO->SetTexCoordData(sizeof(float) * 3);
-
 	// Initialize fbo used for drawing reflection
 	pReflectionFBO = new FBO(GL_RGB, GL_UNSIGNED_SHORT_5_6_5, ShellGet(SHELL_WIDTH),
 		ShellGet(SHELL_HEIGHT), true);
@@ -245,10 +229,18 @@ bool BigHeadScreamers::InitGL()
 	glDisable(GL_DEPTH_TEST);
 
 
-	fpsCamera.Init(5.0f * Height, -Height);
+	fpsCamera.Init(5.0f * 20.0f, -20.0f);
 
 	// Initialize AI 
 	pAIManager = new AIManager(fpsCamera.GetPosition());
+
+	// Initialize weapon system
+	pWS = new WeaponSystem(0.1f);
+
+	// Initialize weapon renderer
+	pWR = new WeaponRenderer();
+
+	pDetector = CollisionDetectorFactory::CreateCPU(pWS, pAIManager);
 
 	timer.Start();
 	return true;
@@ -283,16 +275,31 @@ void BigHeadScreamers::Input()
 
 	float t = timer.GetTime();
 	float dt = timer.GetDeltaTime();
+	// Graph input
 	fpsGraph.Input(1.0f / dt, t);
 
-	/* User input */
-	launcher.Update(dt);
-	if (LeftClick() || KeyPressing(KEY_SPACE))
-	{
-		launcher.Fire(fpsCamera);
-	}
+	// Update camera position
 	fpsCamera.Update(this, dt);
 
+	// Game input
+	// Weapons input
+	pWS->Input(dt, fpsCamera, LeftClick() || KeyPressing(KEY_SPACE));
+
+	// AI input
+	pAIManager->Input(t, dt, fpsCamera.GetPosition());
+
+	pDetector->Run();
+
+	pWS->UpdateState();
+	pAIManager->UpdateState(fpsCamera.GetPosition());
+
+	// Ground input
+	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
+	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
+	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
+	ground.Input(projViewInv, fpsCamera.GetPosition(), Far);
+
+	// Visual options input: ground and cubemap textures
 	if (KeyPressed(KEY_1))
 		uiCurTexture = Prev(uiCurTexture, NUM_TEXTURES);
 	if (KeyPressed(KEY_2))
@@ -302,13 +309,6 @@ void BigHeadScreamers::Input()
 		uiCurCubemap = Prev(uiCurCubemap, NUM_CUBEMAPS);
 	if (KeyPressed(KEY_4))
 		uiCurCubemap = Next(uiCurCubemap, NUM_CUBEMAPS);
-
-
-	// Ground input
-	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
-	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
-	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
-	ground.Input(projViewInv, fpsCamera.GetPosition(), Far);
 
 	// Some randomisation
 	if (t - fSetTime > fRandomTime)
@@ -320,10 +320,6 @@ void BigHeadScreamers::Input()
 		else
 			NextCubemap();
 	}
-
-	// AI input
-	pAIManager->Input(t, dt, fpsCamera.GetPosition());
-	
 }
 
 
@@ -367,7 +363,7 @@ void BigHeadScreamers::RenderScene() const
 		RenderGround();
 	}
 	// sets modelview matrix to LoadMatrix()
-	RenderGrenades();
+	RenderFire();
 	// Uses previous modelview matrix
 	RenderSprites();
 }
@@ -442,8 +438,12 @@ void BigHeadScreamers::RenderGround() const
 
 
 
-void BigHeadScreamers::RenderGrenades() const
+void BigHeadScreamers::RenderFire() const
 {
+	//glPushMatrix();
+	fpsCamera.LoadMatrix();
+	MultMirror();
+
 	float yellow[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 	GLuint shader = uiProgram[E_LOOKUP_COLOR];
 	glUseProgram(shader);
@@ -452,25 +452,12 @@ void BigHeadScreamers::RenderGrenades() const
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	//glPushMatrix();
-	fpsCamera.LoadMatrix();
-	MultMirror();
-
-	list<Grenade>::const_iterator iter;
-	for (iter = launcher.GetGrenades().begin();
-		iter != launcher.GetGrenades().end(); iter++)
-	{
-		glPushMatrix();
-		const Point3 &pos = iter->GetPosition();
-		glTranslatef(pos[0], pos[1], pos[2]);
-		glScalef(10.0f, 10.0f, 10.0f);
-		pTetraVBO->Render(GL_TRIANGLES);
-		glPopMatrix();
-	}
-	//glPopMatrix();
+	pWR->Render(pWS);
 
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
+
+	//glPopMatrix();
 }
 
 void BigHeadScreamers::RenderSprites() const
@@ -482,10 +469,10 @@ void BigHeadScreamers::RenderSprites() const
 	//glEnable(GL_BLEND);
 	GLuint shader = uiProgram[E_SPRITE];
 	glUseProgram(shader);
-	float offset[] = { 2.0f / 512.0f, 2.0f / 1024.0f };
+	float offset[] = { 4.0f / 512.0f, 4.0f / 1024.0f };
 	glUniform2fv(GetUniLoc(shader, "NeighborOffset"), 1, offset);
 
-	pAIManager->Render(Height, -fpsCamera.GetAlpha());
+	pAIManager->Render(-fpsCamera.GetAlpha());
 
 	//glDisable(GL_BLEND);
 }
@@ -606,11 +593,13 @@ bool BigHeadScreamers::ReleaseGL()
 {
 	CoordinateFrame::Instance().Unload();
 
-	delete pTetraVBO;
-	
 	delete pReflectionFBO;
 
 	delete pAIManager;
+
+	delete pWS;
+
+	delete pDetector;
 
 	return GLResourceManager::Instance().Release();
 }
