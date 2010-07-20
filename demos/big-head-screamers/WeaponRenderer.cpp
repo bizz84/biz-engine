@@ -28,6 +28,8 @@ static const int TetraIndices[12] = {
 	1, 2, 3
 };
 
+static const float AmmoSize = 5.0f;
+
 WeaponRenderer::WeaponRenderer()
 	: pTetraVBO(NULL)
 {
@@ -52,7 +54,7 @@ void WeaponRenderer::Render(const WeaponSystem *ws) const
 		glPushMatrix();
 		const Point3 &pos = (*iter)->GetPosition();
 		glTranslatef(pos[0], pos[1], pos[2]);
-		glScalef(10.0f, 10.0f, 10.0f);
+		glScalef(AmmoSize, AmmoSize, AmmoSize);
 		pTetraVBO->Render(GL_TRIANGLES);
 		glPopMatrix();
 	}
