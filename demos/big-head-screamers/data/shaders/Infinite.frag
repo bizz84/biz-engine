@@ -6,21 +6,21 @@ uniform vec2 ScreenInv;
 
 varying float Arg;
 
-float ReflectionMix()
+// TODO: Can use frag y and horizon line to determine mix value?
+float ReflectionMix(float value)
 {
-	return pow(Arg, 0.4);
+	return pow(value, 0.4);
 }
-
-// Note this creates a very cool drunken/"black hole" effect
-//vec2 TexCoord2 = gl_FragCoord.xy * ScreenInv;
-//gl_FragColor = texture2D(sTexture, gl_TexCoord[0].st + TexCoord2);
 
 void main()
 {
 	vec2 TexCoord2 = gl_FragCoord.xy * ScreenInv;
-	//gl_FragColor = texture2D(sTexture, gl_TexCoord[0].st + TexCoord2);
+	// Note this creates a very cool drunken/"black hole" effect
+	//vec2 TexCoord = gl_TexCoord[0].st + TexCoord2;
+	// regular mapping
+	vec2 TexCoord = gl_TexCoord[0].st; 
 	
-	gl_FragColor = mix(texture2D(sTexture, gl_TexCoord[0].st),
-					texture2D(sTexture2, TexCoord2), ReflectionMix());
+	gl_FragColor = mix(texture2D(sTexture, TexCoord),
+					texture2D(sTexture2, TexCoord2), ReflectionMix(Arg));
 }
 
