@@ -25,7 +25,7 @@ class Enemy
 {
 protected:
 	// Only AIManager can create instances of Enemy via derived classes
-	Enemy(const Vector2 &p, const int health = 100)
+	Enemy(const Vector2 &p, const int health)
 		: pos(p), health(health) { }
 public:
 	virtual ~Enemy() { }
@@ -48,18 +48,22 @@ class AIManager
 	class SpriteEnemy : public Enemy
 	{
 	public:
-		SpriteEnemy(const Vector2 &p, const int index, const int health = 100)
-				: Enemy(p, health), texIndex(index) { }
+		SpriteEnemy(const Vector2 &p, const int health,
+			const int index1, const int index2)
+				: Enemy(p, health), texIndex0(index1), texIndex1(index2) { }
 
-		int texIndex;
+		int texIndex0, texIndex1;
+
+		int GetTextureIndex() { return health <= 50 ? texIndex1 : texIndex0; }
 	};
 
 
 	class EnemyFactory
 	{
 	public:
-		static Enemy *NewEnemy(const Vector2 &p, const int index,
-			const int health = 100) { return new SpriteEnemy(p, index, health); }
+		static Enemy *NewEnemy(const Vector2 &p, const int health,
+			const int index1, const int index2
+			) { return new SpriteEnemy(p, health, index1, index2); }
 	};
 
 	enum { NUM_SPRITES = 8 };

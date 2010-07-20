@@ -46,7 +46,9 @@ AIManager::AIManager(const Vector3 &player)
 		                      RandRange(-MaxDistance, MaxDistance));
 		if ((pos - target).Length() < InitialMinDistance)
 			continue;
-		data.push_back(EnemyFactory::NewEnemy(pos + target, rand() % NUM_SPRITES));
+		int texture = (rand() % (NUM_SPRITES >> 1));
+		data.push_back(EnemyFactory::NewEnemy(pos + target, 100,
+			texture << 1, (texture << 1) + 1));
 		i++;
 	}
 	LoadSprites();
@@ -128,7 +130,7 @@ void AIManager::Render(const float angleCorr)
 	// More textures handled as texture atlas with texcoords as attributes
 	for (iter = data.begin(); iter != data.end(); iter++)
 	{
-		glBindTexture(GL_TEXTURE_2D, uiSprite[(dynamic_cast<SpriteEnemy *>(*iter))->texIndex]);
+		glBindTexture(GL_TEXTURE_2D, uiSprite[(dynamic_cast<SpriteEnemy *>(*iter))->GetTextureIndex()]);
 		Sprite2D::Render((*iter)->pos, 0.5f * EnemyHeight, 20.0f, angleCorr);
 	}
 }
