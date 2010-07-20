@@ -21,6 +21,10 @@ const float AIManager::InitialMinDistance = 100.0f;
 const unsigned int AIManager::NumEnemies = 200;
 const float AIManager::MaxDistance = 1000.0f;
 
+const float AIManager::EnemyHeight = 20.0f;
+const float AIManager::EnemyRadius = 20.0f;
+
+
 
 static const char *Sprites[] = {
 	"data/textures/Sprites/berlusconi.bmp",
@@ -36,11 +40,22 @@ AIManager::AIManager(const Vector3 &player)
 		                      RandRange(-MaxDistance, MaxDistance));
 		if ((pos - target).Length() < InitialMinDistance)
 			continue;
-		data.push_back(SpriteData(pos + target, rand() % NUM_SPRITES));
+		data.push_back(EnemyFactory::NewEnemy(pos + target, rand() % NUM_SPRITES));
 		i++;
 	}
 	LoadSprites();
 }
+
+AIManager::~AIManager()
+{
+	vector<Enemy *>::iterator iter;
+
+	for (iter = data.begin(); iter != data.end(); iter++)
+	{
+		delete *iter;
+	}
+}
+
 
 bool AIManager::LoadSprites()
 {
@@ -60,35 +75,35 @@ bool AIManager::LoadSprites()
 void AIManager::Input(const float t, const float dt, const Vector3 &player)
 {
 	const Vector2 target = Vector2(player[0], player[2]);
-	vector<SpriteData>::iterator iter;
+	vector<Enemy *>::iterator iter;
 
 	for (iter = data.begin(); iter != data.end(); iter++)
 	{
 		// Update position
-		Vector2 dir = target - iter->pos;
-		iter->pos += dir.Normalize() * dt * 20.0f;
+		Vector2 dir = target - (*iter)->pos;
+		(*iter)->pos += dir.Normalize() * dt * 20.0f;
 		// Check impact
-		if ((iter->pos - target).Length() < ImpactDistance)
+		if (((*iter)->pos - target).Length() < ImpactDistance)
 		{
 			do
 			{
-				iter->pos = target + Vector2(RandRange(-MaxDistance, MaxDistance),
+				(*iter)->pos = target + Vector2(RandRange(-MaxDistance, MaxDistance),
 		                                     RandRange(-MaxDistance, MaxDistance));
 			}
-			while ((iter->pos - target).Length() < InitialMinDistance);
+			while (((*iter)->pos - target).Length() < InitialMinDistance);
 		}
 	}
 }
 
-void AIManager::Render(const float height, const float angleCorr)
+void AIManager::Render(const float angleCorr)
 {
-	vector<SpriteData>::iterator iter;
+	vector<Enemy *>::iterator iter;
 
 	// TODO: Use instancing here. One draw call, extrinsics passed as attributes
 	// More textures handled as texture atlas with texcoords as attributes
 	for (iter = data.begin(); iter != data.end(); iter++)
 	{
-		glBindTexture(GL_TEXTURE_2D, uiSprite[iter->texIndex]);
-		Sprite2D::Render(iter->pos, 0.5f * height, 20.0f, angleCorr);
+		glBindTexture(GL_TEXTURE_2D, uiSprite[(dynamic_cast<SpriteEnemy *>(*iter))->texIndex]);
+		Sprite2D::Render((*iter)->pos, 0.5f * EnemyHeight, 20.0f, angleCorr);
 	}
 }
