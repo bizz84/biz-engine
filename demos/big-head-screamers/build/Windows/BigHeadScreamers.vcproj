@@ -183,6 +183,14 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\AIManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\AIManager.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\BigHeadScreamers.cpp"
 				>
 			</File>
@@ -191,12 +199,52 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\CollisionDetector.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\CollisionDetector.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Ground.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Ground.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Sprite2D.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Sprite2D.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\UnitTest.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\UnitTest.h"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\version.h"
@@ -208,6 +256,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Weapon.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\WeaponRenderer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\WeaponRenderer.h"
 				>
 			</File>
 		</Filter>
