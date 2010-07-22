@@ -30,26 +30,28 @@
 #include "GLResourceManager.h"
 #include "VBO.h"
 #include "FBO.h"
+#include "Matrix.h"
 #include "CoordinateFrame.h"
 
 #include "BaseGraph.h"
 
-#include "Matrix.h"
 #include "CameraController.h"
-#include "Weapon.h"
 #include "SkyBox.h"
 #include "Ground.h"
-#include "AIManager.h"
+
+#include "Weapon.h"
 #include "WeaponRenderer.h"
+
+#include "AIManager.h"
+#include "EnemyRenderer.h"
+
 #include "CollisionDetector.h"
 
-class BigHeadScreamers : public SDLShell
+class BigHeadScreamers : public SDLShell, private ProgramArray
 {
-	enum EShaders {
-		E_LOOKUP,		// used for font
-		E_SPRITE,		// used for sprites
-		E_LOOKUP_COLOR, // used for grenades
-		E_COLOR_OFFSET, // used for coordinate frame
+	enum {
+		P_LOOKUP,		// used for font
+		P_COLOR_OFFSET, // used for coordinate frame
 		NUM_PROGRAMS 
 	};
 
@@ -83,9 +85,6 @@ protected:
 	// aka logical constness
 	mutable bool bReflectionFlag;
 
-	// Shader program files
-	GLuint uiProgram[NUM_PROGRAMS];
-
 	// Timing related variables
 	Timer timer;
 	float fSetTime;
@@ -104,13 +103,15 @@ protected:
 	// Game Data
 	WeaponSystem *pWS;
 	WeaponRenderer *pWR;
-	AIManager *pAIManager;
+	AIManager *pAI;
+	EnemyRenderer *pER;
 
 	CollisionDetector *pDetector;
 
+	float fCollisionTime;
+
 protected:
 	// Resource loading
-	bool LoadShaders();
 	bool LoadTextures();
 	bool LoadCubemaps();
 

@@ -85,8 +85,6 @@ static const char **Cubemaps[6] = {
 // Shaders
 static const char *Shaders[] = {
 	"data/shaders/Lookup.vert", "data/shaders/Lookup.frag",
-	"data/shaders/Sprite.vert", "data/shaders/Sprite.frag",
-	"data/shaders/LookupColor.vert", "data/shaders/LookupColor.frag",
 	"data/shaders/ColorOffset.vert", "data/shaders/ColorOffset.frag"
 };
 
@@ -109,10 +107,12 @@ BigHeadScreamers::BigHeadScreamers()
 	fRandomTime(0.0f),
 	bReflectionFlag(false),
 	pReflectionFBO(NULL),
-	pAIManager(NULL),
+	pAI(NULL),
 	pWS(NULL),
 	pWR(NULL),
-	pDetector(NULL)
+	pER(NULL),
+	pDetector(NULL),
+	fCollisionTime(0.0f) // debug
 {
 	// initialize random number generator
 	Timer::InitRand();
@@ -142,17 +142,6 @@ bool BigHeadScreamers::InitApp()
 	return true;
 }
 
-bool BigHeadScreamers::LoadShaders()
-{
-	GLResourceManager &loader = GLResourceManager::Instance();
-	for (unsigned int i = 0; i < NUM_PROGRAMS; i++)
-	{
-		if (!loader.LoadShaderFromFile(Shaders[i<<1], Shaders[(i<<1)+1],
-			uiProgram[i]))
-			return false;
-	}
-	return true;
-}
 
 bool BigHeadScreamers::LoadTextures()
 {
@@ -189,7 +178,7 @@ bool BigHeadScreamers::InitGL()
 		return false;
 
 	// Load Shaders
-	if (!LoadShaders())
+	if (!LoadShaders(Shaders, NUM_PROGRAMS))
 		return false;
 
 	if (!LoadTextures())
@@ -232,15 +221,17 @@ bool BigHeadScreamers::InitGL()
 	fpsCamera.Init(5.0f * 20.0f, -20.0f);
 
 	// Initialize AI 
-	pAIManager = new AIManager(fpsCamera.GetPosition());
+	pAI = new AIManager(fpsCamera.GetPosition());
 
 	// Initialize weapon system
 	pWS = new WeaponSystem(0.1f);
 
 	// Initialize weapon renderer
 	pWR = new WeaponRenderer();
+	
+	pER = new EnemyRenderer();
 
-	pDetector = CollisionDetectorFactory::CreateCPU(pWS, pAIManager);
+	pDetector = CollisionDetectorFactory::CreateCPU(pWS, pAI);
 
 	timer.Start();
 	return true;
@@ -286,12 +277,14 @@ void BigHeadScreamers::Input()
 	pWS->Input(dt, fpsCamera, LeftClick() || KeyPressing(KEY_SPACE));
 
 	// AI input
-	pAIManager->Input(t, dt, fpsCamera.GetPosition());
+	pAI->Input(t, dt, fpsCamera.GetPosition());
 
+	Timer temp;
 	pDetector->Run();
+	fCollisionTime = temp.Update();
 
 	pWS->UpdateState();
-	pAIManager->UpdateState(fpsCamera.GetPosition());
+	pAI->UpdateState(fpsCamera.GetPosition());
 
 	// Ground input
 	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
@@ -444,18 +437,7 @@ void BigHeadScreamers::RenderFire() const
 	fpsCamera.LoadMatrix();
 	MultMirror();
 
-	float yellow[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-	GLuint shader = uiProgram[E_LOOKUP_COLOR];
-	glUseProgram(shader);
-	glUniform4fv(GetUniLoc(shader, "Color"), 1, yellow);
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
 	pWR->Render(pWS);
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
 
 	//glPopMatrix();
 }
@@ -466,15 +448,7 @@ void BigHeadScreamers::RenderSprites() const
 	//MultMirror();
 
 	// Note alpha mask is needed since the polygons z-fight otherwise
-	//glEnable(GL_BLEND);
-	GLuint shader = uiProgram[E_SPRITE];
-	glUseProgram(shader);
-	float offset[] = { 4.0f / 512.0f, 4.0f / 1024.0f };
-	glUniform2fv(GetUniLoc(shader, "NeighborOffset"), 1, offset);
-
-	pAIManager->Render(-fpsCamera.GetAlpha());
-
-	//glDisable(GL_BLEND);
+	pER->Render(pAI, -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
 }
 
 
@@ -483,8 +457,9 @@ void BigHeadScreamers::DrawCoordinateFrame() const
 	glClear(GL_DEPTH_BUFFER_BIT);
 	
 	float offset[] = { -0.9f, -0.9f };
-	glUseProgram(uiProgram[E_COLOR_OFFSET]);
-	glUniform2fv(GetUniLoc(uiProgram[E_COLOR_OFFSET], "Offset"), 1, offset);
+	GLuint shader = Program(P_COLOR_OFFSET);
+	glUseProgram(shader);
+	glUniform2fv(GetUniLoc(shader, "Offset"), 1, offset);
 
 	glPushMatrix();
 	glLoadIdentity();
@@ -510,7 +485,7 @@ void BigHeadScreamers::RenderReflectionFBO()
 	glPushMatrix();
 	glLoadIdentity();
 
-	glUseProgram(uiProgram[E_LOOKUP]);
+	glUseProgram(Program(P_LOOKUP));
 
 	pReflectionFBO->BindTexture();
 
@@ -538,7 +513,7 @@ void BigHeadScreamers::ShowInfo()
 		glBlendFunc(GL_ONE, GL_ONE);
 		glEnable(GL_TEXTURE_2D);
 
-		glUseProgram(uiProgram[E_LOOKUP]);
+		glUseProgram(Program(P_LOOKUP));
 
 		TTFont::glEnable2D();
 		
@@ -552,33 +527,34 @@ void BigHeadScreamers::ShowInfo()
 		position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
 		position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.75f);
 
-		if (iShowInfo == 1)
-		{
-			ttFont.SDL_GL_RenderText(color, &position, "%.1f",  1.0f / timer.GetDeltaTime());
-		}
-		else if (iShowInfo == 2)
+		if (iShowInfo >= 1)
 		{
 			ttFont.SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
 			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "alpha=%.1f", fpsCamera.GetAlpha());
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "beta=%.1f", fpsCamera.GetBeta());
-			position.y -= position.h * 1.2f;
-
-			const Vector3 tr = fpsCamera.GetPosition();
-			ttFont.SDL_GL_RenderText(color, &position, "pos=[%.1f,%.1f,%.1f]", tr[0], tr[1], tr[2]);
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "#=%d", ground.VisibleVertices());
-			position.y -= position.h * 1.2f;
-
-			for (int i = 0; i < ground.VisibleVertices(); i++)
+		
+			if (iShowInfo >= 2)
 			{
-				ttFont.SDL_GL_RenderText(color, &position, "w[%d]=[%.1f,%.1f,%.1f]", i, ground[i][0], ground[i][1], ground[i][2]);
+				ttFont.SDL_GL_RenderText(color, &position, "alpha=%.1f", fpsCamera.GetAlpha());
 				position.y -= position.h * 1.2f;
+
+				ttFont.SDL_GL_RenderText(color, &position, "beta=%.1f", fpsCamera.GetBeta());
+				position.y -= position.h * 1.2f;
+
+				const Vector3 tr = fpsCamera.GetPosition();
+				ttFont.SDL_GL_RenderText(color, &position, "pos=[%.1f,%.1f,%.1f]", tr[0], tr[1], tr[2]);
+				position.y -= position.h * 1.2f;
+
+				ttFont.SDL_GL_RenderText(color, &position, "#=%d", ground.VisibleVertices());
+				position.y -= position.h * 1.2f;
+
+				for (int i = 0; i < ground.VisibleVertices(); i++)
+				{
+					ttFont.SDL_GL_RenderText(color, &position, "w[%d]=[%.1f,%.1f,%.1f]", i, ground[i][0], ground[i][1], ground[i][2]);
+					position.y -= position.h * 1.2f;
+				}
 			}
+			ttFont.SDL_GL_RenderText(color, &position, "collisions=%dms", (int)(fCollisionTime * 1000.0f));
+			position.y -= position.h * 1.2f;
 		}
 
 		TTFont::glDisable2D();
@@ -595,9 +571,11 @@ bool BigHeadScreamers::ReleaseGL()
 
 	delete pReflectionFBO;
 
-	delete pAIManager;
+	delete pAI;
 
 	delete pWS;
+	
+	delete pER;
 
 	delete pDetector;
 
