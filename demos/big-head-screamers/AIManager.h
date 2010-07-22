@@ -41,37 +41,31 @@ public:
 	bool Dead() const { return health <= 0; }
 };
 
+class SpriteEnemy : public Enemy
+{
+public:
+	SpriteEnemy(const Vector2 &p, const int health,
+		const int index1, const int index2)
+			: Enemy(p, health), texIndex0(index1), texIndex1(index2) { }
+
+	int texIndex0, texIndex1;
+
+	int GetTextureIndex() { return health <= 50 ? texIndex1 : texIndex0; }
+};
+
 // AIManager defines the logic for the enemies and (currently) the rendering
 // code as well (move this somewhere else?)
 class AIManager
 {
-	class SpriteEnemy : public Enemy
-	{
-	public:
-		SpriteEnemy(const Vector2 &p, const int health,
-			const int index1, const int index2)
-				: Enemy(p, health), texIndex0(index1), texIndex1(index2) { }
-
-		int texIndex0, texIndex1;
-
-		int GetTextureIndex() { return health <= 50 ? texIndex1 : texIndex0; }
-	};
-
-
-	class EnemyFactory
-	{
-	public:
-		static Enemy *NewEnemy(const Vector2 &p, const int health,
-			const int index1, const int index2
-			) { return new SpriteEnemy(p, health, index1, index2); }
-	};
+	// Factory method
+	static Enemy *NewEnemy(const Vector2 &p, const int health,
+		const int index1, const int index2
+		) { return new SpriteEnemy(p, health, index1, index2); }
 
 	enum { NUM_SPRITES = 8 };
-	GLuint uiSprite[NUM_SPRITES];
 
 	vector<Enemy *> data;
-
-	bool LoadSprites();
+	
 	void Spawn(vector<Enemy *>::iterator &iter, const Vector2 &player);
 public:
 	AIManager(const Vector3 &player);
@@ -79,9 +73,6 @@ public:
 
 	void Input(const float t, const float dt, const Vector3 &player);
 	void UpdateState(const Vector3 &player);
-
-
-	void Render(const float angleCorr);
 	
 	const vector<Enemy *> &GetData() const { return data; }
 
