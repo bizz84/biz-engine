@@ -12,6 +12,9 @@
  *****************************************************************************/
 
 #include "WeaponRenderer.h"
+#include "Misc.h"
+
+#include <assert.h>
 
 // Object representing a tetrahedron
 static const float TetraVertices[20] = {
@@ -30,6 +33,10 @@ static const int TetraIndices[12] = {
 
 static const float AmmoSize = 5.0f;
 
+static const char *Shaders[] = {
+	"data/shaders/LookupColor.vert", "data/shaders/LookupColor.frag",
+};
+
 WeaponRenderer::WeaponRenderer()
 	: pTetraVBO(NULL)
 {
@@ -37,6 +44,8 @@ WeaponRenderer::WeaponRenderer()
 	pTetraVBO = new IndexedVBO((void *)TetraVertices, sizeof(float) * 5, 4,
 	                           (void *)TetraIndices, 12);
 	pTetraVBO->SetTexCoordData(sizeof(float) * 3);
+
+	assert(LoadShaders(Shaders, NUM_PROGRAMS));
 }
 
 WeaponRenderer::~WeaponRenderer()
@@ -47,6 +56,14 @@ WeaponRenderer::~WeaponRenderer()
 
 void WeaponRenderer::Render(const WeaponSystem *ws) const
 {
+	float yellow[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+	GLuint shader = Program(P_LOOKUP_COLOR);
+	glUseProgram(shader);
+	glUniform4fv(GetUniLoc(shader, "Color"), 1, yellow);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
 	const list<Bullet *> &bullets = ws->GetBullets();
 	list<Bullet *>::const_iterator iter;
 	for (iter = bullets.begin(); iter != bullets.end(); iter++)
@@ -58,4 +75,7 @@ void WeaponRenderer::Render(const WeaponSystem *ws) const
 		pTetraVBO->Render(GL_TRIANGLES);
 		glPopMatrix();
 	}
+
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }

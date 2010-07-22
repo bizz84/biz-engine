@@ -16,9 +16,15 @@
 #include "Extensions.h"
 #include "Weapon.h"
 #include "VBO.h"
+#include "ProgramArray.h"
 
-class WeaponRenderer
+class WeaponRenderer : private ProgramArray
 {
+	enum {
+		P_LOOKUP_COLOR, 
+		NUM_PROGRAMS 
+	};
+
 	IndexedVBO *pTetraVBO;
 public:
 	WeaponRenderer();
