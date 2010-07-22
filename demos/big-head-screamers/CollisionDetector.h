@@ -22,6 +22,8 @@
 // Generic collision detector
 class CollisionDetector
 {
+	WeaponSystem *pWS;
+	AIManager *pAI;
 protected:
 	// Implemented by derived classes to write the operand arrays before computation
 	virtual bool Write() = 0;
@@ -30,44 +32,37 @@ protected:
 	// Implemented by derived classes to read results after computation
 	virtual bool Read() = 0;
 
+	WeaponSystem *GetWS() { return pWS; }
+	AIManager *GetAI() { return pAI; }	
 public:
-	CollisionDetector() { }
+	CollisionDetector(WeaponSystem *ws, AIManager *ai) : pWS(ws), pAI(ai) { }
 	virtual ~CollisionDetector() { }
 	
 	void Run();
 };
 
-class SegmentSphereCollisionDetector : public CollisionDetector
+/*class SegmentSphereCollisionDetector : public CollisionDetector
 {
 public:
 	
 
-};
+};*/
 
 // Note: might be more efficient to use interleaved on cpu and 
 // non-interleaved on OpenCL -> allocate on final class
-class GrenadeEnemyCollisionDetector : public SegmentSphereCollisionDetector
+/*class GrenadeEnemyCollisionDetector : public SegmentSphereCollisionDetector
 {
-	WeaponSystem *pWS;
-	AIManager *pAI;
-	unsigned int uiNumColliders;
-	unsigned int uiNumTargets;
-protected:
-	WeaponSystem *GetWS() { return pWS; }
-	AIManager *GetAI() { return pAI; }
-	void SetNumTargets(const unsigned int targets) { uiNumTargets = targets; }
-	void SetNumColliders(const unsigned int colliders) { uiNumColliders = colliders; }
-	unsigned int GetNumColliders() const { return uiNumColliders; }
-	unsigned int GetNumTargets() const { return uiNumTargets; }
-public:
-	GrenadeEnemyCollisionDetector(WeaponSystem *ws, AIManager *ai)
-		: pWS(ws), pAI(ai), uiNumColliders(0), uiNumTargets(0) { }
-		
-};
 
-class CPUGrenadeEnemyCollisionDetector : public GrenadeEnemyCollisionDetector
+protected:
+
+
+public:
+		
+};*/
+
+class CPUGrenadeEnemyCollisionDetector : public CollisionDetector//GrenadeEnemyCollisionDetector
 {
-	struct BulletState
+	/*struct BulletState
 	{
 		Vector3 prev;
 		Vector3 curr;
@@ -78,15 +73,26 @@ class CPUGrenadeEnemyCollisionDetector : public GrenadeEnemyCollisionDetector
 	{
 		Vector3 pos;
 		int health;
-	} *enemy;
-
+	} *enemy;*/
+	
+	//unsigned int uiNumColliders;
+	//unsigned int uiNumTargets;
 protected:
 	virtual bool Write();
 	virtual void Execute();
 	virtual bool Read();
+
+	//void SetNumTargets(const unsigned int targets) { uiNumTargets = targets; }
+	//void SetNumColliders(const unsigned int colliders) { uiNumColliders = colliders; }
+	//unsigned int GetNumColliders() const { return uiNumColliders; }
+	//unsigned int GetNumTargets() const { return uiNumTargets; }
+
 public:
 	CPUGrenadeEnemyCollisionDetector(WeaponSystem *ws, AIManager *ai)
-		: GrenadeEnemyCollisionDetector(ws, ai), bullet(NULL), enemy(NULL) { }
+		: CollisionDetector(ws, ai)
+		//bullet(NULL), enemy(NULL),
+		//uiNumColliders(0), uiNumTargets(0)
+		{ }
 		
 };
 
