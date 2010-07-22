@@ -19,14 +19,15 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "SDLShell.h"
+#include "ProgramArray.h"
 
-class Ground
+// is-implemented-in-terms-of
+class Ground : private ProgramArray
 {
 	unsigned int uiInfPlaneVertices;
 	Vector3 vGround[5];
 
-	enum { 	E_INFINITE, NUM_SHADERS };
-	GLuint uiProgram[NUM_SHADERS];
+	enum { P_INFINITE, NUM_PROGRAMS };
 
 	SDLShell *pShell;
 public:

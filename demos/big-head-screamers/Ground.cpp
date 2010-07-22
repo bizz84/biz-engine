@@ -29,17 +29,14 @@ Ground::Ground(SDLShell *shell)
 
 bool Ground::Init()
 {
-	GLResourceManager &loader = GLResourceManager::Instance();
-	for (unsigned int i = 0; i < NUM_SHADERS; i++)
-	{
-		if (!loader.LoadShaderFromFile(Shaders[i<<1], Shaders[(i<<1)+1],
-			uiProgram[i]))
-			return false;
-
-		glUseProgram(uiProgram[i]);
-		glUniform1i(GetUniLoc(uiProgram[i], "sTexture"), 0);
-		glUniform1i(GetUniLoc(uiProgram[i], "sTexture2"), 1);
-	}
+	if (!LoadShaders(Shaders, NUM_PROGRAMS))
+		return false;
+	// set samplers
+	GLuint program = Program(P_INFINITE);
+	glUseProgram(program);
+	glUniform1i(GetUniLoc(program, "sTexture"), 0);
+	glUniform1i(GetUniLoc(program, "sTexture2"), 1);
+	
 	return true;
 }
 
@@ -67,7 +64,7 @@ void Ground::Render(const Vector3 &eyePos, const float zfar) const
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 
-	GLuint shader = uiProgram[E_INFINITE];
+	GLuint shader = Program(P_INFINITE);
 
 	glUseProgram(shader);
 
