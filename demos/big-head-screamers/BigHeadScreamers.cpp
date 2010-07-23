@@ -107,12 +107,14 @@ BigHeadScreamers::BigHeadScreamers() :
 	pAI(NULL),
 	pWS(NULL),
 	pWR(NULL),
-	pER(NULL),
 	pDetector(NULL),
-	fCollisionTime(0.0f) // debug
+	iCurER(0),
+	fCollisionTime(0.0f), // debug
+	fEnemiesTime(0.0f)
 {
 	// initialize random number generator
 	Timer::InitRand();
+	pER[0] = pER[1] = NULL;
 }
 
 BigHeadScreamers::~BigHeadScreamers()
@@ -194,6 +196,11 @@ bool BigHeadScreamers::InitGL()
 	if (!fpsGraph.Init(4.0f, 3000, -0.98f, 0.60f, -0.6f, 0.95f, false))
 		return false;
 	
+	if (!mouseGraph[0].Init(4.0f, 3000, 0.6f, 0.60f, 0.98f, 0.95f, false, Pointer::MaxMotion))
+		return false;
+	if (!mouseGraph[1].Init(4.0f, 3000, 0.6f, 0.20f, 0.98f, 0.55f, false, Pointer::MaxMotion))
+		return false;
+
 	// Initialize skybox singleton
 	if (!SkyBox::Instance().Init())
 		return false;
@@ -216,7 +223,8 @@ bool BigHeadScreamers::InitGL()
 	// Initialize weapon renderer
 	pWR = new WeaponRenderer();
 	
-	pER = new EnemyRenderer();
+	pER[0] = new EnemyRendererAttrib();
+	pER[1] = new EnemyRendererBasic();
 
 	pDetector = CollisionDetectorFactory::CreateCPU(pWS, pAI);
 
@@ -265,6 +273,9 @@ void BigHeadScreamers::Input()
 	// Graph input
 	fpsGraph.Input(1.0f / dt, t);
 
+	mouseGraph[0].Input(fabs(GetPointer()->GetMotionX()), t);
+	mouseGraph[1].Input(fabs(GetPointer()->GetMotionY()), t);
+
 	// Update camera position
 	fpsCamera.Update(this, dt);
 
@@ -278,6 +289,8 @@ void BigHeadScreamers::Input()
 	Timer temp;
 	pDetector->Run();
 	fCollisionTime = temp.Update();
+
+	fEnemiesTime = 0.0f;
 
 	pWS->UpdateState();
 	pAI->UpdateState(fpsCamera.GetPosition());
@@ -298,6 +311,9 @@ void BigHeadScreamers::Input()
 		uiCurCubemap = Prev(uiCurCubemap, NUM_CUBEMAPS);
 	if (KeyPressed(KEY_4))
 		uiCurCubemap = Next(uiCurCubemap, NUM_CUBEMAPS);
+
+	if (KeyPressed(KEY_R))
+		iCurER = iCurER == 0 ? 1 : 0;
 
 	// Some randomisation
 	if (t - fSetTime > fRandomTime)
@@ -442,8 +458,11 @@ void BigHeadScreamers::RenderSprites() const
 	//fpsCamera.LoadMatrix();
 	//MultMirror();
 
+	Timer temp;
 	// Note alpha mask is needed since the polygons z-fight otherwise
-	pER->Render(pAI->GetData(), -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
+	pER[iCurER]->Render(pAI->GetData(), -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
+
+	fEnemiesTime += temp.Update();
 }
 
 
@@ -494,13 +513,18 @@ void BigHeadScreamers::RenderReflectionFBO() const
 
 void BigHeadScreamers::ShowInfo()
 {
-	if (iShowInfo)
+	if (iShowInfo >= 1)
 	{
 		glDisable(GL_DEPTH_TEST);
 		
 		RenderReflectionFBO();
 
 		fpsGraph.Draw();
+		if (iShowInfo >= 2)
+		{
+			mouseGraph[0].Draw();
+			mouseGraph[1].Draw();
+		}
 
 		/* Draw font */
 		glEnable(GL_BLEND);
@@ -521,35 +545,40 @@ void BigHeadScreamers::ShowInfo()
 		position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
 		position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.75f);
 
-		if (iShowInfo >= 1)
+
+		ttFont.SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
+		position.y -= position.h * 1.2f;
+	
+		if (iShowInfo >= 2)
 		{
-			ttFont.SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
+			ttFont.SDL_GL_RenderText(color, &position, "alpha=%.1f", fpsCamera.GetAlpha());
 			position.y -= position.h * 1.2f;
-		
-			if (iShowInfo >= 2)
+
+			ttFont.SDL_GL_RenderText(color, &position, "beta=%.1f", fpsCamera.GetBeta());
+			position.y -= position.h * 1.2f;
+
+			const Vector3 tr = fpsCamera.GetPosition();
+			ttFont.SDL_GL_RenderText(color, &position, "pos=[%.1f,%.1f,%.1f]", tr[0], tr[1], tr[2]);
+			position.y -= position.h * 1.2f;
+
+			ttFont.SDL_GL_RenderText(color, &position, "#=%d", ground.VisibleVertices());
+			position.y -= position.h * 1.2f;
+
+			for (int i = 0; i < ground.VisibleVertices(); i++)
 			{
-				ttFont.SDL_GL_RenderText(color, &position, "alpha=%.1f", fpsCamera.GetAlpha());
+				ttFont.SDL_GL_RenderText(color, &position, "w[%d]=[%.1f,%.1f,%.1f]", i, ground[i][0], ground[i][1], ground[i][2]);
 				position.y -= position.h * 1.2f;
-
-				ttFont.SDL_GL_RenderText(color, &position, "beta=%.1f", fpsCamera.GetBeta());
-				position.y -= position.h * 1.2f;
-
-				const Vector3 tr = fpsCamera.GetPosition();
-				ttFont.SDL_GL_RenderText(color, &position, "pos=[%.1f,%.1f,%.1f]", tr[0], tr[1], tr[2]);
-				position.y -= position.h * 1.2f;
-
-				ttFont.SDL_GL_RenderText(color, &position, "#=%d", ground.VisibleVertices());
-				position.y -= position.h * 1.2f;
-
-				for (int i = 0; i < ground.VisibleVertices(); i++)
-				{
-					ttFont.SDL_GL_RenderText(color, &position, "w[%d]=[%.1f,%.1f,%.1f]", i, ground[i][0], ground[i][1], ground[i][2]);
-					position.y -= position.h * 1.2f;
-				}
 			}
-			ttFont.SDL_GL_RenderText(color, &position, "collisions=%.2fms", fCollisionTime * 1000.0f);
-			position.y -= position.h * 1.2f;
 		}
+		ttFont.SDL_GL_RenderText(color, &position, "collisions=%.2fms", fCollisionTime * 1000.0f);
+		position.y -= position.h * 1.2f;
+
+		ttFont.SDL_GL_RenderText(color, &position, "enemies=%.2fms", fEnemiesTime * 1000.0f);
+		position.y -= position.h * 1.2f;
+
+		ttFont.SDL_GL_RenderText(color, &position, "instancing=%s", iCurER == 0 ? "yes" : "no");
+		position.y -= position.h * 1.2f;
+
 
 		TTFont::glDisable2D();
 		glDisable(GL_BLEND);
@@ -569,7 +598,8 @@ bool BigHeadScreamers::ReleaseGL()
 
 	delete pWS;
 	
-	delete pER;
+	delete pER[0];
+	delete pER[1];
 
 	delete pDetector;
 

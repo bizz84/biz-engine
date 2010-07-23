@@ -97,17 +97,22 @@ protected:
 	Ground ground;
 
 	BaseGraph fpsGraph;
+	BaseGraph mouseGraph[2];
 	FPSCamera fpsCamera;
 
 	// Game Data
 	WeaponSystem *pWS;
 	WeaponRenderer *pWR;
 	AIManager *pAI;
-	EnemyRenderer *pER;
+	// Two versions loaded for benchmarking
+	int iCurER;
+	EnemyRenderer *pER[2];
 
 	CollisionDetector *pDetector;
 
 	float fCollisionTime;
+	// This is updated during render time
+	mutable float fEnemiesTime;
 
 	// Overrides SDLShell version
 	virtual Pointer *NewPointer() { return new FPSPointer(this); }
