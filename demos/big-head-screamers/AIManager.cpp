@@ -13,13 +13,13 @@
 
 #include "AIManager.h"
 #include "Misc.h" // Used for RandRange()
-#include "EnemyRenderer.h" // for NUM_SPRITES
+#include "Enemy.h" // for NUM_SPRITES
 
 
 const float AIManager::ImpactDistance = 10.0f;
 const float AIManager::InitialMinDistance = 100.0f;
-const unsigned int AIManager::NumEnemies = 100;
-const float AIManager::MaxDistance = 1000.0f;
+const unsigned int AIManager::NumEnemies = 200;
+const float AIManager::MaxDistance = 3000.0f;
 
 const float AIManager::EnemyHeight = 20.0f;
 const float AIManager::EnemyRadius = 15.0f;
