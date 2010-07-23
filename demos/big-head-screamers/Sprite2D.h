@@ -17,6 +17,7 @@
 
 #include "Vector.h"
 
+#include <iostream>
 
 class Sprite2D
 {
@@ -45,7 +46,16 @@ struct SpriteVertexData
 		scale = s;
 		rotAngle = rot;
 		translation = t;
-	}	
+	}
+
+	void DebugPrint()
+	{	
+		cout << "POS[" << pos[0] << "," << pos[1] << "] TEX[" << tex[0] << "," << tex[1]
+			<< "] I[" << texIndex << "] R[" << rotAngle << "] T[" << translation[0]
+			<< "," << translation[1] << "," << translation[2] << "]\n";
+		//printf("POS[%.2f,%.2f] TEX[%.2f,%.2f] I[%.2f] S[%.2f] R[%.2f] T[%.2f,%.2f,%.2f]\n",
+		//	pos[0], pos[1], tex[0], tex[1], texIndex, scale, rotAngle, translation[0], translation[1], translation[2]);
+	}
 };
 
 #endif
