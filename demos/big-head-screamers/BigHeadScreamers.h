@@ -11,8 +11,8 @@
  *
  *****************************************************************************/
 
-#ifndef _BIG_HEAD_SCREAMERS_
-#define _BIG_HEAD_SCREAMERS_
+#ifndef _BIG_HEAD_SCREAMERS_H_
+#define _BIG_HEAD_SCREAMERS_H_
 
 #include "version.h"
 
@@ -47,6 +47,7 @@
 
 #include "CollisionDetector.h"
 
+// is-a SDLShell, is-implemented-in-terms-of ProgramArray
 class BigHeadScreamers : public SDLShell, private ProgramArray
 {
 	enum {
@@ -58,8 +59,6 @@ class BigHeadScreamers : public SDLShell, private ProgramArray
 	enum { NUM_TEXTURES = 2 };
 	enum { NUM_CUBEMAPS = 5 };
 
-
-	Pointer *NewPointer() { return new FPSPointer(this); }
 protected:
 
 	int iShowInfo;
@@ -110,13 +109,16 @@ protected:
 
 	float fCollisionTime;
 
+	// Overrides SDLShell version
+	virtual Pointer *NewPointer() { return new FPSPointer(this); }
 protected:
 	// Resource loading
 	bool LoadTextures();
 	bool LoadCubemaps();
 
 	
-	// All input is processed here
+	// All input is processed here (called by Render())
+	// TODO implement into SDLShell as non-const, make Render() const
 	void Input();
 
 	// Simple utility functions
@@ -141,13 +143,13 @@ protected:
 	void RenderFire() const;	
 	void RenderSprites() const;
 	void DrawCoordinateFrame() const;
-	void RenderReflectionFBO();
-	void ShowInfo();
+	void RenderReflectionFBO() const;
+	void ShowInfo(); // TODO const
 	
 	// Virtuals
 	virtual bool InitApp();
 	virtual bool InitGL();
-	virtual bool Render();
+	virtual bool Render(); // TODO: const once Input is moved out
 	virtual bool ReleaseGL();
 	virtual bool ReleaseApp();	
 	virtual bool Resize(unsigned int width, unsigned int height);

@@ -12,9 +12,7 @@
  *****************************************************************************/
 
 #include "BigHeadScreamers.h"
-#include "UnitTest.h"
 #include "Misc.h"
-#include "Sprite2D.h"
 #include <iostream>
 
 // Near, Far values for projection matrix and distance from plane
@@ -98,8 +96,7 @@ static const char *Textures[] = {
 
 
 
-BigHeadScreamers::BigHeadScreamers()
-	: ground(this),
+BigHeadScreamers::BigHeadScreamers() : 
 	iShowInfo(0),
 	uiCurTexture(0),
 	uiCurCubemap(0),
@@ -208,16 +205,6 @@ bool BigHeadScreamers::InitGL()
 	pReflectionFBO = new FBO(GL_RGB, GL_UNSIGNED_SHORT_5_6_5, ShellGet(SHELL_WIDTH),
 		ShellGet(SHELL_HEIGHT), true);
 
-
-
-	glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
-
-	Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
-
-	// As first element to be drawn is always the skybox
-	glDisable(GL_DEPTH_TEST);
-
-
 	fpsCamera.Init(5.0f * 20.0f, -20.0f);
 
 	// Initialize AI 
@@ -232,6 +219,15 @@ bool BigHeadScreamers::InitGL()
 	pER = new EnemyRenderer();
 
 	pDetector = CollisionDetectorFactory::CreateCPU(pWS, pAI);
+
+	
+	// GL state setup
+	glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+
+	// As first element to be drawn is always the skybox
+	glDisable(GL_DEPTH_TEST);
+
+	Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 
 	timer.Start();
 	return true;
@@ -320,8 +316,6 @@ bool BigHeadScreamers::Render()
 {
 	Input();	
 	
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	/* Rendering */
 	// First render mirrored content to FBO
 	RenderReflection();
@@ -425,7 +419,8 @@ void BigHeadScreamers::RenderGround() const
 	pReflectionFBO->BindTexture();
 	glActiveTexture(GL_TEXTURE0);
 
-	ground.Render(fpsCamera.GetPosition(), Far);
+	ground.Render(fpsCamera.GetPosition(), Far,
+		ShellGet(SDLShell::SHELL_WIDTH), ShellGet(SDLShell::SHELL_HEIGHT));
 }
 
 
@@ -437,7 +432,7 @@ void BigHeadScreamers::RenderFire() const
 	fpsCamera.LoadMatrix();
 	MultMirror();
 
-	pWR->Render(pWS);
+	pWR->Render(pWS->GetBullets());
 
 	//glPopMatrix();
 }
@@ -448,7 +443,7 @@ void BigHeadScreamers::RenderSprites() const
 	//MultMirror();
 
 	// Note alpha mask is needed since the polygons z-fight otherwise
-	pER->Render(pAI, -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
+	pER->Render(pAI->GetData(), -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
 }
 
 
@@ -474,9 +469,8 @@ void BigHeadScreamers::DrawCoordinateFrame() const
 }
 
 
-void BigHeadScreamers::RenderReflectionFBO()
+void BigHeadScreamers::RenderReflectionFBO() const
 {
-
 	glMatrixMode( GL_MODELVIEW );
 	glPushMatrix();
 	glLoadIdentity();
@@ -553,7 +547,7 @@ void BigHeadScreamers::ShowInfo()
 					position.y -= position.h * 1.2f;
 				}
 			}
-			ttFont.SDL_GL_RenderText(color, &position, "collisions=%dms", (int)(fCollisionTime * 1000.0f));
+			ttFont.SDL_GL_RenderText(color, &position, "collisions=%.2fms", fCollisionTime * 1000.0f);
 			position.y -= position.h * 1.2f;
 		}
 
