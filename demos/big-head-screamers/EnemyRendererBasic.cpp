@@ -11,12 +11,9 @@
  *
  *****************************************************************************/
 
-#include "EnemyRenderer.h"
+#include "EnemyRendererBasic.h"
 #include "GLResourceManager.h"
-#include "Enemy.h"
 #include "Misc.h"
-#include "AIManager.h"
-#include "UnitTest.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>

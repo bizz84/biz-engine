@@ -15,7 +15,7 @@
 
 #include "Extensions.h"
 #include "ProgramArray.h"
-#include "EnemyRenderer.h"
+#include "Enemy.h"
 
 #include <vector>
 using namespace std;
