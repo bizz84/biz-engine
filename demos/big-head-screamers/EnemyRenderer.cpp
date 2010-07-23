@@ -13,8 +13,14 @@
 
 #include "EnemyRenderer.h"
 #include "GLResourceManager.h"
+#include "Enemy.h"
 #include "Sprite2D.h"
 #include "Misc.h"
+#include "AIManager.h"
+#include "UnitTest.h"
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #include <assert.h>
 
@@ -22,6 +28,7 @@
 static const char *Shaders[] = {
 	"data/shaders/Sprite.vert", "data/shaders/Sprite.frag",
 	"data/shaders/SpriteAttrib.vert", "data/shaders/Sprite.frag",
+	"data/shaders/TestAttrib.vert", "data/shaders/Lookup.frag"
 };
 
 
@@ -50,6 +57,12 @@ EnemyRenderer::EnemyRenderer()
 	attribLoc[A_SCALE] = glGetAttribLocation(program, "inScale");
 	attribLoc[A_ROT_ANGLE] = glGetAttribLocation(program, "inRotAngle");
 	attribLoc[A_TRANSLATE] = glGetAttribLocation(program, "inTranslate");
+
+	attrib = new SpriteVertexData[4 * AIManager::NumEnemies];
+}
+EnemyRenderer::~EnemyRenderer()
+{
+	delete [] attrib;
 }
 
 bool EnemyRenderer::LoadSprites()
@@ -76,120 +89,121 @@ GLuint EnemyRenderer::UseProgram(EProgram index) const
 	return program;
 }
 
-#define MEMBER_OFFSET(s, var) (s + ((ptrdiff_t)&s->texIndex - (ptrdiff_t)s))
+bool EnemyRenderer::SetAttribPointer(GLint loc, size_t size, GLenum type, void *address) const
+{
+	if (loc != -1)
+	{
+		glEnableVertexAttribArray(loc);
+		glVertexAttribPointer(loc, size, type, GL_FALSE,
+			sizeof(SpriteVertexData), address);
+		return true;
+	}
+	return false;
+}
+
+bool EnemyRenderer::UnsetAttribPointer(GLint loc) const
+{
+	if (loc != -1)
+	{
+		glDisableVertexAttribArray(loc);
+		return true;
+	}
+	return false;
+}
+
 
 // BindTexture happens outside
-void EnemyRenderer::Render(const AIManager *ai, const float angle, const float height) const
+void EnemyRenderer::Render(const vector<Enemy *> &data, const float angle,
+							const float height) const
 {
-	const vector<Enemy *> &data = ai->GetData();
-	if (data.size())
+	// Render if there's at least one enemy
+	if (!data.size())
+		return;
+
+
+	// Create attribute array to be passed to GL
+	// vertices = # sprites * 4
+	size_t size = data.size() << 2;
+
+	// Use this if # of enemies is not capped
+	//SpriteVertexData *attrib = new SpriteVertexData[size];
+	
+	float radAngle = angle * M_PI / 180.0f;
+	// Loop through sprites: Sprites are made by groups of four vertices
+	// sharing the same attributes
+	vector<Enemy *>::const_iterator iter;
+	SpriteVertexData *ptr = attrib;
+	for (iter = data.begin(); iter != data.end(); iter++)
 	{
-		glGetError();
-		vector<Enemy *>::const_iterator iter;
-
-		// Prepare attrib data for rendering
-		// vertices = # sprites * 4
-		size_t size = data.size() << 2;
-		SpriteVertexData *attrib = new SpriteVertexData[size];
+		int texIndex = (dynamic_cast<SpriteEnemy *>(*iter))->GetTextureIndex();
+		Vector3 translation = Point3((*iter)->pos[0], 0.5f * height, (*iter)->pos[1]);
+	
+		// positions-texcoords loop
+		ptr->pos = Point2(-0.5f, -1.0f);
+		ptr->tex = Point2( 0.0f,  1.0f);
+		ptr->SetAttributes(texIndex, 20.0f, radAngle, translation);
+		ptr++;
 		
-		SpriteVertexData *first, *ptr = attrib;
-		for (iter = data.begin(); iter != data.end(); iter++)
-		{
-			// Set attributes for first vertex of quad and repeat for the other three
-			first = ptr;
+		ptr->pos = Point2( 0.5f, -1.0f);
+		ptr->tex = Point2( 1.0f,  1.0f);
+		ptr->SetAttributes(texIndex, 20.0f, radAngle, translation);
+		ptr++;
 
-			first->texIndex = (dynamic_cast<SpriteEnemy *>(*iter))->GetTextureIndex();
-			first->scale = 20.0f;
-			first->rotAngle = angle;
-			first->translation = Point3((*iter)->pos[0], 0.5f * height, (*iter)->pos[1]);
-
+		ptr->pos = Point2( 0.5f,  1.0f);;
+		ptr->tex = Point2( 1.0f,  0.0f);
+		ptr->SetAttributes(texIndex, 20.0f, radAngle, translation);
+		ptr++;
 		
-			//-0.5f, -1.0f, 1.0f, 2.0f, 0.0f, 0.0f, 1.0f, 1.0f
-			
-			// positions-texcoords loop
-			ptr->pos = Point2(-0.5f, -1.0f);
-			ptr->tex = Point2( 0.0f,  1.0f);
-			ptr++;
-			
-			*ptr = *first;
-			ptr->pos = Point2( 0.5f, -1.0f);
-			ptr->tex = Point2( 1.0f,  1.0f);
-			ptr++;
-
-			*ptr = *first;
-			ptr->pos = Point2( 0.5f,  1.0f);;
-			ptr->tex = Point2( 1.0f,  0.0f);
-			ptr++;
-			
-			*ptr = *first;
-			ptr->pos = Point2(-0.5f,  1.0f);;
-			ptr->tex = Point2( 0.0f,  0.0f);
-			ptr++;
-		}
-
-		// Choose program
-		GLuint program = UseProgram(P_SPRITE_ATTRIB);
-
-		// Set attributes
-		char *attribs = (char *)attrib;
-		
-		// TODO?
-		//	glEnableClientState(GL_VERTEX_ARRAY);
-
-		//glBindBuffer(
-
-		//glVertexPointer(2, GL_FLOAT, sizeof(SpriteVertexData), attribs);
-		//glTexCoordPointer(2, GL_FLOAT, sizeof(SpriteVertexData), MEMBER_OFFSET(attrib, tex));
-		//glBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
-
-		//glVertexPointer(2, GL_FLOAT, sizeof(SpriteVertexData), attrib); 
-
-		// todo: link with:
-		//void glBindAttribLocation( uint program, uint index, const char *name );
-		
-		/*glEnableVertexAttribArray(attribLoc[A_VERTEX]);
-		glVertexAttribPointer(attribLoc[A_VERTEX], 2, GL_FLOAT, GL_FALSE,
-			sizeof(SpriteVertexData), attrib);
-		glEnableVertexAttribArray(attribLoc[A_TEX_COORD]);
-		glVertexAttribPointer(attribLoc[A_TEX_COORD], 2, GL_FLOAT, GL_FALSE,
-			sizeof(SpriteVertexData), MEMBER_OFFSET(attrib, tex));
-		glEnableVertexAttribArray(attribLoc[A_TEX_INDEX]);
-		glVertexAttribPointer(attribLoc[A_TEX_INDEX], 1, GL_INT,   GL_FALSE,
-			sizeof(SpriteVertexData), MEMBER_OFFSET(attrib, texIndex));
-		glEnableVertexAttribArray(attribLoc[A_SCALE]);
-		glVertexAttribPointer(attribLoc[A_SCALE], 1, GL_FLOAT, GL_FALSE,
-			sizeof(SpriteVertexData), MEMBER_OFFSET(attrib, scale));
-		//glEnableVertexAttribArray(attribLoc[A_ROT_ANGLE]);
-		//glVertexAttribPointer(attribLoc[A_ROT_ANGLE], 1, GL_FLOAT, GL_FALSE, sizeof(SpriteVertexData), MEMBER_OFFSET(attrib, rotAngle));
-		glEnableVertexAttribArray(attribLoc[A_TRANSLATE]);
-		glVertexAttribPointer(attribLoc[A_TRANSLATE], 3, GL_FLOAT, GL_FALSE,
-			sizeof(SpriteVertexData), MEMBER_OFFSET(attrib, translation));
-		
-		
-		int err = glGetError();
-		assert(err != GL_INVALID_VALUE);
-
-		// Render VBO
-		glDrawArrays(GL_QUADS, 0, size);
-		
-		for (unsigned int i = 0; i < P_ATTRIBS; i++)
-			glDisableVertexAttribArray(attribLoc[i]);
-
-		delete [] attrib;
-
-		err = glGetError();
-		//assert(err == GL_NO_ERROR);*/
-
-		// Choose program
-		program = UseProgram(P_SPRITE);
-		// TODO: Use instancing here. One draw call, extrinsics passed as attributes
-		// More textures handled as texture atlas with texcoords as attributes
-		for (iter = data.begin(); iter != data.end(); iter++)
-		{
-			glBindTexture(GL_TEXTURE_2D, uiSprite[(dynamic_cast<SpriteEnemy *>(*iter))->GetTextureIndex()]);
-			Sprite2D::Render((*iter)->pos, 0.5f * height, 20.0f, angle);
-		}
+		ptr->pos = Point2(-0.5f,  1.0f);;
+		ptr->tex = Point2( 0.0f,  0.0f);
+		ptr->SetAttributes(texIndex, 20.0f, radAngle, translation);
+		ptr++;
 	}
+	
+	glBindTexture(GL_TEXTURE_2D, uiSprite[0]);
+
+	glEnableClientState(GL_VERTEX_ARRAY);	
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	// Choose program
+	GLuint program = UseProgram(P_SPRITE_ATTRIB);
+
+	// Bind regular vertex array and pass it to GL. MUST be used in the shader
+	glVertexPointer(2, GL_FLOAT, sizeof(SpriteVertexData), &attrib->pos);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SpriteVertexData), &attrib->tex);
+
+	// Pass in attributes
+	// This ones shouldn't be necessary if glVertexPointer and
+	// glTexCoordPointer are issued
+	SetAttribPointer(attribLoc[A_VERTEX], 2, GL_FLOAT, &attrib->pos);
+	SetAttribPointer(attribLoc[A_TEX_COORD], 2, GL_FLOAT, &attrib->tex);
+	// Custom attributes
+	SetAttribPointer(attribLoc[A_TEX_INDEX], 1, GL_INT, &attrib->texIndex);
+	SetAttribPointer(attribLoc[A_SCALE], 1, GL_FLOAT, &attrib->scale);
+	SetAttribPointer(attribLoc[A_ROT_ANGLE], 1, GL_FLOAT, &attrib->rotAngle);
+	SetAttribPointer(attribLoc[A_TRANSLATE], 3, GL_FLOAT, &attrib->translation);
+
+	// Render VBO
+	glDrawArrays(GL_QUADS, 0, size);
+	
+	// Once finished, disable arrays
+	for (unsigned int i = 0; i < P_ATTRIBS; i++)
+		UnsetAttribPointer(attribLoc[i]);
+
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);	
+
+	//delete [] attrib;
+
+
+	// Alternative method: render each sprite one by one
+	/*program = UseProgram(P_SPRITE);
+	for (iter = data.begin(); iter != data.end(); iter++)
+	{
+		glBindTexture(GL_TEXTURE_2D,
+			uiSprite[(dynamic_cast<SpriteEnemy *>(*iter))->GetTextureIndex()]);
+		Sprite2D::Render((*iter)->pos, 0.5f * height, 20.0f, angle);
+	}*/
 }
 
 
