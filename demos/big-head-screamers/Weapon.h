@@ -135,6 +135,7 @@ public:
 	void Input(const float dt, const FPSCamera &cameraPos, const bool fire);
 	void UpdateState();
 
+	// Get data array (used bt WeaponRenderer)
 	const list<Bullet *> &GetBullets() const { return bullets; }
 	
 	void AddExplosion(const Point3 &p) { explosions.push_back(new GrenadeExplosion(p)); }
