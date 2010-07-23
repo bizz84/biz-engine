@@ -24,16 +24,15 @@
 
 #include <assert.h>
 
-// Shaders
-static const char *Shaders[] = {
+
+/*****************************************************************************
+ * EnemyRendererBasic implementation
+ *****************************************************************************/
+static const char *BasicShaders[] = {
 	"data/shaders/Sprite.vert", "data/shaders/Sprite.frag",
-	"data/shaders/SpriteAttrib.vert", "data/shaders/Sprite.frag",
-	"data/shaders/TestAttrib.vert", "data/shaders/Lookup.frag"
 };
 
-
-
-static const char *Sprites[] = {
+static const char *BaseSprites[] = {
 	"data/textures/Sprites/BER01.bmp",
 	"data/textures/Sprites/BER02.bmp",
 	"data/textures/Sprites/OBI01.bmp",
@@ -44,52 +43,91 @@ static const char *Sprites[] = {
 	"data/textures/Sprites/SARKO02.bmp",
 };
 
-EnemyRenderer::EnemyRenderer()
+EnemyRendererBasic::EnemyRendererBasic()
 {
-	assert(LoadShaders(Shaders, NUM_PROGRAMS));
+	assert(LoadShaders(BasicShaders, NUM_PROGRAMS));
 	assert(LoadSprites());
-
-	GLuint program = UseProgram(P_SPRITE_ATTRIB);
-
-	attribLoc[A_VERTEX] = glGetAttribLocation(program, "inVertex");
-	attribLoc[A_TEX_COORD] = glGetAttribLocation(program, "inTexCoord");
-	attribLoc[A_TEX_INDEX] = glGetAttribLocation(program, "inTexIndex");
-	attribLoc[A_SCALE] = glGetAttribLocation(program, "inScale");
-	attribLoc[A_ROT_ANGLE] = glGetAttribLocation(program, "inRotAngle");
-	attribLoc[A_TRANSLATE] = glGetAttribLocation(program, "inTranslate");
-
-	attrib = new SpriteVertexData[4 * AIManager::NumEnemies];
-}
-EnemyRenderer::~EnemyRenderer()
-{
-	delete [] attrib;
 }
 
-bool EnemyRenderer::LoadSprites()
+bool EnemyRendererBasic::LoadSprites()
 {
 	GLResourceManager &loader = GLResourceManager::Instance();
 	for (unsigned int i = 0; i < NUM_SPRITES; i++)
 	{
 		// Load texture for ground
-		if (!loader.LoadTextureFromFile(Sprites[i],
+		if (!loader.LoadTextureFromFile(BaseSprites[i],
 			uiSprite[i], GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
 			return false;
 	}
 	return true;
 }
 
+void EnemyRendererBasic::Render(const vector<Enemy *> &data, const float angle,
+		const float height) const
+{
+	vector<Enemy *>::const_iterator iter;
+	// Alternative method: render each sprite one by one
+	glUseProgram(Program(P_SPRITE));
+	for (iter = data.begin(); iter != data.end(); iter++)
+	{
+		glBindTexture(GL_TEXTURE_2D,
+			uiSprite[(dynamic_cast<SpriteEnemy *>(*iter))->GetTextureIndex()]);
+		Sprite2D::Render((*iter)->pos, 0.5f * height, 20.0f, angle);
+	}
+}
 
-GLuint EnemyRenderer::UseProgram(EProgram index) const
+/*****************************************************************************
+ * EnemyRendererAttrib implementation
+ *****************************************************************************/
+static const char *AttribShaders[] = {
+	"data/shaders/SpriteAttrib.vert", "data/shaders/Sprite.frag",
+};
+
+EnemyRendererAttrib::EnemyRendererAttrib()
+{
+	assert(LoadShaders(AttribShaders, NUM_PROGRAMS));
+	assert(LoadSprites());
+
+	GLuint program = UseProgram(P_SPRITE_ATTRIB);
+
+	attribLoc[A_VERTEX] = glGetAttribLocation(program, "inVertex");
+	attribLoc[A_TEX_COORD] = glGetAttribLocation(program, "inTexCoord");
+	attribLoc[A_SCALE] = glGetAttribLocation(program, "inScale");
+	attribLoc[A_ROT_ANGLE] = glGetAttribLocation(program, "inRotAngle");
+	attribLoc[A_TRANSLATE] = glGetAttribLocation(program, "inTranslate");
+
+	attrib = new SpriteVertexData[4 * AIManager::NumEnemies];
+}
+EnemyRendererAttrib::~EnemyRendererAttrib()
+{
+	delete [] attrib;
+}
+
+bool EnemyRendererAttrib::LoadSprites()
+{
+	GLResourceManager &loader = GLResourceManager::Instance();
+	for (unsigned int i = 0; i < NUM_SPRITES; i++)
+	{
+		// Load texture for ground
+		if (!loader.LoadTextureFromFile("data/textures/sprites/Atlas.bmp",
+			uiAtlas, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
+			return false;
+	}
+	return true;
+}
+
+
+GLuint EnemyRendererAttrib::UseProgram(int index) const
 {
 	GLuint program = Program(index);
 	glUseProgram(program);
 	// Set uniforms
-	float offset[] = { 4.0f / 512.0f, 4.0f / 1024.0f };
+	float offset[] = { 4.0f / 2048.0f, 4.0f / 2048.0f };
 	glUniform2fv(GetUniLoc(program, "NeighborOffset"), 1, offset);
 	return program;
 }
 
-bool EnemyRenderer::SetAttribPointer(GLint loc, size_t size, GLenum type, void *address) const
+bool EnemyRendererAttrib::SetAttribPointer(GLint loc, size_t size, GLenum type, void *address) const
 {
 	if (loc != -1)
 	{
@@ -101,7 +139,7 @@ bool EnemyRenderer::SetAttribPointer(GLint loc, size_t size, GLenum type, void *
 	return false;
 }
 
-bool EnemyRenderer::UnsetAttribPointer(GLint loc) const
+bool EnemyRendererAttrib::UnsetAttribPointer(GLint loc) const
 {
 	if (loc != -1)
 	{
@@ -111,9 +149,18 @@ bool EnemyRenderer::UnsetAttribPointer(GLint loc) const
 	return false;
 }
 
+Point2 EnemyRendererAttrib::TexCoord(Point2 coord, int index)
+{
+	coord[0] *= 0.25f;
+	coord[1] *= 0.5f;
+	coord[0] += (index % 4) * 0.25f;
+	coord[1] += (index / 4) * 0.5f;
+	return coord;
+}
+
 
 // BindTexture happens outside
-void EnemyRenderer::Render(const vector<Enemy *> &data, const float angle,
+void EnemyRendererAttrib::Render(const vector<Enemy *> &data, const float angle,
 							const float height) const
 {
 	// Render if there's at least one enemy
@@ -140,27 +187,27 @@ void EnemyRenderer::Render(const vector<Enemy *> &data, const float angle,
 	
 		// positions-texcoords loop
 		ptr->pos = Point2(-0.5f, -1.0f);
-		ptr->tex = Point2( 0.0f,  1.0f);
-		ptr->SetAttributes(texIndex, 20.0f, radAngle, translation);
+		ptr->tex = TexCoord(Point2( 0.0f,  1.0f), texIndex);
+		ptr->SetAttributes(20.0f, radAngle, translation);
 		ptr++;
 		
 		ptr->pos = Point2( 0.5f, -1.0f);
-		ptr->tex = Point2( 1.0f,  1.0f);
-		ptr->SetAttributes(texIndex, 20.0f, radAngle, translation);
+		ptr->tex = TexCoord(Point2( 1.0f,  1.0f), texIndex);
+		ptr->SetAttributes(20.0f, radAngle, translation);
 		ptr++;
 
 		ptr->pos = Point2( 0.5f,  1.0f);;
-		ptr->tex = Point2( 1.0f,  0.0f);
-		ptr->SetAttributes(texIndex, 20.0f, radAngle, translation);
+		ptr->tex = TexCoord(Point2( 1.0f,  0.0f), texIndex);
+		ptr->SetAttributes(20.0f, radAngle, translation);
 		ptr++;
 		
 		ptr->pos = Point2(-0.5f,  1.0f);;
-		ptr->tex = Point2( 0.0f,  0.0f);
-		ptr->SetAttributes(texIndex, 20.0f, radAngle, translation);
+		ptr->tex = TexCoord(Point2( 0.0f,  0.0f), texIndex);
+		ptr->SetAttributes(20.0f, radAngle, translation);
 		ptr++;
 	}
 	
-	glBindTexture(GL_TEXTURE_2D, uiSprite[0]);
+	glBindTexture(GL_TEXTURE_2D, uiAtlas);
 
 	glEnableClientState(GL_VERTEX_ARRAY);	
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -178,7 +225,6 @@ void EnemyRenderer::Render(const vector<Enemy *> &data, const float angle,
 	SetAttribPointer(attribLoc[A_VERTEX], 2, GL_FLOAT, &attrib->pos);
 	SetAttribPointer(attribLoc[A_TEX_COORD], 2, GL_FLOAT, &attrib->tex);
 	// Custom attributes
-	SetAttribPointer(attribLoc[A_TEX_INDEX], 1, GL_INT, &attrib->texIndex);
 	SetAttribPointer(attribLoc[A_SCALE], 1, GL_FLOAT, &attrib->scale);
 	SetAttribPointer(attribLoc[A_ROT_ANGLE], 1, GL_FLOAT, &attrib->rotAngle);
 	SetAttribPointer(attribLoc[A_TRANSLATE], 3, GL_FLOAT, &attrib->translation);
@@ -194,16 +240,6 @@ void EnemyRenderer::Render(const vector<Enemy *> &data, const float angle,
 	glDisableClientState(GL_VERTEX_ARRAY);	
 
 	//delete [] attrib;
-
-
-	// Alternative method: render each sprite one by one
-	/*program = UseProgram(P_SPRITE);
-	for (iter = data.begin(); iter != data.end(); iter++)
-	{
-		glBindTexture(GL_TEXTURE_2D,
-			uiSprite[(dynamic_cast<SpriteEnemy *>(*iter))->GetTextureIndex()]);
-		Sprite2D::Render((*iter)->pos, 0.5f * height, 20.0f, angle);
-	}*/
 }
 
 

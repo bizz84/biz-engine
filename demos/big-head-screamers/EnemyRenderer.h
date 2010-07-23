@@ -21,25 +21,54 @@
 #include <vector>
 using namespace std;
 
-// is-implemented-in-terms-of
-class EnemyRenderer : private ProgramArray
+/*****************************************************************************
+ * Base EnemyRenderer class for rendering billboarded enemies
+ *****************************************************************************/
+
+class EnemyRenderer
 {
 public:
 	// This needs to be accessible elsewhere
 	enum { NUM_SPRITES = 8 };
+public:
+	virtual ~EnemyRenderer() { }
+	virtual bool LoadSprites() = 0;
+	virtual void Render(const vector<Enemy *> &data, const float angle,
+		const float height) const = 0;
+};
+
+/*****************************************************************************
+ * Derived class (one draw call per enemy)
+ *****************************************************************************/
+
+class EnemyRendererBasic : public EnemyRenderer, private ProgramArray
+{
+	enum EProgram { P_SPRITE, NUM_PROGRAMS };
+
+	GLuint uiSprite[NUM_SPRITES];
+public:
+	EnemyRendererBasic();
+	virtual bool LoadSprites();
+	virtual void Render(const vector<Enemy *> &data, const float angle,
+		const float height) const;
+
+};
+
+/*****************************************************************************
+ * Derived class (one draw call for all enemies via instancing)
+ *****************************************************************************/
+
+// is-implemented-in-terms-of
+class EnemyRendererAttrib : public EnemyRenderer, private ProgramArray
+{
+public:
 private:
-	enum EProgram {
-		P_SPRITE,		// used for sprites
-		P_SPRITE_ATTRIB, // used for instanced sprites
-		P_TEST_ATTRIB,
-		NUM_PROGRAMS
-	};
+	enum EProgram {	P_SPRITE_ATTRIB, NUM_PROGRAMS };
 
 	// Attributes used by the instancing shader
 	enum {
 		A_VERTEX,
 		A_TEX_COORD,
-		A_TEX_INDEX,
 		A_SCALE,
 		A_ROT_ANGLE,
 		A_TRANSLATE,
@@ -47,22 +76,24 @@ private:
 	};
 	GLint attribLoc[P_ATTRIBS];
 
-	GLuint UseProgram(EProgram index) const;
+	GLuint UseProgram(int index) const;
 
-	GLuint uiSprite[NUM_SPRITES];
+	GLuint uiAtlas;
 
 	SpriteVertexData *attrib;
 
 	bool LoadSprites();
 
+	static Point2 TexCoord(Point2 coord, int index);
+
 	bool SetAttribPointer(GLint loc, size_t size, GLenum type, void *address) const;
 	bool UnsetAttribPointer(GLint loc) const;
 
 public:
-	EnemyRenderer();
-	~EnemyRenderer();
+	EnemyRendererAttrib();
+	~EnemyRendererAttrib();
 
-	void Render(const vector<Enemy *> &data, const float angle, const float height) const;	
+	virtual void Render(const vector<Enemy *> &data, const float angle, const float height) const;	
 
 	static const unsigned int NumSprites;
 };
