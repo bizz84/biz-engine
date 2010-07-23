@@ -13,6 +13,8 @@
 
 #include "BigHeadScreamers.h"
 #include "Misc.h"
+#include "EnemyRendererAttrib.h"
+#include "EnemyRendererBasic.h"
 #include <iostream>
 
 // Near, Far values for projection matrix and distance from plane
@@ -279,21 +281,7 @@ void BigHeadScreamers::Input()
 	// Update camera position
 	fpsCamera.Update(this, dt);
 
-	// Game input
-	// Weapons input
-	pWS->Input(dt, fpsCamera, LeftClick() || KeyPressing(KEY_SPACE));
 
-	// AI input
-	pAI->Input(t, dt, fpsCamera.GetPosition());
-
-	Timer temp;
-	pDetector->Run();
-	fCollisionTime = temp.Update();
-
-	fEnemiesTime = 0.0f;
-
-	pWS->UpdateState();
-	pAI->UpdateState(fpsCamera.GetPosition());
 
 	// Ground input
 	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
@@ -325,6 +313,27 @@ void BigHeadScreamers::Input()
 		else
 			NextCubemap();
 	}
+
+
+	// Game input
+	// Weapons input
+	pWS->Input(dt, fpsCamera, LeftClick() || KeyPressing(KEY_SPACE));
+
+	// AI input
+	pAI->Input(t, dt, fpsCamera.GetPosition());
+
+	Timer temp;
+	pDetector->Run();
+	fCollisionTime = temp.Update();
+
+	fEnemiesTime = 0.0f;
+
+	pWS->UpdateState();
+	pAI->UpdateState(fpsCamera.GetPosition());
+
+	temp.Start();
+	pER[iCurER]->Update(pAI->GetData(), -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
+	fEnemiesTime = temp.Update();
 }
 
 
@@ -458,11 +467,8 @@ void BigHeadScreamers::RenderSprites() const
 	//fpsCamera.LoadMatrix();
 	//MultMirror();
 
-	Timer temp;
 	// Note alpha mask is needed since the polygons z-fight otherwise
 	pER[iCurER]->Render(pAI->GetData(), -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
-
-	fEnemiesTime += temp.Update();
 }
 
 

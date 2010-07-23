@@ -43,7 +43,7 @@
 #include "WeaponRenderer.h"
 
 #include "AIManager.h"
-#include "EnemyRenderer.h"
+#include "Enemy.h"
 
 #include "CollisionDetector.h"
 
@@ -112,7 +112,7 @@ protected:
 
 	float fCollisionTime;
 	// This is updated during render time
-	mutable float fEnemiesTime;
+	float fEnemiesTime;
 
 	// Overrides SDLShell version
 	virtual Pointer *NewPointer() { return new FPSPointer(this); }
