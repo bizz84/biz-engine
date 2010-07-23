@@ -24,9 +24,12 @@
 */
 
 /* Version History
+V0.0.7
+- Working istancing
 V0.0.6
 - Collision detection between enemies
 - Formalized Weapon and AI subsystems
+- Some code redesign
 V0.0.5
 - Added Enemies as sprites
 - Rearranged rendering code
@@ -45,7 +48,7 @@ V0.0.1
 */
 
 
-const char szAppVersion[] = "0.0.6";
+const char szAppVersion[] = "0.0.7";
 const char szAppName[] = "Big Head Screamers";
 
 
