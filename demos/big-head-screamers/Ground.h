@@ -14,11 +14,9 @@
 #ifndef _GROUND_H_
 #define _GROUND_H_
 
-
 #include "Extensions.h"
 #include "Vector.h"
 #include "Matrix.h"
-#include "SDLShell.h"
 #include "ProgramArray.h"
 
 // is-implemented-in-terms-of
@@ -28,10 +26,8 @@ class Ground : private ProgramArray
 	Vector3 vGround[5];
 
 	enum { P_INFINITE, NUM_PROGRAMS };
-
-	SDLShell *pShell;
 public:
-	Ground(SDLShell *shell);
+	Ground() : uiInfPlaneVertices(0) { }
 
 	bool Init();
 
@@ -40,7 +36,8 @@ public:
 	void Input(const Matrix4 &invProjView,
 		const Vector3 &eyePos, const float zfar);
 
-	void Render(const Vector3 &eyePos, const float zfar) const;
+	void Render(const Vector3 &eyePos, const float zfar,
+		const unsigned int width, const unsigned int height) const;
 
 	const unsigned int VisibleVertices() const { return uiInfPlaneVertices; }
 

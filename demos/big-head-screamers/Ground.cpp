@@ -19,14 +19,6 @@ static const char *Shaders[] = {
 	"data/shaders/Infinite.vert", "data/shaders/Infinite.frag",
 };
 
-
-
-Ground::Ground(SDLShell *shell)
-	: pShell(shell), uiInfPlaneVertices(0)
-{
-
-}
-
 bool Ground::Init()
 {
 	if (!LoadShaders(Shaders, NUM_PROGRAMS))
@@ -53,7 +45,8 @@ void Ground::Input(const Matrix4 &invProjView,
 		zfar);
 }
 
-void Ground::Render(const Vector3 &eyePos, const float zfar) const
+void Ground::Render(const Vector3 &eyePos, const float zfar,
+	const unsigned int width, const unsigned int height) const
 {
 	// Additional value for mix computation can be passed to the vertex shader
 	/*float arg[5];
@@ -68,8 +61,7 @@ void Ground::Render(const Vector3 &eyePos, const float zfar) const
 
 	glUseProgram(shader);
 
-	float screeninv[] = { 1.0f / pShell->ShellGet(SDLShell::SHELL_WIDTH),
-	                      1.0f / pShell->ShellGet(SDLShell::SHELL_HEIGHT) };
+	float screeninv[] = { 1.0f / (float)width, 1.0f / (float)height };
 	float texoffset[] = { eyePos[0], eyePos[2] };
 	glUniform1f(GetUniLoc(shader, "ZFar"), zfar);
 	glUniform1f(GetUniLoc(shader, "TexRepeat"), zfar / 100.0f);
