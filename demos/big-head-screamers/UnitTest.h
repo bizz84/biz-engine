@@ -46,4 +46,7 @@ public:
 void UnitTestRun();
 
 
+bool AttribTest();
+
+
 #endif

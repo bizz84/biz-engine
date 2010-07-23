@@ -19,6 +19,7 @@
 #include <iostream>
 
 #include "Vector.h"
+#include "GLResourceManager.h"
 
 using namespace std;
 
@@ -195,3 +196,61 @@ void UnitTestRun()
 }
 
  
+
+bool AttribTest()
+{
+	GLResourceManager &loader = GLResourceManager::Instance();
+	GLuint texture, program;
+	if (!loader.LoadTextureFromFile("data/textures/Sprites/BER01.bmp",
+			texture, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
+		return false;
+
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	if (!loader.LoadShaderFromFile("data/shaders/TestAttrib.vert", "data/shaders/Lookup.frag", program))
+		return false;
+
+
+	glUseProgram(program);
+
+	glEnableClientState(GL_VERTEX_ARRAY);	
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	float x = -0.5, y = -0.5, w = 1.0, h = 1.0, u0 = 0.0, v0 = 0.0, u1 = 1.0, v1 = 1.0;
+
+	float afAttribs[] = {
+		x    , y    , u0, v1,
+		x + w, y    , u1, v1,
+		x + w, y + h, u1, v0,
+		x    , y + h, u0, v0
+	};
+
+	glVertexPointer(2, GL_FLOAT, sizeof(float) * 4, afAttribs);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 4, afAttribs + 2);
+
+	GLint attribLoc[2];
+
+	attribLoc[0] = glGetAttribLocation(program, "inVertex");
+	attribLoc[1] = glGetAttribLocation(program, "inTexCoord");
+
+
+	// Pass in attributes
+	// This one shouldn't be necessary if glVertexPointer is issued
+	glEnableVertexAttribArray(attribLoc[0]);
+	glVertexAttribPointer(attribLoc[0], 2, GL_FLOAT, GL_FALSE,
+		sizeof(float) * 4, afAttribs);
+	glEnableVertexAttribArray(attribLoc[1]);
+	glVertexAttribPointer(attribLoc[1], 2, GL_FLOAT, GL_FALSE,
+		sizeof(float) * 4, afAttribs + 2);
+
+	glDrawArrays(GL_QUADS, 0, 4);
+
+	glDisableVertexAttribArray(attribLoc[0]);
+	glDisableVertexAttribArray(attribLoc[1]);
+
+
+	glDisableClientState(GL_VERTEX_ARRAY);	
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	return true;
+}
