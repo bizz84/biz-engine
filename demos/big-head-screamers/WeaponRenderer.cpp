@@ -54,7 +54,7 @@ WeaponRenderer::~WeaponRenderer()
 }
 
 
-void WeaponRenderer::Render(const WeaponSystem *ws) const
+void WeaponRenderer::Render(const list<Bullet *> &bullets) const
 {
 	float yellow[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 	GLuint shader = Program(P_LOOKUP_COLOR);
@@ -64,7 +64,6 @@ void WeaponRenderer::Render(const WeaponSystem *ws) const
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	const list<Bullet *> &bullets = ws->GetBullets();
 	list<Bullet *>::const_iterator iter;
 	for (iter = bullets.begin(); iter != bullets.end(); iter++)
 	{

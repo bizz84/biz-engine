@@ -14,7 +14,7 @@
 #define _WEAPON_RENDERER_H_
 
 #include "Extensions.h"
-#include "Weapon.h"
+#include "Weapon.h" // Bullet part of it
 #include "VBO.h"
 #include "ProgramArray.h"
 
@@ -29,7 +29,7 @@ class WeaponRenderer : private ProgramArray
 public:
 	WeaponRenderer();
 	~WeaponRenderer();
-	void Render(const WeaponSystem *ws) const;
+	void Render(const list<Bullet *> &bullets) const;
 };
 
 #endif
