@@ -14,15 +14,24 @@
 #include "AIManager.h"
 #include "Misc.h" // Used for RandRange()
 #include "Enemy.h" // for NUM_SPRITES
+#include "ParticleEmitter.h"
 
 
 const float AIManager::ImpactDistance = 10.0f;
 const float AIManager::InitialMinDistance = 100.0f;
-const unsigned int AIManager::NumEnemies = 200;
-const float AIManager::MaxDistance = 3000.0f;
+const unsigned int AIManager::NumEnemies = 50;
+const float AIManager::MaxDistance = 1000.0f;
 
 const float AIManager::EnemyHeight = 20.0f;
 const float AIManager::EnemyRadius = 15.0f;
+
+const unsigned int AIManager::NumBloodDrops = 150;
+
+Enemy *AIManager::NewEnemy(const Vector2 &p, const int health,
+		const int index1, const int index2)
+{
+	return new SpriteEnemy(p, health, index1, index2);
+}
 
 AIManager::AIManager(const Vector3 &player)
 {
@@ -52,6 +61,12 @@ AIManager::~AIManager()
 	{
 		delete *iter;
 	}
+
+	list<ParticleEmitter *>::iterator e;
+	for (e = particles.begin(); e != particles.end(); e++)
+	{
+		delete *e;
+	}
 }
 
 void AIManager::Spawn(vector<Enemy *>::iterator &iter, const Vector2 &player)
@@ -77,14 +92,36 @@ void AIManager::Input(const float t, const float dt, const Vector3 &player)
 	{
 		// Update position
 		Vector2 dir = target - (*iter)->pos;
+		//(*iter)->hit = false;
 		(*iter)->pos += dir.Normalize() * dt * 20.0f;
 		// Check impact
 		if (((*iter)->pos - target).Length() < ImpactDistance)
 		{
-			Spawn(iter, target);
+			// Die, new one will spawn in UpdateState
+			(*iter)->health = 0.0f;
 		}
 	}
+
+	// Update particles
+	// TODO: should be a generic Explosion * routine
+	list<ParticleEmitter *>::iterator e;	
+	for (e = particles.begin(); e != particles.end(); e++)
+	{
+		(*e)->Update(dt);
+	}
 }
+
+// TODO: lambda function in C++0x
+bool ExpiredCondition(const ParticleEmitter *particle)
+{
+	return particle->Expired();
+}
+
+void AIManager::AddParticles(const Point3 &pos, const unsigned int health)
+{
+	particles.push_back(new BloodDropEmitter(pos, NumBloodDrops));
+}
+
 
 void AIManager::UpdateState(const Vector3 &player)
 {
@@ -95,7 +132,12 @@ void AIManager::UpdateState(const Vector3 &player)
 	{
 		if ((*iter)->Dead())
 		{
+			// Some more blood never hurts
+			Vector3 pos = Vector3((*iter)->pos[0], 0.75 * EnemyHeight, (*iter)->pos[1]);
+			particles.push_back(new BloodDropEmitter(pos, NumBloodDrops));
+			// New position
 			Spawn(iter, target);
 		}
 	}
+	particles.remove_if(ExpiredCondition);	
 }

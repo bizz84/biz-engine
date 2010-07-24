@@ -16,11 +16,13 @@
 
 #include "Extensions.h"
 #include "Vector.h"
-#include "Enemy.h"
 
 #include <vector>
-
+#include <list>
 using namespace std;
+
+class ParticleEmitter;
+class Enemy;
 
 
 // AIManager defines the generation and update logic of enemies.
@@ -31,12 +33,14 @@ class AIManager
 	// Factory method for creating a new Enemy
 	// TODO: modify to allow different types of enemies
 	static Enemy *NewEnemy(const Vector2 &p, const int health,
-		const int index1, const int index2
-		) { return new SpriteEnemy(p, health, index1, index2); }
+		const int index1, const int index2);
 
 	// Vector containing all the enemies
 	vector<Enemy *> data;
-	
+
+	// Blood
+	list<ParticleEmitter *> particles;
+
 	// Spawn new enemy
 	void Spawn(vector<Enemy *>::iterator &iter, const Vector2 &player);
 public:
@@ -50,6 +54,9 @@ public:
 	
 	// public const access (used for rendering)
 	const vector<Enemy *> &GetData() const { return data; }
+	const list<ParticleEmitter *> &GetParticles() const { return particles; }
+
+	void AddParticles(const Point3 &pos, const unsigned int health);
 
 	// const values
 	static const float ImpactDistance;
@@ -59,6 +66,8 @@ public:
 
 	static const float EnemyHeight;
 	static const float EnemyRadius;
+
+	static const unsigned int NumBloodDrops;
 };
 
 #endif
