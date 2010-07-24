@@ -12,8 +12,10 @@
  *****************************************************************************/
 
 #include "CollisionDetector.h"
-#include "Misc.h"
+#include "Vector.h"
 #include "Weapon.h"
+#include "AIManager.h"
+#include "Misc.h"
 
 using namespace std;
 
@@ -79,6 +81,7 @@ void CPUGrenadeEnemyCollisionDetector::Execute()
 			if (CollisionSegmentSphere(prev, curr, target3, AIManager::EnemyRadius))
 			{
 				(*b)->SetImpact();
+				//(*b)->SetPosition() here to determine the exact point
 				(*e)->health -= Grenade::DAMAGE;
 			}				
 		}

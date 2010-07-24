@@ -13,11 +13,8 @@
 #ifndef _COLLISION_DETECTOR_H_
 #define _COLLISION_DETECTOR_H_
 
-#include "Extensions.h"
-
-#include "Vector.h"
-#include "Weapon.h"
-#include "AIManager.h"
+class WeaponSystem;
+class AIManager;
 
 // Generic collision detector
 class CollisionDetector
