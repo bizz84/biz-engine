@@ -13,6 +13,8 @@
 
 #include "WeaponRenderer.h"
 #include "Misc.h"
+#include "Weapon.h" // Bullet part of it
+#include "Explosion.h"
 
 #include <assert.h>
 
@@ -35,6 +37,7 @@ static const float AmmoSize = 5.0f;
 
 static const char *Shaders[] = {
 	"data/shaders/LookupColor.vert", "data/shaders/LookupColor.frag",
+	"data/shaders/Particle.vert", "data/shaders/Particle.frag",
 };
 
 WeaponRenderer::WeaponRenderer()
@@ -56,6 +59,7 @@ WeaponRenderer::~WeaponRenderer()
 
 void WeaponRenderer::Render(const list<Bullet *> &bullets) const
 {
+	// TODO: This is pre-render (factor out as the function is templatized)
 	float yellow[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 	GLuint shader = Program(P_LOOKUP_COLOR);
 	glUseProgram(shader);
@@ -75,6 +79,24 @@ void WeaponRenderer::Render(const list<Bullet *> &bullets) const
 		glPopMatrix();
 	}
 
+	// TODO: This is post-render (factor out as the function is templatized)
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+}
+
+
+void WeaponRenderer::Render(const list<BulletExplosion *> &explosions) const
+{
+	GLuint shader = Program(P_PARTICLE);
+	glUseProgram(shader);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	list<BulletExplosion *>::const_iterator iter;
+	for (iter = explosions.begin(); iter != explosions.end(); iter++)
+	{
+		//Point3 pos = (*iter)->GetPosition();
+		//glUniform3fv(GetUniLoc(shader, "Position"), 1, (const GLfloat *)&pos);
+		(*iter)->Render();
+	}
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
