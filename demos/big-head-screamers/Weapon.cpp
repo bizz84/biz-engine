@@ -81,6 +81,11 @@ WeaponSystem::~WeaponSystem()
 	{
 		delete *iter;
 	}
+	list<BulletExplosion *>::iterator e;
+	for (e = explosions.begin(); e != explosions.end(); e++)
+	{
+		delete *e;
+	}
 }
 
 Bullet *WeaponSystem::NewBullet(const Point3 &p, const float yRot,
@@ -97,7 +102,7 @@ bool ImpactCondition(const Bullet *bullet)
 
 bool ExplosionCondition(const BulletExplosion *explosion)
 {
-	return explosion->Ended();
+	return explosion->Expired();
 }
 
 void WeaponSystem::Input(const float dt, const FPSCamera &cameraPos, const bool fire)
@@ -135,8 +140,27 @@ void WeaponSystem::Input(const float dt, const FPSCamera &cameraPos, const bool 
 
 }
 
+BulletExplosion *WeaponSystem::MakeExplosion(Bullet *b)
+{
+	string type = typeid(*b).name();
+	if (type.find("Grenade") >= 0)
+		return new GrenadeExplosion(b->GetPosition());
+	return NULL;
+}
+
+
 void WeaponSystem::UpdateState()
 {
+	list<Bullet *>::iterator b;
+	for (b = bullets.begin(); b != bullets.end(); b++)
+	{
+		if ((*b)->Impact())
+		{
+			AddExplosion((*b)->GetPosition());
+			//printf("%s\n", typeid(*(*b)).name());
+			//explosions.push_back(MakeExplosion(*b));
+		}
+	}
 	// This is called after collision detection
 	bullets.remove_if(ImpactCondition);
 	explosions.remove_if(ExplosionCondition);	

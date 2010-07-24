@@ -15,7 +15,7 @@
 
 #include "Extensions.h"
 #include "Matrix.h"
-#include "CameraController.h"
+#include "Explosion.h"
 
 #include <vector>
 #include <list>
@@ -46,6 +46,7 @@ public:
 	const Point3 GetPrevPosition() const { return pos[0]; }
 	
 	void SetImpact() { impact = true; }
+	//void SetPosition(const Point3 &pos) { pos[1] = pos; }
 
 	virtual const unsigned int Damage() const = 0;
 };
@@ -70,37 +71,6 @@ public:
 	virtual const unsigned int Damage() const { return DAMAGE; }
 };
 
-/*****************************************************************************
- * BulletExplosion class declaration
- *****************************************************************************/
- 
-class BulletExplosion
-{
-	Point3 pos;
-	float time;
-public:
-	BulletExplosion(const Point3 &p) : pos(p), time(0.0f) { }
-	virtual ~BulletExplosion() { }
-	
-	bool Update(const float dt) { return (time += dt) < LifeTime(); }
-	
-	virtual const bool Ended() const { return time >= LifeTime(); }
-	
-	virtual const float LifeTime() const = 0;
-};
-
-/*****************************************************************************
- * GrenadeExplosion class declaration
- *****************************************************************************/
-
-class GrenadeExplosion : public BulletExplosion
-{
-
-public:
-	GrenadeExplosion(const Point3 &p) : BulletExplosion(p) { }
-	
-	virtual const float LifeTime() const { return 3.0f; }
-};
 
 /*****************************************************************************
  * WeaponSystem class declaration
@@ -119,9 +89,10 @@ private:
 
 	WeaponType eCurrWeapon;
 
-
 	list<Bullet *> bullets;
 	list<BulletExplosion *> explosions;
+	
+	BulletExplosion *MakeExplosion(Bullet *b);
 public:
 	WeaponSystem(const float reloadTime)
 		: reloadTime(reloadTime), time(0.0f), canFire(true), eCurrWeapon(TypeGrenade) { }
@@ -137,6 +108,7 @@ public:
 
 	// Get data array (used bt WeaponRenderer)
 	const list<Bullet *> &GetBullets() const { return bullets; }
+	const list<BulletExplosion *> &GetExplosions() const { return explosions; }
 	
 	void AddExplosion(const Point3 &p) { explosions.push_back(new GrenadeExplosion(p)); }
 };
