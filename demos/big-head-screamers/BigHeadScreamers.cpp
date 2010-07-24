@@ -20,7 +20,6 @@
 #include "AIManager.h"
 #include "WeaponManager.h"
 #include "ParticleRenderer.h"
-#include "EnemyRendererBasic.h"
 #include "EnemyRendererAttrib.h"
 #include "CollisionDetector.h"
 
@@ -118,14 +117,13 @@ BigHeadScreamers::BigHeadScreamers() :
 	pWM(NULL),
 	pExpR(NULL),
 	pBR(NULL),
+	pER(NULL),
 	pDetector(NULL),
-	iCurER(0),
 	fCollisionTime(0.0f), // debug
 	fEnemiesTime(0.0f)
 {
 	// initialize random number generator
 	Timer::InitRand();
-	pER[0] = pER[1] = NULL;
 }
 
 BigHeadScreamers::~BigHeadScreamers()
@@ -237,8 +235,7 @@ bool BigHeadScreamers::InitGL()
 	// Initialize GrenadeRenderer
 	pBR = new GrenadeRenderer();
 	
-	pER[0] = new EnemyRendererAttrib();
-	pER[1] = new EnemyRendererBasic();
+	pER = new EnemyRendererAttrib();
 
 	pDetector = CollisionDetectorFactory::CreateCPU(pWM, pAI);
 
@@ -314,9 +311,6 @@ void BigHeadScreamers::Input()
 	if (KeyPressed(KEY_4))
 		uiCurCubemap = Next(uiCurCubemap, NUM_CUBEMAPS);
 
-	if (KeyPressed(KEY_R))
-		iCurER = iCurER == 0 ? 1 : 0;
-
 	// Some randomisation
 	if (t - fSetTime > fRandomTime)
 	{
@@ -346,7 +340,7 @@ void BigHeadScreamers::Input()
 	pAI->UpdateState(fpsCamera.GetPosition());
 
 	temp.Start();
-	pER[iCurER]->Update(pAI->GetData(), -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
+	pER->Update(pAI->GetData(), -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
 	fEnemiesTime = temp.Update();
 }
 
@@ -482,7 +476,7 @@ void BigHeadScreamers::RenderSprites() const
 	//MultMirror();
 
 	// Note alpha mask is needed since the polygons z-fight otherwise
-	pER[iCurER]->Render(pAI->GetData(), -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
+	pER->Render(pAI->GetData(), -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
 }
 
 
@@ -577,9 +571,6 @@ void BigHeadScreamers::ShowInfo()
 			position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.95f);
 
 			ttFont.SDL_GL_RenderText(color, &position, "%.1f",  1.0f / timer.GetDeltaTime());
-			position.x = (int)(ShellGet(SHELL_WIDTH) * 0.95f);
-
-			ttFont.SDL_GL_RenderText(color, &position, iCurER == 0 ? "I.ON" : "I.OFF");
 		}
 		else
 		{
@@ -615,9 +606,6 @@ void BigHeadScreamers::ShowInfo()
 
 			ttFont.SDL_GL_RenderText(color, &position, "enemies=%.2fms", fEnemiesTime * 1000.0f);
 			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "instancing=%s", iCurER == 0 ? "yes" : "no");
-			position.y -= position.h * 1.2f;
 		}
 
 		TTFont::glDisable2D();
@@ -637,11 +625,13 @@ bool BigHeadScreamers::ReleaseGL()
 	delete pAI;
 
 	delete pWM;
-	
-	delete pER[0];
-	delete pER[1];
+	delete pExpR;
+
+	delete pBR;
+	delete pER;
 
 	delete pDetector;
+
 
 	return GLResourceManager::Instance().Release();
 }

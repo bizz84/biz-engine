@@ -104,9 +104,7 @@ protected:
 	ParticleRenderer *pExpR;
 	BulletRenderer *pBR;
 	AIManager *pAI;
-	// Two versions loaded for benchmarking
-	int iCurER;
-	EnemyRenderer *pER[2];
+	EnemyRenderer *pER;
 
 	CollisionDetector *pDetector;
 
