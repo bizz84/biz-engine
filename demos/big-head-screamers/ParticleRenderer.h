@@ -21,14 +21,14 @@ using namespace std;
 
 class ParticleEmitter;
 
-class ExplosionRenderer : private ProgramArray
+class ParticleRenderer : private ProgramArray
 {
 	enum { P_PARTICLE, NUM_PROGRAMS };
 
 public:
-	ExplosionRenderer();
-	virtual ~ExplosionRenderer() { }
-	void Render(const list<ParticleEmitter *> &explosions) const;
+	ParticleRenderer();
+	virtual ~ParticleRenderer() { }
+	void Render(const list<ParticleEmitter *> &particles) const;
 };
 
 #endif
