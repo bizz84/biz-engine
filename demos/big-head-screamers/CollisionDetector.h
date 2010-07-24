@@ -13,13 +13,13 @@
 #ifndef _COLLISION_DETECTOR_H_
 #define _COLLISION_DETECTOR_H_
 
-class WeaponSystem;
+class WeaponManager;
 class AIManager;
 
 // Generic collision detector
 class CollisionDetector
 {
-	WeaponSystem *pWS;
+	WeaponManager *pWM;
 	AIManager *pAI;
 protected:
 	// Implemented by derived classes to write the operand arrays before computation
@@ -29,10 +29,10 @@ protected:
 	// Implemented by derived classes to read results after computation
 	virtual bool Read() = 0;
 
-	WeaponSystem *GetWS() { return pWS; }
+	WeaponManager *GetWM() { return pWM; }
 	AIManager *GetAI() { return pAI; }	
 public:
-	CollisionDetector(WeaponSystem *ws, AIManager *ai) : pWS(ws), pAI(ai) { }
+	CollisionDetector(WeaponManager *ws, AIManager *ai) : pWM(ws), pAI(ai) { }
 	virtual ~CollisionDetector() { }
 	
 	void Run();
@@ -85,7 +85,7 @@ protected:
 	//unsigned int GetNumTargets() const { return uiNumTargets; }
 
 public:
-	CPUGrenadeEnemyCollisionDetector(WeaponSystem *ws, AIManager *ai)
+	CPUGrenadeEnemyCollisionDetector(WeaponManager *ws, AIManager *ai)
 		: CollisionDetector(ws, ai)
 		//bullet(NULL), enemy(NULL),
 		//uiNumColliders(0), uiNumTargets(0)
@@ -105,7 +105,7 @@ protected:
 	virtual void Execute();
 	virtual bool Read();
 public:
-	OpenCLGrenadeEnemyCollisionDetector(WeaponSystem *ws, AIManager *ai)
+	OpenCLGrenadeEnemyCollisionDetector(WeaponManager *ws, AIManager *ai)
 		: GrenadeEnemyCollisionDetector(ws, ws) { }
 
 };*/
@@ -113,7 +113,7 @@ public:
 class CollisionDetectorFactory
 {
 public:
-	static CollisionDetector *CreateCPU(WeaponSystem *ws, AIManager *ai)
+	static CollisionDetector *CreateCPU(WeaponManager *ws, AIManager *ai)
 	{
 		return new CPUGrenadeEnemyCollisionDetector(ws, ai);
 	}

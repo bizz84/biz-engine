@@ -13,9 +13,11 @@
 
 #include "CollisionDetector.h"
 #include "Vector.h"
-#include "Weapon.h"
+#include "WeaponManager.h"
+#include "Bullet.h"
 #include "AIManager.h"
 #include "Misc.h"
+#include "Enemy.h"
 
 using namespace std;
 
@@ -25,7 +27,7 @@ Initially all bullets are un-exploded and as the double loop in Execute()
 finds collisions, the "hit" flag is set to true in Grenade objects and the
 health is diminished in monsters.
 When results are read back, hit bullets are removed from the array and
-originate instances of GrenadeExplosions.
+originate instances of BloodParticleSystems.
 Enemies whose health <= 0 are removed as well and originate instances of
 DeathAnimation.
 */
@@ -49,7 +51,7 @@ bool CPUGrenadeEnemyCollisionDetector::Write()
 
 void CPUGrenadeEnemyCollisionDetector::Execute()
 {
-	const list<Bullet *> &bullets = GetWS()->GetBullets();
+	const list<Bullet *> &bullets = GetWM()->GetBullets();
 	const vector<Enemy *> &enemies = GetAI()->GetData();
 	
 	if (bullets.size() == 0 || enemies.size() == 0)
@@ -81,8 +83,9 @@ void CPUGrenadeEnemyCollisionDetector::Execute()
 			if (CollisionSegmentSphere(prev, curr, target3, AIManager::EnemyRadius))
 			{
 				(*b)->SetImpact();
-				//(*b)->SetPosition() here to determine the exact point
+
 				(*e)->health -= Grenade::DAMAGE;
+				GetAI()->AddParticles(curr, (*e)->health);
 			}				
 		}
 	}	
@@ -101,7 +104,7 @@ bool CPUGrenadeEnemyCollisionDetector::Read()
 /*bool CPUGrenadeEnemyCollisionDetector::Write()
 {
 	// get arrays
-	const list<Bullet *> &bullets = GetWS()->GetBullets();
+	const list<Bullet *> &bullets = GetWM()->GetBullets();
 	const vector<Enemy *> &enemies = GetAI()->GetData();
 
 	if (bullets.size() == 0 || enemies.size() == 0)
@@ -169,7 +172,7 @@ bool CPUGrenadeEnemyCollisionDetector::Read()
 	// TODO: read & deallocate
 	// write back to data structures
 	// delete item if hit == true & generate explosion
-	const list<Bullet *> &bullets = GetWS()->GetBullets();
+	const list<Bullet *> &bullets = GetWM()->GetBullets();
 	const vector<Enemy *> &enemies = GetAI()->GetData();
 
 	unsigned int i = 0;
