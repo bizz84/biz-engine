@@ -17,17 +17,34 @@
 #include "EnemyRendererBasic.h"
 #include <iostream>
 
+#include "AIManager.h"
+#include "Weapon.h"
+#include "WeaponRenderer.h"
+#include "EnemyRendererBasic.h"
+#include "EnemyRendererAttrib.h"
+#include "CollisionDetector.h"
+
+
 // Near, Far values for projection matrix and distance from plane
 static const float Near = 1.0f;
 static const float Far = 100000.0f;
 
 // Demo timing values for changing skybox and ground textures
-static const float MinRandomCycle = 2.5f;
-static const float MaxRandomCycle = 5.0f;
+static const float MinRandomCycle = 7.5f;
+static const float MaxRandomCycle = 15.0f;
 
 
 // Credit for cubemaps:
 // http://www.alusion-fr.com/
+static const char *CubemapFaesky[] = {
+	"data/textures/Skybox_faesky/faesky02left.bmp",
+	"data/textures/Skybox_faesky/faesky02right.bmp",
+	"data/textures/Skybox_faesky/faesky02up.bmp",
+	"data/textures/Skybox_faesky/faesky02down.bmp",
+	"data/textures/Skybox_faesky/faesky02back.bmp",
+	"data/textures/Skybox_faesky/faesky02front.bmp",
+};
+
 static const char *CubemapAlpine[] = {
 	"data/textures/Skybox_alpine/alpine_east.bmp",
 	"data/textures/Skybox_alpine/alpine_west.bmp",
@@ -44,15 +61,6 @@ static const char *CubemapCanyon[] = {
 	"data/textures/Skybox_canyon/lnhcanyons1_dn.bmp",
 	"data/textures/Skybox_canyon/lnhcanyons1_rt.bmp",
 	"data/textures/Skybox_canyon/lnhcanyons1_lt.bmp",
-};
-
-static const char *CubemapFaesky[] = {
-	"data/textures/Skybox_faesky/faesky02left.bmp",
-	"data/textures/Skybox_faesky/faesky02right.bmp",
-	"data/textures/Skybox_faesky/faesky02up.bmp",
-	"data/textures/Skybox_faesky/faesky02down.bmp",
-	"data/textures/Skybox_faesky/faesky02back.bmp",
-	"data/textures/Skybox_faesky/faesky02front.bmp",
 };
 
 static const char *CubemapTaosky[] = {
@@ -75,9 +83,9 @@ static const char *CubemapMntsea[] = {
 
 
 static const char **Cubemaps[6] = {
+	CubemapFaesky,
 	CubemapAlpine,
 	CubemapCanyon,
-	CubemapFaesky,
 	CubemapTaosky,
 	CubemapMntsea,
 };
@@ -91,11 +99,9 @@ static const char *Shaders[] = {
 // Credit for textures (licensed under Creative Commons):
 // http://www.marcchehab.org/frozenmist
 static const char *Textures[] = {
-	"data/textures/Rore_floor-tiles2.bmp",
-	"data/textures/TiZeta_pav2.bmp"
+	"data/textures/TiZeta_pav2.bmp",
+	"data/textures/Rore_floor-tiles2.bmp"
 };
-
-
 
 
 BigHeadScreamers::BigHeadScreamers() : 
@@ -348,9 +354,6 @@ bool BigHeadScreamers::Render()
 	// Then, render normally
 	RenderScene();
 
-	// Clears depth buffer
-	DrawCoordinateFrame();
-
 	// Draws fps counter, fbos and overlays
 	ShowInfo();
 	
@@ -519,17 +522,25 @@ void BigHeadScreamers::RenderReflectionFBO() const
 
 void BigHeadScreamers::ShowInfo()
 {
+	printf("FPS=%.1f\n", 1.0f / timer.GetDeltaTime());
+
 	if (iShowInfo >= 1)
 	{
-		glDisable(GL_DEPTH_TEST);
-		
-		RenderReflectionFBO();
-
-		fpsGraph.Draw();
 		if (iShowInfo >= 2)
 		{
-			mouseGraph[0].Draw();
-			mouseGraph[1].Draw();
+			// Clears depth buffer
+			DrawCoordinateFrame();
+
+			glDisable(GL_DEPTH_TEST);
+			
+			RenderReflectionFBO();
+
+			fpsGraph.Draw();
+			if (iShowInfo >= 3)
+			{
+				mouseGraph[0].Draw();
+				mouseGraph[1].Draw();
+			}
 		}
 
 		/* Draw font */
@@ -548,43 +559,54 @@ void BigHeadScreamers::ShowInfo()
 		color.g = 255;
 		color.b = 255;
 
-		position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
-		position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.75f);
-
-
-		ttFont.SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
-		position.y -= position.h * 1.2f;
-	
-		if (iShowInfo >= 2)
+		if (iShowInfo == 1)
 		{
-			ttFont.SDL_GL_RenderText(color, &position, "alpha=%.1f", fpsCamera.GetAlpha());
-			position.y -= position.h * 1.2f;
+			position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
+			position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.95f);
 
-			ttFont.SDL_GL_RenderText(color, &position, "beta=%.1f", fpsCamera.GetBeta());
-			position.y -= position.h * 1.2f;
+			ttFont.SDL_GL_RenderText(color, &position, "%.1f",  1.0f / timer.GetDeltaTime());
+			position.x = (int)(ShellGet(SHELL_WIDTH) * 0.95f);
 
-			const Vector3 tr = fpsCamera.GetPosition();
-			ttFont.SDL_GL_RenderText(color, &position, "pos=[%.1f,%.1f,%.1f]", tr[0], tr[1], tr[2]);
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "#=%d", ground.VisibleVertices());
-			position.y -= position.h * 1.2f;
-
-			for (int i = 0; i < ground.VisibleVertices(); i++)
-			{
-				ttFont.SDL_GL_RenderText(color, &position, "w[%d]=[%.1f,%.1f,%.1f]", i, ground[i][0], ground[i][1], ground[i][2]);
-				position.y -= position.h * 1.2f;
-			}
+			ttFont.SDL_GL_RenderText(color, &position, iCurER == 0 ? "I.ON" : "I.OFF");
 		}
-		ttFont.SDL_GL_RenderText(color, &position, "collisions=%.2fms", fCollisionTime * 1000.0f);
-		position.y -= position.h * 1.2f;
+		else
+		{
+			position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
+			position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.75f);
 
-		ttFont.SDL_GL_RenderText(color, &position, "enemies=%.2fms", fEnemiesTime * 1000.0f);
-		position.y -= position.h * 1.2f;
+			ttFont.SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
+			position.y -= position.h * 1.2f;
+		
+			if (iShowInfo >= 3)
+			{
+				ttFont.SDL_GL_RenderText(color, &position, "alpha=%.1f", fpsCamera.GetAlpha());
+				position.y -= position.h * 1.2f;
 
-		ttFont.SDL_GL_RenderText(color, &position, "instancing=%s", iCurER == 0 ? "yes" : "no");
-		position.y -= position.h * 1.2f;
+				ttFont.SDL_GL_RenderText(color, &position, "beta=%.1f", fpsCamera.GetBeta());
+				position.y -= position.h * 1.2f;
 
+				const Vector3 tr = fpsCamera.GetPosition();
+				ttFont.SDL_GL_RenderText(color, &position, "pos=[%.1f,%.1f,%.1f]", tr[0], tr[1], tr[2]);
+				position.y -= position.h * 1.2f;
+
+				ttFont.SDL_GL_RenderText(color, &position, "#=%d", ground.VisibleVertices());
+				position.y -= position.h * 1.2f;
+
+				for (int i = 0; i < ground.VisibleVertices(); i++)
+				{
+					ttFont.SDL_GL_RenderText(color, &position, "w[%d]=[%.1f,%.1f,%.1f]", i, ground[i][0], ground[i][1], ground[i][2]);
+					position.y -= position.h * 1.2f;
+				}
+			}
+			ttFont.SDL_GL_RenderText(color, &position, "collisions=%.2fms", fCollisionTime * 1000.0f);
+			position.y -= position.h * 1.2f;
+
+			ttFont.SDL_GL_RenderText(color, &position, "enemies=%.2fms", fEnemiesTime * 1000.0f);
+			position.y -= position.h * 1.2f;
+
+			ttFont.SDL_GL_RenderText(color, &position, "instancing=%s", iCurER == 0 ? "yes" : "no");
+			position.y -= position.h * 1.2f;
+		}
 
 		TTFont::glDisable2D();
 		glDisable(GL_BLEND);

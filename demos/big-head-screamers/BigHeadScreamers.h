@@ -39,13 +39,11 @@
 #include "SkyBox.h"
 #include "Ground.h"
 
-#include "Weapon.h"
-#include "WeaponRenderer.h"
-
-#include "AIManager.h"
-#include "Enemy.h"
-
-#include "CollisionDetector.h"
+class WeaponSystem;
+class WeaponRenderer;
+class AIManager;
+class EnemyRenderer;
+class CollisionDetector;
 
 // is-a SDLShell, is-implemented-in-terms-of ProgramArray
 class BigHeadScreamers : public SDLShell, private ProgramArray
