@@ -4,37 +4,34 @@
 
 attribute vec2 inVertex;
 attribute vec2 inTexCoord;
-// Texture indices go from 0 to 7 and 
-// are mapped to the corresponding 2x4 texture atlas
-attribute int inTexIndex;
 // Own sprite transformations
 attribute float inScale;
 attribute float inRotAngle;
 attribute vec3 inTranslate;
 
-uniform vec2 NeighborOffset;
+//uniform vec2 NeighborOffset;
 
-varying vec2 Neighbor[4];
+//varying vec2 Neighbor[4];
 
 void main()
 {
 	// Find corresponding image in texture atlas
-	gl_TexCoord[0].xy = inTexCoord * vec2(0.25, 0.5);
-	gl_TexCoord[0].x += inTexIndex % 4;
-	if (inTexIndex >= 4)
-		gl_TexCoord[0].y += 0.5;
+	gl_TexCoord[0] = gl_MultiTexCoord0;
 	
-	Neighbor[0] = gl_TexCoord[0].st + vec2(-NeighborOffset.x,  NeighborOffset.y);
+	/*Neighbor[0] = gl_TexCoord[0].st + vec2(-NeighborOffset.x,  NeighborOffset.y);
 	Neighbor[1] = gl_TexCoord[0].st + vec2( NeighborOffset.x,  NeighborOffset.y);
 	Neighbor[2] = gl_TexCoord[0].st + vec2( NeighborOffset.x, -NeighborOffset.y);
-	Neighbor[3] = gl_TexCoord[0].st + vec2(-NeighborOffset.x, -NeighborOffset.y);
-	
-	vec3 Pos = vec3(inVertex.x, 0.0, inVertex.y);
-	Pos *= inScale;
-	// TODO rotate
-	
-	Pos += inTranslate;
+	Neighbor[3] = gl_TexCoord[0].st + vec2(-NeighborOffset.x, -NeighborOffset.y);*/
 
-    gl_Position = gl_ModelViewProjectionMatrix * vec4(Pos, 1.0);
-    //gl_Position = gl_ModelViewProjectionMatrix * vec4(gl_Vertex.x, 10.0, gl_Vertex.y, 1.0);
+	// Instancing transformation
+	vec3 Pos = vec3(gl_Vertex.x, gl_Vertex.y, 0.0);
+	Pos *= inScale;
+	
+	float c = cos(inRotAngle);
+	float s = sin(inRotAngle);
+	vec3 Rot = Pos;
+	Rot.x = c * Pos.x + s * Pos.z;
+	Rot.z = -s * Pos.x + c * Pos.z;
+
+    gl_Position = gl_ModelViewProjectionMatrix * vec4(Rot + inTranslate, 1.0);
 }
