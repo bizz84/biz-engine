@@ -62,6 +62,15 @@ bool EnemyRendererAttrib::LoadSprites()
 	return true;
 }
 
+Point2 EnemyRendererAttrib::TexCoord(Point2 coord, int index)
+{
+	coord[0] *= 0.25f;
+	coord[1] *= 0.5f;
+	coord[0] += (index % 4) * 0.25f;
+	coord[1] += (index / 4) * 0.5f;
+	return coord;
+}
+
 bool EnemyRendererAttrib::Update(const vector<Enemy *> &data, const float angle,
 							const float height)
 {
@@ -140,15 +149,6 @@ bool EnemyRendererAttrib::UnsetAttribPointer(GLint loc) const
 		return true;
 	}
 	return false;
-}
-
-Point2 EnemyRendererAttrib::TexCoord(Point2 coord, int index)
-{
-	coord[0] *= 0.25f;
-	coord[1] *= 0.5f;
-	coord[0] += (index % 4) * 0.25f;
-	coord[1] += (index / 4) * 0.5f;
-	return coord;
 }
 
 
