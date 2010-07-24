@@ -12,8 +12,7 @@
  *****************************************************************************/
 
 #include "ParticleEmitter.h"
-#define _USE_MATH_DEFINES
-#include <math.h>
+
 
 #include "Extensions.h"
 #include "Misc.h"
