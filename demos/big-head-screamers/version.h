@@ -20,12 +20,20 @@
 - OpenAL integration
 - Big Head meshes
 - Jumping. Space bar calls for it!
+- Explosions
+- Plasma gun
+- Game logic
+- HUD
 
 */
 
 /* Version History
+V0.0.8
+- Proper Grenade model
+- Big classes redesign
 V0.0.7
 - Working istancing
+- Blood
 V0.0.6
 - Collision detection between enemies
 - Formalized Weapon and AI subsystems
