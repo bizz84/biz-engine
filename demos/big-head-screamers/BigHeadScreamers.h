@@ -41,7 +41,7 @@
 
 class AIManager;
 class WeaponManager;
-class ExplosionRenderer;
+class ParticleRenderer;
 class BulletRenderer;
 class EnemyRenderer;
 class CollisionDetector;
@@ -101,7 +101,7 @@ protected:
 
 	// Game Data
 	WeaponManager *pWM;
-	ExplosionRenderer *pExpR;
+	ParticleRenderer *pExpR;
 	BulletRenderer *pBR;
 	AIManager *pAI;
 	// Two versions loaded for benchmarking

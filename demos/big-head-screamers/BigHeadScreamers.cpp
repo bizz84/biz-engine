@@ -19,7 +19,7 @@
 
 #include "AIManager.h"
 #include "WeaponManager.h"
-#include "ExplosionRenderer.h"
+#include "ParticleRenderer.h"
 #include "EnemyRendererBasic.h"
 #include "EnemyRendererAttrib.h"
 #include "CollisionDetector.h"
@@ -232,7 +232,7 @@ bool BigHeadScreamers::InitGL()
 	pWM = new WeaponManager(0.1f);
 
 	// Initialize weapon renderer
-	pExpR = new ExplosionRenderer();
+	pExpR = new ParticleRenderer();
 
 	// Initialize GrenadeRenderer
 	pBR = new GrenadeRenderer();
