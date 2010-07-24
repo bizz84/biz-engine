@@ -39,9 +39,10 @@
 #include "SkyBox.h"
 #include "Ground.h"
 
-class WeaponSystem;
-class WeaponRenderer;
 class AIManager;
+class WeaponManager;
+class ExplosionRenderer;
+class BulletRenderer;
 class EnemyRenderer;
 class CollisionDetector;
 
@@ -99,8 +100,9 @@ protected:
 	FPSCamera fpsCamera;
 
 	// Game Data
-	WeaponSystem *pWS;
-	WeaponRenderer *pWR;
+	WeaponManager *pWM;
+	ExplosionRenderer *pExpR;
+	BulletRenderer *pBR;
 	AIManager *pAI;
 	// Two versions loaded for benchmarking
 	int iCurER;

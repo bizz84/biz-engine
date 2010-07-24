@@ -18,11 +18,13 @@
 #include <iostream>
 
 #include "AIManager.h"
-#include "Weapon.h"
-#include "WeaponRenderer.h"
+#include "WeaponManager.h"
+#include "ExplosionRenderer.h"
 #include "EnemyRendererBasic.h"
 #include "EnemyRendererAttrib.h"
 #include "CollisionDetector.h"
+
+#include "GrenadeRenderer.h"
 
 
 // Near, Far values for projection matrix and distance from plane
@@ -113,8 +115,9 @@ BigHeadScreamers::BigHeadScreamers() :
 	bReflectionFlag(false),
 	pReflectionFBO(NULL),
 	pAI(NULL),
-	pWS(NULL),
-	pWR(NULL),
+	pWM(NULL),
+	pExpR(NULL),
+	pBR(NULL),
 	pDetector(NULL),
 	iCurER(0),
 	fCollisionTime(0.0f), // debug
@@ -226,19 +229,24 @@ bool BigHeadScreamers::InitGL()
 	pAI = new AIManager(fpsCamera.GetPosition());
 
 	// Initialize weapon system
-	pWS = new WeaponSystem(0.1f);
+	pWM = new WeaponManager(0.1f);
 
 	// Initialize weapon renderer
-	pWR = new WeaponRenderer();
+	pExpR = new ExplosionRenderer();
+
+	// Initialize GrenadeRenderer
+	pBR = new GrenadeRenderer();
 	
 	pER[0] = new EnemyRendererAttrib();
 	pER[1] = new EnemyRendererBasic();
 
-	pDetector = CollisionDetectorFactory::CreateCPU(pWS, pAI);
+	pDetector = CollisionDetectorFactory::CreateCPU(pWM, pAI);
 
 	
 	// GL state setup
 	glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+
+	glPointSize(3.0f);
 
 	// As first element to be drawn is always the skybox
 	glDisable(GL_DEPTH_TEST);
@@ -290,7 +298,7 @@ void BigHeadScreamers::Input()
 
 
 	// Ground input
-	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha(), fpsCamera.GetBeta());
+	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha() * M_PI / 180.0f, fpsCamera.GetBeta() * M_PI / 180.0f);
 	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
 	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
 	ground.Input(projViewInv, fpsCamera.GetPosition(), Far);
@@ -314,16 +322,16 @@ void BigHeadScreamers::Input()
 	{
 		fSetTime = timer.GetTime();
 		fRandomTime = RandRange(MinRandomCycle, MaxRandomCycle);
-		if ((rand() % 4) == 0)
-			NextTexture();
-		else
+		//if ((rand() % 4) == 0)
+		//	NextTexture();
+		//else
 			NextCubemap();
 	}
 
 
 	// Game input
 	// Weapons input
-	pWS->Input(dt, fpsCamera, LeftClick() || KeyPressing(KEY_SPACE));
+	pWM->Input(dt, fpsCamera, LeftClick() || KeyPressing(KEY_SPACE));
 
 	// AI input
 	pAI->Input(t, dt, fpsCamera.GetPosition());
@@ -334,7 +342,7 @@ void BigHeadScreamers::Input()
 
 	fEnemiesTime = 0.0f;
 
-	pWS->UpdateState();
+	pWM->UpdateState();
 	pAI->UpdateState(fpsCamera.GetPosition());
 
 	temp.Start();
@@ -460,7 +468,10 @@ void BigHeadScreamers::RenderFire() const
 	fpsCamera.LoadMatrix();
 	MultMirror();
 
-	pWR->Render(pWS->GetBullets());
+	pBR->Render(pWM->GetBullets());
+
+	if (!bReflectionFlag)
+		pExpR->Render(pAI->GetParticles());
 
 	//glPopMatrix();
 }
@@ -522,9 +533,10 @@ void BigHeadScreamers::RenderReflectionFBO() const
 
 void BigHeadScreamers::ShowInfo()
 {
-	printf("FPS=%.1f\n", 1.0f / timer.GetDeltaTime());
+	if (!iShowInfo)
+		printf("FPS=%.1f\n", 1.0f / timer.GetDeltaTime());
 
-	if (iShowInfo >= 1)
+	if (iShowInfo)
 	{
 		if (iShowInfo >= 2)
 		{
@@ -624,7 +636,7 @@ bool BigHeadScreamers::ReleaseGL()
 
 	delete pAI;
 
-	delete pWS;
+	delete pWM;
 	
 	delete pER[0];
 	delete pER[1];
