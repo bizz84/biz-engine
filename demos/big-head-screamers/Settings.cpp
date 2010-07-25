@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Filename			Weapon.cpp
+ * Filename			Settings.cpp
  * 
  * License			LGPL
  *
@@ -7,7 +7,7 @@
  *
  * Platform			LinuxX11 / OpenGL
  * 
- * Description		Weapon
+ * Description		Class for reading and writing settings to a file
  *
  *****************************************************************************/
 
@@ -33,10 +33,10 @@ Settings::Settings() :
 	EnemyHealth(100),
 	EnemySpeed(20.0f),
 
-	NumBloodDrops(150),
+	NumBloodDrops(200),
 	ParticleGravity(100.0f),
-	ParticleSpeed(12.0f),
-	PointSize(3.0f),
+	ParticleSpeed(15.0f),
+	PointSize(3.5f),
 
 	// Near, Far values for projection matrix and distance from plane
 	Fov(90.0f),
