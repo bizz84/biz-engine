@@ -20,17 +20,24 @@
 #include <stdio.h>
 #include <assert.h>
 
-const int permutation[3] = { 1, 2, 0 };
+#include "SDL_image.h"
+
+
 static const float u = 1.0f;
 static const float z = 0.0f;
 
+/*****************************************************************************
+ * Verbosity managemet
+ *****************************************************************************/
 static VerboseLevel AppVerboseLevel = VerboseInfo;
 
 VerboseLevel GetVerboseLevel() { return AppVerboseLevel; }
 void SetVerboseLevel(VerboseLevel level) { AppVerboseLevel = level; }
 bool Verbose(VerboseLevel level) { return AppVerboseLevel >= level; }
 
-
+/*****************************************************************************
+ * Loading files
+ *****************************************************************************/
 int LoadFileIntoMemory(const char *filename, char **result)
 {
 	int size = 0;
@@ -68,7 +75,9 @@ bool LoadImage(const char *filename, SDL_Surface *&surface,
     SDL_Surface* loadedImage = NULL;
     
     //Load the image
-    loadedImage = SDL_LoadBMP( filename );
+    //loadedImage = SDL_LoadBMP( filename );
+    loadedImage = IMG_Load( filename ); // Uses SDL_image
+
     
     //If nothing went wrong in loading the image
     if( loadedImage != NULL )
@@ -114,29 +123,9 @@ bool LoadImage(const char *filename, SDL_Surface *&surface,
     return false;
 }
 
-
-void RenderQuad2D(float x, float y, float w, float h,
-	float u0, float v0, float u1, float v1)
-{
-	glEnableClientState(GL_VERTEX_ARRAY);	
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	float afAttribs[] = {
-		x    , y    , u0, v1,
-		x + w, y    , u1, v1,
-		x + w, y + h, u1, v0,
-		x    , y + h, u0, v0
-	};
-
-	glVertexPointer(2, GL_FLOAT, sizeof(float) * 4, afAttribs);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 4, afAttribs + 2);
-
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-	glDisableClientState(GL_VERTEX_ARRAY);	
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-}
-
+/*****************************************************************************
+ * Simple mathematical utilities
+ *****************************************************************************/
 int IntRound(double x)
 {
 	return (int)(x + 0.5);
@@ -157,6 +146,9 @@ float Inertia(float t, float tau)
 	return exp(-tau * t);
 }
 
+/*****************************************************************************
+ * OpenGL related functions
+ *****************************************************************************/
 void PrintOpenGLError()
 {
 	GLenum err = glGetError();
@@ -181,20 +173,63 @@ GLint GetUniLoc(GLuint program, const GLchar *name)
 	return loc;
 }
 
+void RenderQuad2D(float x, float y, float w, float h,
+	float u0, float v0, float u1, float v1)
+{
+	glEnableClientState(GL_VERTEX_ARRAY);	
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	float afAttribs[] = {
+		x    , y    , u0, v1,
+		x + w, y    , u1, v1,
+		x + w, y + h, u1, v0,
+		x    , y + h, u0, v0
+	};
+
+	glVertexPointer(2, GL_FLOAT, sizeof(float) * 4, afAttribs);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 4, afAttribs + 2);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	glDisableClientState(GL_VERTEX_ARRAY);	
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+}
+
+/*****************************************************************************
+ * Random functions
+ *****************************************************************************/
 float RandRange(float min, float max)
 {
 	float temp = (rand() / (static_cast<float>(RAND_MAX) + 1.0))
 		* (max - min) + min;
 	return temp;
+}
 
-	//double val = (double)(rand() % 1073741824);
-	//return min + (val * float((min - max) / 1073741824.0));
+Point3 RandSphere()
+{
+	float alpha = RandRange(-M_PI, M_PI);
+	float beta = RandRange(-M_PI, M_PI);
+	return AlphaBetaRotation(alpha, beta) * Point3(0.0, 0.0, 1.0);
 }
 
 
+/*****************************************************************************
+ * Mathematical functions dealing planes and matrices
+ *****************************************************************************/
+
+void IntersectionLinePlane(Vector3 &intersection, const float *plane,
+						   const Vector3 &a, const Vector3 &b)
+{
+	Vector3 diff = b - a;
+
+	const float den = diff.dot(plane);
+	const float num = a.dot(plane);
+
+	intersection = a - diff * (num / den);
+}
 
 /*
-//
+// Pseudocode for InfinitePlane
 if dot(plane, eye) < 0 then plane not visible, return 0
 // Calculate 4 vertexes of zfar clipping plane in world coordinates.
 (-1,-1), (1,-1), (1,1), (-1,1) * Inv * zfar
@@ -218,21 +253,9 @@ end
 return V.size
 
 */
-void IntersectionLinePlane(Vector3 &intersection, const float *plane, const Vector3 &a, const Vector3 &b)
+unsigned int InfinitePlane(Vector3 *poly, const float *plane,
+			const Matrix4 &inv, const Vector3 &eye, const float zfar)
 {
-	Vector3 diff = b - a;
-
-	const float den = diff.dot(plane);
-	const float num = a.dot(plane);
-
-	intersection = a - diff * (num / den);
-}
-
-unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv, const Vector3 &eye, const float zfar)
-{
-	//if ((eye[0] + plane[0] * plane[3]) * plane[0] +
-	//	(eye[1] + plane[1] * plane[3]) * plane[1] +
-	//	(eye[2] + plane[2] * plane[3]) * plane[2] < 0.0f)
 	Vector3 vplane = Vector3(plane) * plane[3];
 	if ((eye + vplane).dot(plane) < 0.0f)
 	{
@@ -262,36 +285,7 @@ unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv
 		        -inv.at(8) - inv.at(9) + inv.at(10) + inv.at(11)) * zfar,
 
 	};
-	// Equivalent row-major version
-	/*Vector3 world1[5] = {
-		Vector3(-inv[0][0] - inv[0][1] + inv[0][2] + inv[0][3], 
-		        -inv[1][0] - inv[1][1] + inv[1][2] + inv[1][3],
-		        -inv[2][0] - inv[2][1] + inv[2][2] + inv[2][3]) * zfar,
 
-		Vector3( inv[0][0] - inv[0][1] + inv[0][2] + inv[0][3], 
-		         inv[1][0] - inv[1][1] + inv[1][2] + inv[1][3],
-		         inv[2][0] - inv[2][1] + inv[2][2] + inv[2][3]) * zfar,
-
-		Vector3( inv[0][0] + inv[0][1] + inv[0][2] + inv[0][3], 
-		         inv[1][0] + inv[1][1] + inv[1][2] + inv[1][3],
-		         inv[2][0] + inv[2][1] + inv[2][2] + inv[2][3]) * zfar,
-
-		Vector3(-inv[0][0] + inv[0][1] + inv[0][2] + inv[0][3], 
-		        -inv[1][0] + inv[1][1] + inv[1][2] + inv[1][3],
-		        -inv[2][0] + inv[2][1] + inv[2][2] + inv[2][3]) * zfar,
-
-		Vector3(-inv[0][0] - inv[0][1] + inv[0][2] + inv[0][3], 
-		        -inv[1][0] - inv[1][1] + inv[1][2] + inv[1][3],
-		        -inv[2][0] - inv[2][1] + inv[2][2] + inv[2][3]) * zfar
-	};*/
-
-	/*for (unsigned int i = 0; i < 4; i++)
-	{
-		poly[i] = world[i];
-	}
-	return 4;*/
-
-	float dot;
 	unsigned int count = 0;
 	Vector3 *p = poly;
 	bool clip = false;
@@ -306,12 +300,7 @@ unsigned int InfinitePlane(Vector3 *poly, const float *plane, const Matrix4 &inv
 										 pvPlane->z * -pvPlane->w]
 			is a point on the plane
 		*/
-		dot = (world[vert] + vplane).dot(plane);
-		//dot = (world[vert][0] + plane[0] * plane[3]) * plane[0] +
-		//	  (world[vert][1] + plane[1] * plane[3]) * plane[1] +
-		//	  (world[vert][2] + plane[2] * plane[3]) * plane[2];
-
-		if (dot < 0.0f)
+		if ((world[vert] + vplane).dot(plane) < 0.0f)
 		{
 			if (clip)
 			{
@@ -422,16 +411,14 @@ Matrix4 InverseMVP(const Matrix4 &invP, const Vector3 &T, const Matrix4 &R)
 }
 
 
-Matrix4 AlphaBetaRotation(const float alpha, const float beta)
+Matrix3 AlphaBetaRotation(const float alpha, const float beta)
 {
-	// The constructor for Matrix4 automatically adds the fourth identity
-	// row and column
-	return Matrix4(Matrix3::RotationX(beta * M_PI / 180.0f) *
-		           Matrix3::RotationY(alpha * M_PI / 180.0f));
+	return Matrix3::RotationX(beta) * Matrix3::RotationY(alpha);
 }
 
-
-// Collision detection routines
+/*****************************************************************************
+ * Collision detection routines
+ *****************************************************************************/
 bool CollisionSegmentSphere(const Vector3 &a, const Vector3 &b, const Vector3 &s, const float r)
 {
 	Vector3 bs = s - b;
