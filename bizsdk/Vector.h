@@ -67,8 +67,9 @@ public:
 		s[1] += v[1];
 		return *this;
 	}	
-
 };
+
+typedef Vector2 Point2;
 
 /*****************************************************************************
  * Vector3 class definition
