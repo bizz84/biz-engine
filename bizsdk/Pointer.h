@@ -44,7 +44,6 @@ protected:
 	bool prevPressing;
 	bool currPressing;
 
-
 	float motionX;
 	float motionY;
 	float releaseMotionX;
@@ -93,6 +92,10 @@ public:
 
 	const float TimeSinceLastInput() const { return timeSinceLastInput; }
 	const float LastInputTime() const { return motionTime > releaseTime ? motionTime : releaseTime; }
+
+	const size_t NumSamples() const { return samples.size(); }
+
+	static const float MaxMotion;
 };
 
 class FPSPointer : public Pointer

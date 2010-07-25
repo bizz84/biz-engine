@@ -16,11 +16,12 @@
 #include "Misc.h"
 #include "SDLShell.h"
 
+const float Pointer::MaxMotion = 5000.0f;
 
 Pointer::Pointer(Shell *shell)
 {
 	pShell = shell;
-	maxDelay = 0.2f;
+	maxDelay = 0.1f;
 	inertiaTau = 2.0f;
 
 	prevPressing = false;
@@ -109,6 +110,13 @@ void Pointer::Update()
 			motionX /= (float)count;
 			motionY /= (float)count;
 		}
+		// limit motion to a maximum;
+		float fmx = fabs(motionX);
+		if (fmx >= MaxMotion)
+			motionX *= MaxMotion / fmx;
+		float fmy = fabs(motionY);
+		if (fmy >= MaxMotion)
+			motionY *= MaxMotion / fmy;
 	}
 }
 
