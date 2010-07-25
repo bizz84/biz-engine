@@ -24,6 +24,8 @@
 #include "VBO.h"
 #include <lib3ds/mesh.h>
 
+extern const int permutation[3];
+
 class Mesh
 {
 protected:
@@ -33,7 +35,6 @@ protected:
 	Lib3dsMesh *pMesh;
 
 	IndexedVBO *pVBO;
-	VBO *pShadowVolumeVBO;
 
 	const float NormalsSign() const { return bFlipNormals ? -1.0f : 1.0f; }
 public:
@@ -42,6 +43,8 @@ public:
 	~Mesh();
 
 	const IndexedVBO *GetVBO() const { return pVBO; }
+
+	const int GetNumTriangles() const { return pMesh->faces; }
 };
 
 #endif

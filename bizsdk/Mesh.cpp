@@ -16,6 +16,8 @@
 #include "assert.h"
 #include "Timer.h"
 
+const int permutation[3] = { 1, 2, 0 };
+
 Mesh::Mesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/,
 		   bool flipNormals/* = false*/, int *permutation/* = NULL*/)
 	: pVBO(NULL), pMesh(mesh), fScale(scale), bFlipNormals(flipNormals)
