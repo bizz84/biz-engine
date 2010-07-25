@@ -52,14 +52,9 @@ EnemyRendererAttrib::~EnemyRendererAttrib()
 bool EnemyRendererAttrib::LoadSprites()
 {
 	GLResourceManager &loader = GLResourceManager::Instance();
-	for (unsigned int i = 0; i < NUM_SPRITES; i++)
-	{
-		// Load texture for ground
-		if (!loader.LoadTextureFromFile("data/textures/sprites/Atlas.bmp",
-			uiAtlas, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
-			return false;
-	}
-	return true;
+	// Load texture atlas
+	return loader.LoadTextureFromFile("data/textures/sprites/Atlas.bmp",
+			uiAtlas, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR);
 }
 
 Point2 EnemyRendererAttrib::TexCoord(Point2 coord, int index)
