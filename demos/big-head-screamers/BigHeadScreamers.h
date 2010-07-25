@@ -36,7 +36,6 @@
 #include "BaseGraph.h"
 
 #include "CameraController.h"
-#include "SkyBox.h"
 #include "Ground.h"
 
 class AIManager;
@@ -45,6 +44,8 @@ class ParticleRenderer;
 class BulletRenderer;
 class EnemyRenderer;
 class CollisionDetector;
+
+class SkyBoxManager;
 
 // is-a SDLShell, is-implemented-in-terms-of ProgramArray
 class BigHeadScreamers : public SDLShell, private ProgramArray
@@ -56,7 +57,7 @@ class BigHeadScreamers : public SDLShell, private ProgramArray
 	};
 
 	enum { NUM_TEXTURES = 2 };
-	enum { NUM_CUBEMAPS = 5 };
+
 
 protected:
 
@@ -68,26 +69,18 @@ protected:
 	const GLuint CurrentTexture() const { return uiTexture[uiCurTexture]; }
 	void NextTexture() { uiCurTexture = Next(uiCurTexture, NUM_TEXTURES); }
 	void PrevTexture() { uiCurTexture = Prev(uiCurTexture, NUM_TEXTURES); }
-
-	// Cubemaps data
-	unsigned int uiCurCubemap;
-	CubeMap cubemap[NUM_CUBEMAPS];
-	const CubeMap &CurrentCubemap() const { return cubemap[uiCurCubemap]; }
-	void NextCubemap() { uiCurCubemap = Next(uiCurCubemap, NUM_CUBEMAPS); }
-	void PrevCubemap() { uiCurCubemap = Prev(uiCurCubemap, NUM_CUBEMAPS); }
-
-	
-	FBO *pReflectionFBO;
 	
 	// mutable since it's changed by RenderReflection() but restored at the end
 	// aka logical constness
 	mutable bool bReflectionFlag;
+	FBO *pReflectionFBO;
 
 	// Timing related variables
 	Timer timer;
 	float fSetTime;
 	float fRandomTime;
 
+	// Used in ShowInfo
 	TTFont ttFont;
 
 	float fFOV;
@@ -105,6 +98,7 @@ protected:
 	BulletRenderer *pBR;
 	AIManager *pAI;
 	EnemyRenderer *pER;
+	SkyBoxManager *pSkyBoxManager;
 
 	CollisionDetector *pDetector;
 
@@ -112,27 +106,16 @@ protected:
 	// This is updated during render time
 	float fEnemiesTime;
 
+protected:
 	// Overrides SDLShell version
 	virtual Pointer *NewPointer() { return new FPSPointer(this); }
-protected:
+
 	// Resource loading
 	bool LoadTextures();
-	bool LoadCubemaps();
-
 	
 	// All input is processed here (called by Render())
 	// TODO implement into SDLShell as non-const, make Render() const
 	void Input();
-
-	// Simple utility functions
-	inline unsigned int Next(unsigned int n, unsigned int mod)
-	{
-		return n < mod - 1 ? n + 1 : 0;
-	}
-	inline unsigned int Prev(unsigned int n, unsigned int mod)
-	{
-		return n > 0 ? n - 1 : mod - 1;
-	}
 	
 	// Auxiliary methods to Render functions
 	void SkyBoxRotate() const;

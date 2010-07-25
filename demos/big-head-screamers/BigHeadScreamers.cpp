@@ -25,62 +25,9 @@
 
 #include "GrenadeRenderer.h"
 #include "Settings.h"
-
-// Credit for cubemaps:
-// http://www.alusion-fr.com/
-static const char *CubemapFaesky[] = {
-	"data/textures/Skybox_faesky/faesky02left.bmp",
-	"data/textures/Skybox_faesky/faesky02right.bmp",
-	"data/textures/Skybox_faesky/faesky02up.bmp",
-	"data/textures/Skybox_faesky/faesky02down.bmp",
-	"data/textures/Skybox_faesky/faesky02back.bmp",
-	"data/textures/Skybox_faesky/faesky02front.bmp",
-};
-
-static const char *CubemapAlpine[] = {
-	"data/textures/Skybox_alpine/alpine_east.bmp",
-	"data/textures/Skybox_alpine/alpine_west.bmp",
-	"data/textures/Skybox_alpine/alpine_up.bmp",
-	"data/textures/Skybox_alpine/alpine_down.bmp",
-	"data/textures/Skybox_alpine/alpine_north.bmp",
-	"data/textures/Skybox_alpine/alpine_south.bmp",
-};
-
-static const char *CubemapCanyon[] = {
-	"data/textures/Skybox_canyon/lnhcanyons1_fr.bmp",
-	"data/textures/Skybox_canyon/lnhcanyons1_bk.bmp",
-	"data/textures/Skybox_canyon/lnhcanyons1_up.bmp",
-	"data/textures/Skybox_canyon/lnhcanyons1_dn.bmp",
-	"data/textures/Skybox_canyon/lnhcanyons1_rt.bmp",
-	"data/textures/Skybox_canyon/lnhcanyons1_lt.bmp",
-};
-
-static const char *CubemapTaosky[] = {
-	"data/textures/Skybox_taosky/skybox3_right.bmp",
-	"data/textures/Skybox_taosky/skybox3_back.bmp",
-	"data/textures/Skybox_taosky/skybox3_top.bmp",
-	"data/textures/Skybox_taosky/skybox3_bottom.bmp",
-	"data/textures/Skybox_taosky/skybox3_front.bmp",
-	"data/textures/Skybox_taosky/skybox3_left.bmp",
-};
-
-static const char *CubemapMntsea[] = {
-	"data/textures/Skybox_mntsea/lnhmtns1_fr.bmp",
-	"data/textures/Skybox_mntsea/lnhmtns1_bk.bmp",
-	"data/textures/Skybox_mntsea/lnhmtns1_up.bmp",
-	"data/textures/Skybox_mntsea/lnhmtns1_dn.bmp",
-	"data/textures/Skybox_mntsea/lnhmtns1_rt.bmp",
-	"data/textures/Skybox_mntsea/lnhmtns1_lt.bmp",
-};
+#include "SkyBoxManager.h"
 
 
-static const char **Cubemaps[6] = {
-	CubemapFaesky,
-	CubemapAlpine,
-	CubemapCanyon,
-	CubemapTaosky,
-	CubemapMntsea,
-};
 
 // Shaders
 static const char *Shaders[] = {
@@ -99,7 +46,6 @@ static const char *Textures[] = {
 BigHeadScreamers::BigHeadScreamers() : 
 	iShowInfo(0),
 	uiCurTexture(0),
-	uiCurCubemap(0),
 	fSetTime(0.0f),
 	fRandomTime(0.0f),
 	bReflectionFlag(false),
@@ -156,21 +102,12 @@ bool BigHeadScreamers::LoadTextures()
 	return true;
 }
 
-bool BigHeadScreamers::LoadCubemaps()
-{
-	GLResourceManager &loader = GLResourceManager::Instance();
-
-	for (unsigned int i = 0; i < NUM_CUBEMAPS; i++)
-	{
-		if (!cubemap[i].Init(Cubemaps[i]))
-			return false;
-	}
-	return true;
-}
 
 
 bool BigHeadScreamers::InitGL()
 {
+	fpsCamera.Init(5.0f * 20.0f, -20.0f);
+
 	GLResourceManager &loader = GLResourceManager::Instance();
 
 	if (!ground.Init())
@@ -183,14 +120,9 @@ bool BigHeadScreamers::InitGL()
 	if (!LoadTextures())
 		return false;
 
-	if (!LoadCubemaps())
-		return false;
-
 	// Load font used for overlay rendering
 	if (!ttFont.LoadFont("data/fonts/LucidaBrightDemiBold.ttf", 20))
 		return false;	
-
-
 	
 	// Initialize FPS graph
 	if (!fpsGraph.Init(4.0f, 3000, -0.98f, 0.60f, -0.6f, 0.95f, false))
@@ -202,8 +134,7 @@ bool BigHeadScreamers::InitGL()
 		return false;
 
 	// Initialize skybox singleton
-	if (!SkyBox::Instance().Init())
-		return false;
+	pSkyBoxManager = new SkyBoxManager();
 
 	// Initialize coordinate frame
 	CoordinateFrame::Instance().Make(400);
@@ -211,8 +142,6 @@ bool BigHeadScreamers::InitGL()
 	// Initialize fbo used for drawing reflection
 	pReflectionFBO = new FBO(GL_RGB, GL_UNSIGNED_SHORT_5_6_5, ShellGet(SHELL_WIDTH),
 		ShellGet(SHELL_HEIGHT), true);
-
-	fpsCamera.Init(5.0f * 20.0f, -20.0f);
 
 	// Initialize AI 
 	pAI = new AIManager(fpsCamera.GetPosition());
@@ -262,7 +191,7 @@ bool BigHeadScreamers::Resize(unsigned int width, unsigned int height)
 
 	// Alternatively use standard gluPerspective method
 	//glLoadIdentity();
-	//gluPerspective( 65.0f, (GLfloat)width/(GLfloat)height, Near, Far);
+	//gluPerspective( fov, (GLfloat)width/(GLfloat)height, Near, Far);
 	// Select and setup the modelview matrix
 	glMatrixMode( GL_MODELVIEW );
 	return true;
@@ -300,19 +229,19 @@ void BigHeadScreamers::Input()
 		uiCurTexture = Next(uiCurTexture, NUM_TEXTURES);
 
 	if (KeyPressed(KEY_3))
-		uiCurCubemap = Prev(uiCurCubemap, NUM_CUBEMAPS);
+		pSkyBoxManager->CubemapUpdate(false, t);
 	if (KeyPressed(KEY_4))
-		uiCurCubemap = Next(uiCurCubemap, NUM_CUBEMAPS);
+		pSkyBoxManager->CubemapUpdate(true, t);
 
 	if (KeyPressing(KEY_5))
 	{
-		if ((fFOV /= (1.0f + dt)) < 40.0f)
+		if ((fFOV /= (1.0f + 0.25 * dt)) < 40.0f)
 			fFOV = 40.0f;
 		Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 	}
 	if (KeyPressing(KEY_6))
 	{
-		if ((fFOV *= (1.0f + dt)) > 150.0f)
+		if ((fFOV *= (1.0f + 0.25 * dt)) > 150.0f)
 			fFOV = 150.0f;
 		Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 	}
@@ -331,8 +260,9 @@ void BigHeadScreamers::Input()
 		//if ((rand() % 4) == 0)
 		//	NextTexture();
 		//else
-			NextCubemap();
+			pSkyBoxManager->CubemapUpdate(true, t);
 	}
+	pSkyBoxManager->Update(t);
 
 
 	// Game input
@@ -355,6 +285,7 @@ void BigHeadScreamers::Input()
 	pER->Update(pAI->GetData(), -fpsCamera.GetAlpha(), Settings::Instance().EnemyHeight);
 	fEnemiesTime = temp.Update();
 }
+
 
 
 bool BigHeadScreamers::Render()
@@ -443,8 +374,8 @@ void BigHeadScreamers::RenderSkyBox() const
 	
 	SkyBoxRotate();	
 
-	SkyBox::Instance().Render(CurrentCubemap());
-		
+	pSkyBoxManager->Render();
+
 	glPopMatrix();
 }
 
