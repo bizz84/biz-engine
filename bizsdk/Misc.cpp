@@ -402,7 +402,7 @@ Matrix4 InverseProjectionRHInfinite(const float fov, const float aspect, const f
 
 Matrix4 InverseProjectionRH(const float fov, const float aspect, const float znear, const float zfar)
 {
-	return Matrix4();//InverseProj(1.0f / tan(0.5f * fo;v), 1.0f / aspect, znear, zfar);
+	return InverseProj(1.0f / tan(0.5f * fov), 1.0f / aspect, znear, zfar);
 }
 
 Matrix4 InverseMVP(const Matrix4 &invP, const Vector3 &T, const Matrix4 &R)
