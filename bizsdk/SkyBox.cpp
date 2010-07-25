@@ -15,6 +15,10 @@
 #include "GLResourceManager.h"
 #include "Misc.h"
 
+/*****************************************************************************
+ * SkyBoxTransition implementation
+ *****************************************************************************/
+
 static const float u = 1.0f;
 const float SkyBox::VertexAttrib[3 * 8] = {
 	-u, -u, -u, 
@@ -37,7 +41,7 @@ const int SkyBox::ElementAttrib[24] = {
 	0, 3, 7, 4
 };
 
-static const char VertexShader[] =
+static const char SkyBoxVertexShader[] =
 	"varying vec3 TexCoord;" \
 	"void main()" \
 	"{"\
@@ -46,7 +50,7 @@ static const char VertexShader[] =
 		"gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;"\
 	"}";
 
-static const char FragmentShader[] = 
+static const char SkyBoxFragmentShader[] = 
 	"uniform samplerCube sTexture;"\
 	"varying vec3 TexCoord;"\
 	"void main()"\
@@ -73,48 +77,111 @@ SkyBox &SkyBox::Instance()
 }
 
 
+bool SkyBox::ShaderSetup()
+{
+	GLResourceManager &loader = GLResourceManager::Instance();
+
+	if (!loader.LoadShaderFromMemory(SkyBoxVertexShader, SkyBoxFragmentShader, uiProgram))
+		return false;
+
+	glUseProgram(uiProgram);
+	glUniform1i(GetUniLoc(uiProgram, "sTexture"), 0);
+	return true;
+}
 
 bool SkyBox::Init()
 {
 	if (init)
 		return true;
 
-	GLResourceManager &loader = GLResourceManager::Instance();
-
-	if (!loader.LoadShaderFromMemory(VertexShader, FragmentShader, uiProgram))
+	if (!ShaderSetup())
 		return false;
-
-	glUniform1i(GetUniLoc(uiProgram, "sTexture"), 0);
 
 	vboCube = new IndexedVBO((void *)VertexAttrib, sizeof(float) * 3, 8, (void *)ElementAttrib, 24);
 
 	return (init = true);
 }
 
-void SkyBox::Render(const CubeMap &cubemap) const
+void SkyBox::Render() const
 {
 	assert(init);
 
 	glDepthMask(0);
 	glUseProgram(uiProgram);
-	glEnable(GL_TEXTURE_CUBE_MAP_EXT);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.Get());
+
+	//glDisable(GL_CULL_FACE);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-
-	glDisable(GL_CULL_FACE);
-
 	vboCube->Render(GL_QUADS);
-
 	glDisableClientState(GL_VERTEX_ARRAY);
 
-	glPopMatrix();
-
-	glDisable(GL_TEXTURE_CUBE_MAP_EXT);
 	glDepthMask(1);
 
 }
 
+/*****************************************************************************
+ * SkyBoxTransition implementation
+ *****************************************************************************/
+static const char TransitionVertexShader[] =
+	"varying vec3 TexCoord;" \
+	"void main()" \
+	"{"\
+		"TexCoord = gl_Vertex.xyz;"\
+		"gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;"\
+	"}";
+
+static const char TransitionFragmentShader[] = 
+	"uniform samplerCube sTexture;"\
+	"uniform samplerCube sTexture2;"\
+	"uniform float Mix;"\
+	"varying vec3 TexCoord;"\
+	"void main()"\
+	"{"\
+		"gl_FragColor = mix(textureCube(sTexture, TexCoord),"\
+		"				textureCube(sTexture2, TexCoord), Mix);"\
+	"}";
+
+SkyBoxTransition &SkyBoxTransition::Instance()
+{
+	static SkyBoxTransition skybox;
+	return skybox;
+}
+
+bool SkyBoxTransition::ShaderSetup()
+{
+	GLResourceManager &loader = GLResourceManager::Instance();
+
+	if (!loader.LoadShaderFromMemory(TransitionVertexShader,
+		TransitionFragmentShader, uiProgram))
+		return false;
+
+	glUseProgram(uiProgram);
+	glUniform1i(GetUniLoc(uiProgram, "sTexture"), 0);
+	glUniform1i(GetUniLoc(uiProgram, "sTexture2"), 1);
+	return true;
+}
+
+void SkyBoxTransition::Render(const float mix) const
+{
+	assert(init);
+
+	glDepthMask(0);
+	glUseProgram(uiProgram);
+
+	//glDisable(GL_CULL_FACE);
+	glUniform1f(GetUniLoc(uiProgram, "Mix"), mix);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	vboCube->Render(GL_QUADS);
+	glDisableClientState(GL_VERTEX_ARRAY);
+
+	glDepthMask(1);
+}
+
+
+/*****************************************************************************
+ * CubeMap implementation
+ *****************************************************************************/
 
 bool CubeMap::Init(const char *textures[])
 {

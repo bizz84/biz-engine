@@ -34,20 +34,38 @@ public:
  *****************************************************************************/
 class SkyBox
 {
+protected:
 	bool init;
 	GLuint uiProgram;
 
 	static const float VertexAttrib[3 * 8];
 	static const int ElementAttrib[24];
-protected:
+
 	IndexedVBO *vboCube;
 
+	virtual bool ShaderSetup();
+
 	SkyBox();
-	~SkyBox();
+	virtual ~SkyBox();
 public:
 	static SkyBox &Instance();
 	bool Init();
-	void Render(const CubeMap &cubemap) const;
+	void Render() const;
+};
+
+/*****************************************************************************
+ * SkyBoxTransition class
+ * Can blend between two cubemaps
+ *****************************************************************************/
+class SkyBoxTransition : public SkyBox
+{
+protected:
+	virtual bool ShaderSetup();
+public:
+	static SkyBoxTransition &Instance();
+	virtual void SetUniforms() { }
+
+	void Render(const float mix) const;
 };
 
 #endif
