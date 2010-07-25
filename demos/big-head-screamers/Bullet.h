@@ -15,7 +15,7 @@
 
 #include "Extensions.h"
 #include "Matrix.h"
-
+#include "Settings.h"
 
 /*****************************************************************************
  * Bullet class declaration
@@ -62,13 +62,7 @@ public:
 		const float speed);
 	virtual bool Update(const float dt);
 
-public:
-	enum { MAX_BOUNCES = 3 };
-	enum { DAMAGE = 50 };
-	virtual const unsigned int Damage() const { return DAMAGE; }
-
-	static const float Gravity;
-	static const float Speed;
+	virtual const unsigned int Damage() const { return Settings::Instance().GrenadeDamage; }
 };
 
 

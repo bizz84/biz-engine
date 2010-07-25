@@ -16,8 +16,7 @@
 
 #include "Extensions.h"
 #include "Misc.h"
-
-const float ParticleEmitter::Gravity = 100.0f;
+#include "Settings.h"
 
 ParticleEmitter::ParticleEmitter(const int n)
 	: numParticles(n), expired(false)
@@ -49,7 +48,7 @@ BloodDropEmitter::BloodDropEmitter(const Point3 &pos, const int n) : ParticleEmi
 	for (unsigned int i = 0; i < numParticles; i++)
 	{
 		q->pos = Point4(pos[0], pos[1], pos[2], 1.0f);
-		q->vel = RandSphere() * 12.0;
+		q->vel = RandSphere() * Settings::Instance().ParticleSpeed;
 		q->hit = 0;
 		q++;
 	}
@@ -58,7 +57,7 @@ BloodDropEmitter::BloodDropEmitter(const Point3 &pos, const int n) : ParticleEmi
 bool BloodDropEmitter::ParticleUpdate(Particle *p, const float dt)
 {
 	BloodParticle *q = (BloodParticle *)p;
-	float f = Gravity * dt;
+	float f = Settings::Instance().ParticleGravity * dt;
 	q->vel[1] -= f;
 
 	Vector3 dir = q->vel * dt;
@@ -79,7 +78,6 @@ bool BloodDropEmitter::ParticleUpdate(Particle *p, const float dt)
 		}
 		q->hit++;
 	}
-	//q->pos[3] = 1.0;
 
 	return true;
 }

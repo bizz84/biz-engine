@@ -15,7 +15,7 @@
 #include "GLResourceManager.h"
 #include "Enemy.h"
 #include "Misc.h"
-#include "AIManager.h" // for NumEnemies
+#include "Settings.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -42,7 +42,7 @@ EnemyRendererAttrib::EnemyRendererAttrib()
 	attribLoc[A_ROT_ANGLE] = glGetAttribLocation(program, "inRotAngle");
 	attribLoc[A_TRANSLATE] = glGetAttribLocation(program, "inTranslate");
 
-	attrib = new SpriteVertexData[4 * AIManager::NumEnemies];
+	attrib = new SpriteVertexData[4 * Settings::Instance().NumEnemies];
 }
 EnemyRendererAttrib::~EnemyRendererAttrib()
 {

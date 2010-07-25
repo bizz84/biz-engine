@@ -57,17 +57,6 @@ public:
 	const list<ParticleEmitter *> &GetParticles() const { return particles; }
 
 	void AddParticles(const Point3 &pos, const unsigned int health);
-
-	// const values
-	static const float ImpactDistance;
-	static const float InitialMinDistance;
-	static const unsigned int NumEnemies;
-	static const float MaxDistance;
-
-	static const float EnemyHeight;
-	static const float EnemyRadius;
-
-	static const unsigned int NumBloodDrops;
 };
 
 #endif

@@ -18,6 +18,7 @@
 #include "AIManager.h"
 #include "Misc.h"
 #include "Enemy.h"
+#include "Settings.h"
 
 using namespace std;
 
@@ -78,13 +79,13 @@ void CPUGrenadeEnemyCollisionDetector::Execute()
 			curr = (*b)->GetPosition();
 			prev = (*b)->GetPrevPosition();
 			target2 = (*e)->pos;
-			target3 = Point3(target2[0], AIManager::EnemyHeight,target2[1]);
+			target3 = Point3(target2[0], Settings::Instance().EnemyHeight,target2[1]);
 				
-			if (CollisionSegmentSphere(prev, curr, target3, AIManager::EnemyRadius))
+			if (CollisionSegmentSphere(prev, curr, target3, Settings::Instance().CollisionRadius))
 			{
 				(*b)->SetImpact();
 
-				(*e)->health -= Grenade::DAMAGE;
+				(*e)->health -= Settings::Instance().GrenadeDamage;
 				GetAI()->AddParticles(curr, (*e)->health);
 			}				
 		}
@@ -157,7 +158,7 @@ void CPUGrenadeEnemyCollisionDetector::Execute()
 				
 			// Once a enemy is hit, the collider does not exist anymore,
 			// continue to next one
-			if (CollisionSegmentSphere(bullet[i].prev, bullet[i].curr, enemy[j].pos, AIManager::EnemyRadius))
+			if (CollisionSegmentSphere(bullet[i].prev, bullet[i].curr, enemy[j].pos, AIManager::CollisionRadius))
 			{
 				bullet[i].hit = true;
 				enemy[j].health -= Grenade::DAMAGE;

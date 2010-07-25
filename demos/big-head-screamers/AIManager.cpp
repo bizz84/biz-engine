@@ -15,17 +15,7 @@
 #include "Misc.h" // Used for RandRange()
 #include "Enemy.h" // for NUM_SPRITES
 #include "ParticleEmitter.h"
-
-
-const float AIManager::ImpactDistance = 10.0f;
-const float AIManager::InitialMinDistance = 100.0f;
-const unsigned int AIManager::NumEnemies = 50;
-const float AIManager::MaxDistance = 1000.0f;
-
-const float AIManager::EnemyHeight = 20.0f;
-const float AIManager::EnemyRadius = 15.0f;
-
-const unsigned int AIManager::NumBloodDrops = 150;
+#include "Settings.h"
 
 Enemy *AIManager::NewEnemy(const Vector2 &p, const int health,
 		const int index1, const int index2)
@@ -35,18 +25,19 @@ Enemy *AIManager::NewEnemy(const Vector2 &p, const int health,
 
 AIManager::AIManager(const Vector3 &player)
 {
+	float maxd = Settings::Instance().EnemyMaxDistance;
 	// Create an array of enemies around the player
 	const Vector2 target = Vector2(player[0], player[2]);
-	for (unsigned int i = 0; i < NumEnemies; )
+	for (unsigned int i = 0; i < Settings::Instance().NumEnemies; )
 	{
-		Vector2 pos = Vector2(RandRange(-MaxDistance, MaxDistance),
-		                      RandRange(-MaxDistance, MaxDistance));
+		Vector2 pos = Vector2(RandRange(-maxd, maxd),
+		                      RandRange(-maxd, maxd));
 		// Minimum distance must be granted
-		if ((pos - target).Length() < InitialMinDistance)
+		if ((pos - target).Length() < Settings::Instance().EnemyMinDistance)
 			continue;
 		// TODO: Used for sprite enemies. Move somewhere else in the factory.
 		int texture = (rand() % (EnemyRenderer::NUM_SPRITES >> 1));
-		data.push_back(NewEnemy(pos + target, 100,
+		data.push_back(NewEnemy(pos + target, Settings::Instance().EnemyHealth,
 			texture << 1, (texture << 1) + 1));
 		i++;
 	}
@@ -71,13 +62,14 @@ AIManager::~AIManager()
 
 void AIManager::Spawn(vector<Enemy *>::iterator &iter, const Vector2 &player)
 {
+	float maxd = Settings::Instance().EnemyMaxDistance;
 	// Respawn and set health to maximum
 	do
 	{
-		(*iter)->pos = player + Vector2(RandRange(-MaxDistance, MaxDistance),
-                                     RandRange(-MaxDistance, MaxDistance));
+		(*iter)->pos = player + Vector2(RandRange(-maxd, maxd),
+                                     RandRange(-maxd, maxd));
 	}
-	while (((*iter)->pos - player).Length() < InitialMinDistance);
+	while (((*iter)->pos - player).Length() < Settings::Instance().EnemyMinDistance);
 	(*iter)->health = 100;
 }
 
@@ -93,9 +85,9 @@ void AIManager::Input(const float t, const float dt, const Vector3 &player)
 		// Update position
 		Vector2 dir = target - (*iter)->pos;
 		//(*iter)->hit = false;
-		(*iter)->pos += dir.Normalize() * dt * 20.0f;
+		(*iter)->pos += dir.Normalize() * dt * Settings::Instance().EnemySpeed;
 		// Check impact
-		if (((*iter)->pos - target).Length() < ImpactDistance)
+		if (((*iter)->pos - target).Length() < Settings::Instance().EnemyImpactDistance)
 		{
 			// Die, new one will spawn in UpdateState
 			(*iter)->health = 0.0f;
@@ -119,7 +111,7 @@ bool ExpiredCondition(const ParticleEmitter *particle)
 
 void AIManager::AddParticles(const Point3 &pos, const unsigned int health)
 {
-	particles.push_back(new BloodDropEmitter(pos, NumBloodDrops));
+	particles.push_back(new BloodDropEmitter(pos, Settings::Instance().NumBloodDrops));
 }
 
 
@@ -133,8 +125,8 @@ void AIManager::UpdateState(const Vector3 &player)
 		if ((*iter)->Dead())
 		{
 			// Some more blood never hurts
-			Vector3 pos = Vector3((*iter)->pos[0], 0.75 * EnemyHeight, (*iter)->pos[1]);
-			particles.push_back(new BloodDropEmitter(pos, NumBloodDrops));
+			Vector3 pos = Vector3((*iter)->pos[0], 0.75 * Settings::Instance().EnemyHeight, (*iter)->pos[1]);
+			particles.push_back(new BloodDropEmitter(pos, Settings::Instance().NumBloodDrops));
 			// New position
 			Spawn(iter, target);
 		}

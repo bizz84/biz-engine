@@ -47,8 +47,6 @@ public:
 	bool Expired() const { return expired; }
 
 	virtual void Render() { }
-
-	static const float Gravity;
 };
 
 class BloodDropEmitter : public ParticleEmitter

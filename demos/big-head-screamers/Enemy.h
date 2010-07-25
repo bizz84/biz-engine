@@ -34,8 +34,6 @@ public:
 	// public
 	Vector2 pos;
 	int health;
-	// HACK: this is reset per frame
-	//bool hit;
 
 	bool Dead() const { return health <= 0; }
 };

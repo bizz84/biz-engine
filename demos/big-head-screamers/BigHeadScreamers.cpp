@@ -24,16 +24,7 @@
 #include "CollisionDetector.h"
 
 #include "GrenadeRenderer.h"
-
-
-// Near, Far values for projection matrix and distance from plane
-static const float Near = 1.0f;
-static const float Far = 100000.0f;
-
-// Demo timing values for changing skybox and ground textures
-static const float MinRandomCycle = 7.5f;
-static const float MaxRandomCycle = 15.0f;
-
+#include "Settings.h"
 
 // Credit for cubemaps:
 // http://www.alusion-fr.com/
@@ -243,10 +234,12 @@ bool BigHeadScreamers::InitGL()
 	// GL state setup
 	glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
 
-	glPointSize(3.0f);
+	glPointSize(Settings::Instance().PointSize);
 
 	// As first element to be drawn is always the skybox
 	glDisable(GL_DEPTH_TEST);
+
+	fFOV = Settings::Instance().Fov;
 
 	Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 
@@ -259,13 +252,13 @@ bool BigHeadScreamers::Resize(unsigned int width, unsigned int height)
 	//printf("Reshaping Screen to %dx%d\n", width, height);
 	// Select and setup the projection matrix
 	glMatrixMode( GL_PROJECTION );
-	float fov = 65.0f * M_PI / 180.0f;
+	float fov = fFOV * M_PI / 180.0f;
 	float aspect = (GLfloat)width/(GLfloat)height;
 	//Matrix4 proj = ProjectionRH(fov, aspect, Near, Far);
-	Matrix4 proj = ProjectionRHInfinite(fov, aspect, Near);
+	Matrix4 proj = ProjectionRHInfinite(fov, aspect, Settings::Instance().Near);
 	glLoadTransposeMatrixf(proj.data());
 	// Calculate inverse (used to draw infinite plane)
-	mInvProj = InverseProjectionRHInfinite(fov, 1.0/aspect, Near);
+	mInvProj = InverseProjectionRHInfinite(fov, 1.0/aspect, Settings::Instance().Near);
 
 	// Alternatively use standard gluPerspective method
 	//glLoadIdentity();
@@ -298,7 +291,7 @@ void BigHeadScreamers::Input()
 	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha() * M_PI / 180.0f, fpsCamera.GetBeta() * M_PI / 180.0f);
 	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
 	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
-	ground.Input(projViewInv, fpsCamera.GetPosition(), Far);
+	ground.Input(projViewInv, fpsCamera.GetPosition(), Settings::Instance().Far);
 
 	// Visual options input: ground and cubemap textures
 	if (KeyPressed(KEY_1))
@@ -311,11 +304,30 @@ void BigHeadScreamers::Input()
 	if (KeyPressed(KEY_4))
 		uiCurCubemap = Next(uiCurCubemap, NUM_CUBEMAPS);
 
+	if (KeyPressing(KEY_5))
+	{
+		if ((fFOV /= (1.0f + dt)) < 40.0f)
+			fFOV = 40.0f;
+		Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
+	}
+	if (KeyPressing(KEY_6))
+	{
+		if ((fFOV *= (1.0f + dt)) > 150.0f)
+			fFOV = 150.0f;
+		Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
+	}
+	if (KeyPressing(KEY_7))
+	{
+		fFOV = Settings::Instance().Fov;
+		Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
+	}
+
+
 	// Some randomisation
 	if (t - fSetTime > fRandomTime)
 	{
 		fSetTime = timer.GetTime();
-		fRandomTime = RandRange(MinRandomCycle, MaxRandomCycle);
+		fRandomTime = RandRange(Settings::Instance().MinRandomCycle, Settings::Instance().MaxRandomCycle);
 		//if ((rand() % 4) == 0)
 		//	NextTexture();
 		//else
@@ -340,7 +352,7 @@ void BigHeadScreamers::Input()
 	pAI->UpdateState(fpsCamera.GetPosition());
 
 	temp.Start();
-	pER->Update(pAI->GetData(), -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
+	pER->Update(pAI->GetData(), -fpsCamera.GetAlpha(), Settings::Instance().EnemyHeight);
 	fEnemiesTime = temp.Update();
 }
 
@@ -416,7 +428,8 @@ void BigHeadScreamers::SkyBoxRotate() const
 	// then rotate alpha angle to orient
 	glRotatef(fpsCamera.GetAlpha(), 0.0, 1.0, 0.0);
 
-	float scale = Far / 10.0f;
+	// Anything more than diagonal(cube) * Near
+	float scale = 10.0f * Settings::Instance().Near;
 	glScalef(scale, scale, scale);
 	
 	MultMirror();
@@ -449,7 +462,7 @@ void BigHeadScreamers::RenderGround() const
 	pReflectionFBO->BindTexture();
 	glActiveTexture(GL_TEXTURE0);
 
-	ground.Render(fpsCamera.GetPosition(), Far,
+	ground.Render(fpsCamera.GetPosition(), Settings::Instance().Far,
 		ShellGet(SDLShell::SHELL_WIDTH), ShellGet(SDLShell::SHELL_HEIGHT));
 }
 
@@ -476,7 +489,7 @@ void BigHeadScreamers::RenderSprites() const
 	//MultMirror();
 
 	// Note alpha mask is needed since the polygons z-fight otherwise
-	pER->Render(pAI->GetData(), -fpsCamera.GetAlpha(), AIManager::EnemyHeight);
+	pER->Render(pAI->GetData(), -fpsCamera.GetAlpha(), Settings::Instance().EnemyHeight);
 }
 
 
@@ -580,6 +593,15 @@ void BigHeadScreamers::ShowInfo()
 			ttFont.SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
 			position.y -= position.h * 1.2f;
 		
+			ttFont.SDL_GL_RenderText(color, &position, "FOV=%.2f", fFOV);
+			position.y -= position.h * 1.2f;
+
+			ttFont.SDL_GL_RenderText(color, &position, "collisions=%.2fms", fCollisionTime * 1000.0f);
+			position.y -= position.h * 1.2f;
+
+			ttFont.SDL_GL_RenderText(color, &position, "enemies=%.2fms", fEnemiesTime * 1000.0f);
+			position.y -= position.h * 1.2f;
+
 			if (iShowInfo >= 3)
 			{
 				ttFont.SDL_GL_RenderText(color, &position, "alpha=%.1f", fpsCamera.GetAlpha());
@@ -601,11 +623,6 @@ void BigHeadScreamers::ShowInfo()
 					position.y -= position.h * 1.2f;
 				}
 			}
-			ttFont.SDL_GL_RenderText(color, &position, "collisions=%.2fms", fCollisionTime * 1000.0f);
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "enemies=%.2fms", fEnemiesTime * 1000.0f);
-			position.y -= position.h * 1.2f;
 		}
 
 		TTFont::glDisable2D();

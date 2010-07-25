@@ -90,7 +90,7 @@ protected:
 
 	TTFont ttFont;
 
-
+	float fFOV;
 	// Inverted projection matrix (needed by infinite plane rendering)
 	Matrix4 mInvProj;
 	Ground ground;

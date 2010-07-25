@@ -20,8 +20,6 @@
 #include <assert.h>
 
 
-static const float AmmoSize = 1.5f;
-
 static const char *Shaders[] = {
 	"data/shaders/Grenade.vert", "data/shaders/Grenade.frag",
 };
@@ -38,8 +36,8 @@ GrenadeRenderer::GrenadeRenderer()
 	unsigned int index;
 	assert(loader.Load3DSFile("data/scenes/grenade.3ds", index));
 	int permutation[] = { 0, 1, 2 };
-	pMesh[0] = new Mesh(loader.FindMesh(index, "Sphere"), AmmoSize, false, permutation);
-	pMesh[1] = new Mesh(loader.FindMesh(index, "Sphere.001"), AmmoSize, false, permutation);
+	pMesh[0] = new Mesh(loader.FindMesh(index, "Sphere"), Settings::Instance().GrenadeSize, false, permutation);
+	pMesh[1] = new Mesh(loader.FindMesh(index, "Sphere.001"), Settings::Instance().GrenadeSize, false, permutation);
 }
 
 GrenadeRenderer::~GrenadeRenderer()
