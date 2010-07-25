@@ -50,6 +50,7 @@ public:
 	// Demo timing values for changing skybox and ground textures
 	float MinRandomCycle;
 	float MaxRandomCycle;
+	float SkyBoxTransitionTime;
 
 	// From Bullet
 	float BulletGravity;

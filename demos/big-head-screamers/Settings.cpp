@@ -46,6 +46,7 @@ Settings::Settings() :
 	// Demo timing values for changing skybox and ground textures
 	MinRandomCycle(7.5f),
 	MaxRandomCycle(15.0f),
+	SkyBoxTransitionTime(2.0f),
 
 	// From Bullet
 	BulletGravity(2.0f),
@@ -93,6 +94,7 @@ bool Settings::Read()
 		READ(stream, fieldName, Far)
 		READ(stream, fieldName, MinRandomCycle)
 		READ(stream, fieldName, MaxRandomCycle)
+		READ(stream, fieldName, SkyBoxTransitionTime)
 		READ(stream, fieldName, BulletGravity)
 		READ(stream, fieldName, BulletSpeed)
 		READ(stream, fieldName, GrenadeSize)
@@ -128,6 +130,7 @@ bool Settings::Write()
 		WRITE(Far)
 		WRITE(MinRandomCycle)
 		WRITE(MaxRandomCycle)
+		WRITE(SkyBoxTransitionTime)
 		WRITE(BulletGravity)
 		WRITE(BulletSpeed)
 		WRITE(GrenadeSize)
