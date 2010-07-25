@@ -74,7 +74,7 @@ void AIManager::Spawn(vector<Enemy *>::iterator &iter, const Vector2 &player)
 }
 
 
-void AIManager::Input(const float t, const float dt, const Vector3 &player)
+void AIManager::Input(const float t, const float dt, const Vector3 &player, bool apocalypse/* = false*/)
 {
 	const Vector2 target = Vector2(player[0], player[2]);
 	vector<Enemy *>::iterator iter;
@@ -87,7 +87,7 @@ void AIManager::Input(const float t, const float dt, const Vector3 &player)
 		//(*iter)->hit = false;
 		(*iter)->pos += dir.Normalize() * dt * Settings::Instance().EnemySpeed;
 		// Check impact
-		if (((*iter)->pos - target).Length() < Settings::Instance().EnemyImpactDistance)
+		if (apocalypse || ((*iter)->pos - target).Length() < Settings::Instance().EnemyImpactDistance)
 		{
 			// Die, new one will spawn in UpdateState
 			(*iter)->health = 0.0f;

@@ -251,16 +251,12 @@ void BigHeadScreamers::Input()
 		Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 	}
 
-
-	// Some randomisation
-	if (t - fSetTime > fRandomTime)
+	// Loop through cubemaps
+	if (Settings::Instance().MinRandomCycle != 0.0f && t - fSetTime > fRandomTime)
 	{
 		fSetTime = timer.GetTime();
 		fRandomTime = RandRange(Settings::Instance().MinRandomCycle, Settings::Instance().MaxRandomCycle);
-		//if ((rand() % 4) == 0)
-		//	NextTexture();
-		//else
-			pSkyBoxManager->CubemapUpdate(true, t);
+		pSkyBoxManager->CubemapUpdate(true, t);
 	}
 	pSkyBoxManager->Update(t);
 
@@ -270,7 +266,7 @@ void BigHeadScreamers::Input()
 	pWM->Input(dt, fpsCamera, LeftClick() || KeyPressing(KEY_SPACE));
 
 	// AI input
-	pAI->Input(t, dt, fpsCamera.GetPosition());
+	pAI->Input(t, dt, fpsCamera.GetPosition(), RightClick());
 
 	Timer temp;
 	pDetector->Run();

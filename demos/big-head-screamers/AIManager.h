@@ -48,7 +48,7 @@ public:
 	~AIManager();
 
 	// Update of all enemy positions
-	void Input(const float t, const float dt, const Vector3 &player);
+	void Input(const float t, const float dt, const Vector3 &player, bool apocalypse = false);
 	// Remove enemies that have died (called after CollisionDetector::Run())
 	void UpdateState(const Vector3 &player);
 	
