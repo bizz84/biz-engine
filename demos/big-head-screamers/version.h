@@ -28,6 +28,9 @@
 */
 
 /* Version History
+V0.0.9
+- Settings on a file
+- Added FOV control
 V0.0.8
 - Proper Grenade model
 - Big classes redesign
@@ -56,7 +59,7 @@ V0.0.1
 */
 
 
-const char szAppVersion[] = "0.0.7";
+const char szAppVersion[] = "0.0.9";
 const char szAppName[] = "Big Head Screamers";
 
 
