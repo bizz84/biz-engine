@@ -59,6 +59,12 @@ public:
 	unsigned int GrenadeDamage;
 	unsigned int GrenadeMaxBounces;
 	float GrenadeBounceSlowDown;
+	float GrenadeReload;
+
+	float LaserSpeed;
+	float LaserReload;
+	unsigned int LaserDamage;
+	float LaserMaxDistance;
 
 };
 

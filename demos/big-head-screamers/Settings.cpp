@@ -54,7 +54,13 @@ Settings::Settings() :
 	GrenadeSize(1.5f),
 	GrenadeDamage(50),
 	GrenadeMaxBounces(3),
-	GrenadeBounceSlowDown(0.5f)
+	GrenadeBounceSlowDown(0.5f),
+	GrenadeReload(0.1f),
+
+	LaserSpeed(16.0f),
+	LaserReload(0.1f),
+	LaserDamage(50),
+	LaserMaxDistance(40.0f)
 {
 	// Read from configuration file or write it
 	if (!Read())
@@ -101,6 +107,11 @@ bool Settings::Read()
 		READ(stream, fieldName, GrenadeDamage)
 		READ(stream, fieldName, GrenadeMaxBounces)
 		READ(stream, fieldName, GrenadeBounceSlowDown)
+		READ(stream, fieldName, GrenadeReload)
+		READ(stream, fieldName, LaserSpeed)
+		READ(stream, fieldName, LaserReload)
+		READ(stream, fieldName, LaserDamage)
+		READ(stream, fieldName, LaserMaxDistance)
 		return true;
 	}
 	return false;
@@ -136,7 +147,12 @@ bool Settings::Write()
 		WRITE(GrenadeSize)
 		WRITE(GrenadeDamage)
 		WRITE(GrenadeMaxBounces)
-		WRITE(GrenadeBounceSlowDown);
+		WRITE(GrenadeBounceSlowDown)
+		WRITE(GrenadeReload)
+		WRITE(LaserSpeed)
+		WRITE(LaserReload)
+		WRITE(LaserDamage)
+		WRITE(LaserMaxDistance);
 
 	return true;
 }
