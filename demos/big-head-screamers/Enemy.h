@@ -14,9 +14,9 @@
 #define _ENEMY_H_
 
 #include "Vector.h"
-#include <vector>
 
-using namespace std;
+#include "boost/ptr_container/ptr_vector.hpp"
+using namespace boost;
 
 /*****************************************************************************
  * class defining an enemy
@@ -51,7 +51,7 @@ public:
 
 	int texIndex0, texIndex1;
 
-	int GetTextureIndex() { return health <= 50 ? texIndex1 : texIndex0; }
+	const int GetTextureIndex() const { return health <= 50 ? texIndex1 : texIndex0; }
 };
 
 
@@ -67,9 +67,9 @@ public:
 public:
 	virtual ~EnemyRenderer() { }
 	virtual bool LoadSprites() = 0;
-	virtual bool Update(const vector<Enemy *> &data, const float angle,
+	virtual bool Update(const ptr_vector<Enemy> &data, const float angle,
 		const float height) { return false; }
-	virtual void Render(const vector<Enemy *> &data, const float angle,
+	virtual void Render(const ptr_vector<Enemy> &data, const float angle,
 		const float height) const = 0;
 };
 
