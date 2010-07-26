@@ -32,6 +32,7 @@ public:
 	GrenadeRenderer();
 	~GrenadeRenderer();
 	virtual void Render(const list<Bullet *> &bullets) const;
+	virtual void Render(const Bullet *bullet) const;
 };
 
 #endif
