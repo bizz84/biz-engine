@@ -16,8 +16,8 @@
 #include "Extensions.h"
 #include "ProgramArray.h"
 
-#include <list>
-using namespace std;
+#include "boost/ptr_container/ptr_list.hpp"
+using namespace boost;
 
 class ParticleEmitter;
 
@@ -28,7 +28,7 @@ class ParticleRenderer : private ProgramArray
 public:
 	ParticleRenderer();
 	virtual ~ParticleRenderer() { }
-	void Render(const list<ParticleEmitter *> &particles) const;
+	void Render(const ptr_list<ParticleEmitter> &particles) const;
 };
 
 #endif

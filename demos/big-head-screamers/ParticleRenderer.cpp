@@ -26,16 +26,16 @@ ParticleRenderer::ParticleRenderer()
 }
 
 
-void ParticleRenderer::Render(const list<ParticleEmitter *> &particles) const
+void ParticleRenderer::Render(const ptr_list<ParticleEmitter> &particles) const
 {
 	GLuint shader = Program(P_PARTICLE);
 	glUseProgram(shader);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-	list<ParticleEmitter *>::const_iterator iter;
+	ptr_list<ParticleEmitter>::const_iterator iter;
 	for (iter = particles.begin(); iter != particles.end(); iter++)
 	{
-		(*iter)->Render();
+		iter->Render();
 	}
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
