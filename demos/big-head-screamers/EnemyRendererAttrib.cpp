@@ -53,7 +53,7 @@ bool EnemyRendererAttrib::LoadSprites()
 {
 	GLResourceManager &loader = GLResourceManager::Instance();
 	// Load texture atlas
-	return loader.LoadTextureFromFile("data/textures/sprites/Atlas.bmp",
+	return loader.LoadTextureFromFile("data/textures/sprites/Atlas.tga",
 			uiAtlas, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR);
 }
 
@@ -66,7 +66,7 @@ Point2 EnemyRendererAttrib::TexCoord(Point2 coord, int index)
 	return coord;
 }
 
-bool EnemyRendererAttrib::Update(const vector<Enemy *> &data, const float angle,
+bool EnemyRendererAttrib::Update(const ptr_vector<Enemy> &data, const float angle,
 							const float height)
 {
 	// Render if there's at least one enemy
@@ -83,12 +83,12 @@ bool EnemyRendererAttrib::Update(const vector<Enemy *> &data, const float angle,
 	float radAngle = angle * M_PI / 180.0f;
 	// Loop through sprites: Sprites are made by groups of four vertices
 	// sharing the same attributes
-	vector<Enemy *>::const_iterator iter;
+	ptr_vector<Enemy>::const_iterator iter;
 	SpriteVertexData *ptr = attrib;
 	for (iter = data.begin(); iter != data.end(); iter++)
 	{
-		int texIndex = (dynamic_cast<SpriteEnemy *>(*iter))->GetTextureIndex();
-		Vector3 translation = Point3((*iter)->pos[0], 0.5f * height, (*iter)->pos[1]);
+		int texIndex = (dynamic_cast<const SpriteEnemy *>(&*iter))->GetTextureIndex();
+		Vector3 translation = Point3(iter->pos[0], height, iter->pos[1]);
 	
 		// positions-texcoords loop
 		ptr->pos = Point2(-0.5f, -1.0f);
@@ -148,7 +148,7 @@ bool EnemyRendererAttrib::UnsetAttribPointer(GLint loc) const
 
 
 // BindTexture happens outside
-void EnemyRendererAttrib::Render(const vector<Enemy *> &data, const float angle,
+void EnemyRendererAttrib::Render(const ptr_vector<Enemy> &data, const float angle,
 							const float height) const
 {
 	// Render if there's at least one enemy

@@ -77,10 +77,10 @@ public:
 	EnemyRendererAttrib();
 	~EnemyRendererAttrib();
 
-	virtual bool Update(const vector<Enemy *> &data, const float angle,
+	virtual bool Update(const ptr_vector<Enemy> &data, const float angle,
 		const float height);
 
-	virtual void Render(const vector<Enemy *> &data, const float angle,
+	virtual void Render(const ptr_vector<Enemy> &data, const float angle,
 		const float height) const;	
 
 	static const unsigned int NumSprites;
