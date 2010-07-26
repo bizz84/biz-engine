@@ -21,7 +21,7 @@
 - Big Head meshes
 - Jumping. Space bar calls for it!
 - Explosions
-- Plasma gun
+- Laser gun
 - Game logic
 - HUD
 
@@ -31,6 +31,7 @@
 V0.0.9
 - Settings on a file
 - Added FOV control
+- Boost pointer containers integration
 V0.0.8
 - Proper Grenade model
 - Big classes redesign
