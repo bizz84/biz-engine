@@ -20,7 +20,10 @@
 #include "Enemy.h"
 #include "Settings.h"
 
+#include "boost/ptr_container/ptr_list.hpp"
+
 using namespace std;
+using namespace boost;
 
 /*
 General algorithm: A list of bullets can collide with a list of enemies.
@@ -52,14 +55,14 @@ bool CPUGrenadeEnemyCollisionDetector::Write()
 
 void CPUGrenadeEnemyCollisionDetector::Execute()
 {
-	const list<Bullet *> &bullets = GetWM()->GetBullets();
-	const vector<Enemy *> &enemies = GetAI()->GetData();
+	ptr_list<Bullet> &bullets = (ptr_list<Bullet> &)GetWM()->GetBullets();
+	ptr_vector<Enemy> &enemies = (ptr_vector<Enemy> &)GetAI()->GetData();
 	
 	if (bullets.size() == 0 || enemies.size() == 0)
 		return;
 		
-	list<Bullet *>::const_iterator b;
-	vector<Enemy *>::const_iterator e;
+	ptr_list<Bullet>::iterator b;
+	ptr_vector<Enemy>::iterator e;
 
 	Point3 prev, curr, target3;
 	Point2 target2;
@@ -69,24 +72,24 @@ void CPUGrenadeEnemyCollisionDetector::Execute()
 		for (e = enemies.begin(); e != enemies.end(); e++)
 		{	
 			// Bullet has exploded already
-			if ((*b)->Impact())
+			if (b->Impact())
 				continue;
 				
 			// Enemy has been killed already
-			if ((*e)->health <= 0)
+			if (e->health <= 0)
 				continue;
 				
-			curr = (*b)->GetPosition();
-			prev = (*b)->GetPrevPosition();
-			target2 = (*e)->pos;
+			curr = b->GetPosition();
+			prev = b->GetPrevPosition();
+			target2 = e->pos;
 			target3 = Point3(target2[0], Settings::Instance().EnemyHeight,target2[1]);
 				
 			if (CollisionSegmentSphere(prev, curr, target3, Settings::Instance().CollisionRadius))
 			{
-				(*b)->SetImpact();
+				b->SetImpact();
 
-				(*e)->health -= Settings::Instance().GrenadeDamage;
-				GetAI()->AddParticles(curr, (*e)->health);
+				e->health -= Settings::Instance().GrenadeDamage;
+				GetAI()->AddParticles(curr, e->health);
 			}				
 		}
 	}	
