@@ -38,6 +38,8 @@
 #include "CameraController.h"
 #include "Ground.h"
 
+using namespace std;
+
 class AIManager;
 class WeaponManager;
 class ParticleRenderer;
@@ -58,7 +60,6 @@ class BigHeadScreamers : public SDLShell, private ProgramArray
 
 	enum { NUM_TEXTURES = 2 };
 
-
 protected:
 
 	int iShowInfo;
@@ -73,7 +74,7 @@ protected:
 	// mutable since it's changed by RenderReflection() but restored at the end
 	// aka logical constness
 	mutable bool bReflectionFlag;
-	FBO *pReflectionFBO;
+	auto_ptr<FBO> pReflectionFBO;
 
 	// Timing related variables
 	Timer timer;
@@ -93,14 +94,13 @@ protected:
 	FPSCamera fpsCamera;
 
 	// Game Data
-	WeaponManager *pWM;
-	ParticleRenderer *pExpR;
-	BulletRenderer *pBR;
-	AIManager *pAI;
-	EnemyRenderer *pER;
-	SkyBoxManager *pSkyBoxManager;
+	auto_ptr<WeaponManager> pWM;
+	auto_ptr<ParticleRenderer> pExpR;
+	auto_ptr<AIManager> pAI;
+	auto_ptr<EnemyRenderer> pER;
+	auto_ptr<SkyBoxManager> pSkyBoxManager;
 
-	CollisionDetector *pDetector;
+	auto_ptr<CollisionDetector> pDetector;
 
 	float fCollisionTime;
 	// This is updated during render time

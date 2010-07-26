@@ -27,6 +27,7 @@
 #include "Settings.h"
 #include "SkyBoxManager.h"
 
+#include "UnitTest.h"
 
 
 // Shaders
@@ -53,7 +54,6 @@ BigHeadScreamers::BigHeadScreamers() :
 	pAI(NULL),
 	pWM(NULL),
 	pExpR(NULL),
-	pBR(NULL),
 	pER(NULL),
 	pDetector(NULL),
 	fCollisionTime(0.0f), // debug
@@ -61,6 +61,8 @@ BigHeadScreamers::BigHeadScreamers() :
 {
 	// initialize random number generator
 	Timer::InitRand();
+
+	TestList();
 }
 
 BigHeadScreamers::~BigHeadScreamers()
@@ -134,30 +136,28 @@ bool BigHeadScreamers::InitGL()
 		return false;
 
 	// Initialize skybox singleton
-	pSkyBoxManager = new SkyBoxManager();
+	pSkyBoxManager = auto_ptr<SkyBoxManager>(new SkyBoxManager());
 
 	// Initialize coordinate frame
 	CoordinateFrame::Instance().Make(400);
 
 	// Initialize fbo used for drawing reflection
-	pReflectionFBO = new FBO(GL_RGB, GL_UNSIGNED_SHORT_5_6_5, ShellGet(SHELL_WIDTH),
-		ShellGet(SHELL_HEIGHT), true);
+	pReflectionFBO = auto_ptr<FBO>(new FBO(GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
+		ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT), true));
 
 	// Initialize AI 
-	pAI = new AIManager(fpsCamera.GetPosition());
+	pAI = auto_ptr<AIManager>(new AIManager(fpsCamera.GetPosition()));
 
 	// Initialize weapon system
-	pWM = new WeaponManager(0.1f);
+	pWM = auto_ptr<WeaponManager>(new WeaponManager());
 
 	// Initialize weapon renderer
-	pExpR = new ParticleRenderer();
+	pExpR = auto_ptr<ParticleRenderer>(new ParticleRenderer());
 
-	// Initialize GrenadeRenderer
-	pBR = new GrenadeRenderer();
 	
-	pER = new EnemyRendererAttrib();
+	pER = auto_ptr<EnemyRendererAttrib>(new EnemyRendererAttrib());
 
-	pDetector = CollisionDetectorFactory::CreateCPU(pWM, pAI);
+	pDetector = auto_ptr<CollisionDetector>(CollisionDetectorFactory::CreateCPU(pWM.get(), pAI.get()));
 
 	
 	// GL state setup
@@ -249,6 +249,18 @@ void BigHeadScreamers::Input()
 	{
 		fFOV = Settings::Instance().Fov;
 		Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
+	}
+
+	// Change weapon
+	if (ScrollDown())
+	{
+		pWM->NextWeapon();
+		cout << "Switched to weapon " << pWM->CurrWeapon() << endl;
+	}
+	if (ScrollUp())
+	{
+		pWM->PrevWeapon();
+		cout << "Switched to weapon " << pWM->CurrWeapon() << endl;
 	}
 
 	// Loop through cubemaps
@@ -402,7 +414,7 @@ void BigHeadScreamers::RenderFire() const
 	fpsCamera.LoadMatrix();
 	MultMirror();
 
-	pBR->Render(pWM->GetBullets());
+	pWM->Render();
 
 	if (!bReflectionFlag)
 		pExpR->Render(pAI->GetParticles());
@@ -511,6 +523,11 @@ void BigHeadScreamers::ShowInfo()
 			position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.95f);
 
 			ttFont.SDL_GL_RenderText(color, &position, "%.1f",  1.0f / timer.GetDeltaTime());
+
+			position.x = (int)(ShellGet(SHELL_WIDTH) * 0.9f);
+			position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.95f);
+
+			ttFont.SDL_GL_RenderText(color, &position, "bullets=%d", pWM->GetBullets().size());
 		}
 		else
 		{
@@ -563,19 +580,6 @@ void BigHeadScreamers::ShowInfo()
 bool BigHeadScreamers::ReleaseGL()
 {
 	CoordinateFrame::Instance().Unload();
-
-	delete pReflectionFBO;
-
-	delete pAI;
-
-	delete pWM;
-	delete pExpR;
-
-	delete pBR;
-	delete pER;
-
-	delete pDetector;
-
 
 	return GLResourceManager::Instance().Release();
 }
