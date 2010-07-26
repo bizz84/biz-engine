@@ -16,12 +16,13 @@
 #include "Extensions.h"
 #include "Matrix.h"
 #include "CameraController.h"
+#include "Misc.h"
 
-#include <list>
-
-using namespace std;
+#include "boost/ptr_container/ptr_list.hpp"
+using namespace boost;
 
 class Bullet;
+class BulletRenderer;
 
 /*****************************************************************************
  * WeaponManager class declaration
@@ -30,21 +31,25 @@ class Bullet;
 class WeaponManager
 {
 public:
-	enum WeaponType { TypeGrenade, TypePlasma, NumWeapons };
+	enum WeaponType { TypeGrenade, TypeLaser, NumWeapons };
 private:
 
-	const float reloadTime;
+	float reloadTime[NumWeapons];
 	float time;
-	// TODO: firing time depends on the weapon used
 	bool canFire;
 
-	WeaponType eCurrWeapon;
+	int currWeapon;
 
-	list<Bullet *> bullets;
-	
+	// pimpl idiom
+	ptr_list<Bullet> bullets;
+
+	BulletRenderer *pGrenadeRenderer;
+	BulletRenderer *pLaserRenderer;
+
 public:
-	WeaponManager(const float reloadTime)
-		: reloadTime(reloadTime), time(0.0f), canFire(true), eCurrWeapon(TypeGrenade) { }
+	WeaponManager();
+	// TODO: why does this raise a compile error if defined on header file or
+	// undefined at all?
 	~WeaponManager();
 
 	// Factory method
@@ -56,7 +61,15 @@ public:
 	void UpdateState();
 
 	// Get data array (used bt WeaponRenderer)
-	const list<Bullet *> &GetBullets() const { return bullets; }	
+	// The non const version is the one passed to CollisionDetector
+	ptr_list<Bullet> &GetBullets() { return bullets; }
+	const ptr_list<Bullet> &GetBullets() const { return bullets; }
+
+	void NextWeapon() { currWeapon = Next(currWeapon, NumWeapons); }
+	void PrevWeapon() { currWeapon = Prev(currWeapon, NumWeapons); }
+	const int CurrWeapon() const { return currWeapon; }
+
+	void Render();
 };
 
 #endif
