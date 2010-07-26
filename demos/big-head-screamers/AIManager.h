@@ -21,6 +21,11 @@
 #include <list>
 using namespace std;
 
+#include "boost/ptr_container/ptr_list.hpp"
+#include "boost/ptr_container/ptr_vector.hpp"
+using namespace boost;
+
+
 class ParticleEmitter;
 class Enemy;
 
@@ -36,13 +41,13 @@ class AIManager
 		const int index1, const int index2);
 
 	// Vector containing all the enemies
-	vector<Enemy *> data;
+	ptr_vector<Enemy> data;
 
 	// Blood
-	list<ParticleEmitter *> particles;
+	ptr_list<ParticleEmitter> particles;
 
 	// Spawn new enemy
-	void Spawn(vector<Enemy *>::iterator &iter, const Vector2 &player);
+	void Spawn(ptr_vector<Enemy>::iterator &iter, const Vector2 &player);
 public:
 	AIManager(const Vector3 &player);
 	~AIManager();
@@ -53,8 +58,10 @@ public:
 	void UpdateState(const Vector3 &player);
 	
 	// public const access (used for rendering)
-	const vector<Enemy *> &GetData() const { return data; }
-	const list<ParticleEmitter *> &GetParticles() const { return particles; }
+	ptr_vector<Enemy> &GetData() { return data; }
+	const ptr_vector<Enemy> &GetData() const { return data; }
+
+	const ptr_list<ParticleEmitter> &GetParticles() const { return particles; }
 
 	void AddParticles(const Point3 &pos, const unsigned int health);
 };

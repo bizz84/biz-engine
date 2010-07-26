@@ -45,68 +45,56 @@ AIManager::AIManager(const Vector3 &player)
 
 AIManager::~AIManager()
 {
-	// deallocate memory
-	// TODO: Use shared_ptr
-	vector<Enemy *>::iterator iter;
-	for (iter = data.begin(); iter != data.end(); iter++)
-	{
-		delete *iter;
-	}
 
-	list<ParticleEmitter *>::iterator e;
-	for (e = particles.begin(); e != particles.end(); e++)
-	{
-		delete *e;
-	}
 }
 
-void AIManager::Spawn(vector<Enemy *>::iterator &iter, const Vector2 &player)
+void AIManager::Spawn(ptr_vector<Enemy>::iterator &iter, const Vector2 &player)
 {
 	float maxd = Settings::Instance().EnemyMaxDistance;
 	// Respawn and set health to maximum
 	do
 	{
-		(*iter)->pos = player + Vector2(RandRange(-maxd, maxd),
+		iter->pos = player + Vector2(RandRange(-maxd, maxd),
                                      RandRange(-maxd, maxd));
 	}
-	while (((*iter)->pos - player).Length() < Settings::Instance().EnemyMinDistance);
-	(*iter)->health = 100;
+	while ((iter->pos - player).Length() < Settings::Instance().EnemyMinDistance);
+	iter->health = 100;
 }
 
 
 void AIManager::Input(const float t, const float dt, const Vector3 &player, bool apocalypse/* = false*/)
 {
 	const Vector2 target = Vector2(player[0], player[2]);
-	vector<Enemy *>::iterator iter;
+	ptr_vector<Enemy>::iterator iter;
 
 	// Update all enemies position
 	for (iter = data.begin(); iter != data.end(); iter++)
 	{
 		// Update position
-		Vector2 dir = target - (*iter)->pos;
-		//(*iter)->hit = false;
-		(*iter)->pos += dir.Normalize() * dt * Settings::Instance().EnemySpeed;
+		Vector2 dir = target - iter->pos;
+		//iter->hit = false;
+		iter->pos += dir.Normalize() * dt * Settings::Instance().EnemySpeed;
 		// Check impact
-		if (apocalypse || ((*iter)->pos - target).Length() < Settings::Instance().EnemyImpactDistance)
+		if (apocalypse || (iter->pos - target).Length() < Settings::Instance().EnemyImpactDistance)
 		{
 			// Die, new one will spawn in UpdateState
-			(*iter)->health = 0.0f;
+			iter->health = 0.0f;
 		}
 	}
 
 	// Update particles
 	// TODO: should be a generic Explosion * routine
-	list<ParticleEmitter *>::iterator e;	
+	ptr_list<ParticleEmitter>::iterator e;	
 	for (e = particles.begin(); e != particles.end(); e++)
 	{
-		(*e)->Update(dt);
+		e->Update(dt);
 	}
 }
 
 // TODO: lambda function in C++0x
-bool ExpiredCondition(const ParticleEmitter *particle)
+bool ExpiredCondition(const ParticleEmitter &particle)
 {
-	return particle->Expired();
+	return particle.Expired();
 }
 
 void AIManager::AddParticles(const Point3 &pos, const unsigned int health)
@@ -119,17 +107,18 @@ void AIManager::UpdateState(const Vector3 &player)
 {
 	// Respawn dead enemies
 	const Vector2 target = Vector2(player[0], player[2]);
-	vector<Enemy *>::iterator iter;
+	ptr_vector<Enemy>::iterator iter;
 	for (iter = data.begin(); iter != data.end(); iter++)
 	{
-		if ((*iter)->Dead())
+		if (iter->Dead())
 		{
 			// Some more blood never hurts
-			Vector3 pos = Vector3((*iter)->pos[0], 0.75 * Settings::Instance().EnemyHeight, (*iter)->pos[1]);
+			Vector3 pos = Vector3(iter->pos[0], 0.75 * Settings::Instance().EnemyHeight, iter->pos[1]);
 			particles.push_back(new BloodDropEmitter(pos, Settings::Instance().NumBloodDrops));
 			// New position
 			Spawn(iter, target);
 		}
 	}
-	particles.remove_if(ExpiredCondition);	
+	// FIXME: This causes memory leaks!!
+	particles.erase_if(ExpiredCondition);	
 }
