@@ -46,7 +46,7 @@ public:
 
 	bool Expired() const { return expired; }
 
-	virtual void Render() { }
+	virtual void Render() const { }
 };
 
 class BloodDropEmitter : public ParticleEmitter
@@ -62,7 +62,7 @@ protected:
 public:
 	BloodDropEmitter(const Point3 &pos, const int n);
 
-	virtual void Render();
+	virtual void Render() const;
 };
 
 #endif
