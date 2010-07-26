@@ -12,13 +12,15 @@
  *****************************************************************************/
 
 #include "Bullet.h"
+#include "BulletRenderer.h"
 
 /*****************************************************************************
  * Bullet implementation
  *****************************************************************************/
 
- Bullet::Bullet(const Point3 &p, const float yRot, const float xRot,
-	 const float speed) : xRot(xRot), yRot(yRot)
+ Bullet::Bullet(BulletRenderer *renderer, const Point3 &p,
+	 const float yRot, const float xRot, const float speed)
+	 : renderer(renderer), xRot(xRot), yRot(yRot)
 {
 	impact = false;
 	pos[1] = -p;
@@ -27,27 +29,25 @@
 	vel = Matrix3::RotationY(-yRot) * (Matrix3::RotationX(-xRot) *
 		Vector3(0.0f, 0.0f, -speed));		
 }
+
+ void Bullet::Render()
+ {
+	 renderer->Render(this);
+ }
 		
 /*****************************************************************************
  * Grenade implementation
  *****************************************************************************/
 
-Grenade::Grenade(const Point3 &p, const float yRot, const float xRot,
-				 const float speed) : Bullet(p, yRot, xRot, speed)
-{
-	bounces = 0;
-}
-
-
-bool Grenade::Update(float dt)
+bool Grenade::Update(const float dt)
 {
 	pos[0] = pos[1];
-	dt *= Settings::Instance().BulletSpeed;
-	float f = Settings::Instance().BulletGravity * dt;
+	float speed = dt * Settings::Instance().BulletSpeed;
+	float f = Settings::Instance().BulletGravity * speed;
 
 	vel[1] -= f;
 
-	pos[1] += vel * dt;
+	pos[1] += vel * speed;
 
 	if (pos[1][1] < 0.0f)
 	{
@@ -65,3 +65,23 @@ bool Grenade::Update(float dt)
 	return !Impact();
 
 }
+
+
+/*****************************************************************************
+ * Grenade implementation
+ *****************************************************************************/
+bool Laser::Update(float dt)
+{
+	float speed = dt * Settings::Instance().LaserSpeed;
+	pos[0] = pos[1];
+	pos[1] += vel * speed;
+
+	if (pos[1][1] <= 0.0f)
+		impact = true;
+
+	if ((distance += speed) > Settings::Instance().LaserMaxDistance)
+		impact = true;
+
+	return !Impact();
+}
+
