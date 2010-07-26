@@ -21,6 +21,15 @@
 #include "Vector.h"
 #include "GLResourceManager.h"
 
+#include <list>
+
+#include "boost/shared_ptr.hpp"
+#include "boost/ptr_container/ptr_list.hpp"
+#include "boost/ptr_container/ptr_vector.hpp"
+
+using namespace boost;
+
+
 using namespace std;
 
 #define M_RAD (180.0 / M_PI)
@@ -191,7 +200,6 @@ void UnitTestRun()
 	}*/
 
 
-	Grenade g(Point3(0.0f, 0.0f, 0.0f), M_PI_2, 0.5 * M_PI_2, 1.0f);
 	return;
 }
 
@@ -253,4 +261,83 @@ bool AttribTest()
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	return true;
+}
+
+class A
+{
+public:
+	A(int a) : a(a) { }
+	virtual ~A() { }
+	int a;
+	virtual void f() { cout << "A(" << a << ")\n"; }
+};
+
+class B : public A
+{
+public:
+	B(int a) : A(a) { }
+	virtual void f() { cout << "B(" << a << ")\n"; }
+};
+
+class C : public A
+{
+public:
+	C(int a) : A(a) { }
+	virtual void f() { cout << "C(" << a << ")\n"; }
+};
+
+void TestList()
+{
+	list<A*> a;
+	a.push_back(new A(1));
+	a.push_back(new A(2));
+	a.push_back(new A(3));
+	
+	list<A*> b;
+	b.push_back(new B(4));
+	b.push_back(new B(5));
+	b.push_back(new B(6));
+
+	list<A*> c;
+	c.push_back(new C(7));
+	c.push_back(new C(8));
+	c.push_back(new C(9));
+
+	{
+		cout << "size(A) = " << a.size() << "size(B) = " << b.size() << "size(C) = " << c.size() << endl; 
+
+		list<A*> d;
+		d.merge(a);
+		d.merge(b);
+		d.merge(c);
+
+		cout << "size(A) = " << a.size() << "size(B) = " << b.size() << "size(C) = " << c.size() << "size(D) = " << d.size() << endl; 
+
+		list<A*>::iterator i;
+		for (i = d.begin(); i != d.end(); i++)
+			(*i)->f();
+	}
+	a.clear();
+	{
+		list<A*> d;
+		d.merge(a);
+		d.merge(b);
+		d.merge(c);
+
+		cout << "size(A) = " << a.size() << "size(B) = " << b.size() << "size(C) = " << c.size() << "size(D) = " << d.size(); 
+
+		list<A*>::iterator i;
+		for (i = d.begin(); i != d.end(); i++)
+			(*i)->f();
+	}
+
+	ptr_vector<A> d;
+	d.push_back(new B(0));
+	ptr_vector<A>::const_iterator i = d.begin();
+
+	dynamic_cast<const B*>(&*i);
+	
+	shared_ptr<A*> p;
+
+	return;
 }

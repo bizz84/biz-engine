@@ -48,5 +48,6 @@ void UnitTestRun();
 
 bool AttribTest();
 
+void TestList();
 
 #endif
