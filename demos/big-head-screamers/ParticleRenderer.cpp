@@ -31,11 +31,11 @@ void ParticleRenderer::Render(const ptr_list<ParticleEmitter> &particles) const
 	GLuint shader = Program(P_PARTICLE);
 	glUseProgram(shader);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);
 	ptr_list<ParticleEmitter>::const_iterator iter;
 	for (iter = particles.begin(); iter != particles.end(); iter++)
 	{
 		iter->Render();
 	}
-	glDisableClientState(GL_VERTEX_ARRAY);
+	//glDisableClientState(GL_VERTEX_ARRAY);
 }
