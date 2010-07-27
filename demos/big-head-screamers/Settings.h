@@ -36,6 +36,7 @@ public:
 	float CollisionRadius;
 	unsigned int EnemyHealth;
 	float EnemySpeed;
+	float EnemyScale;
 
 	unsigned int NumBloodDrops;
 	float ParticleGravity;

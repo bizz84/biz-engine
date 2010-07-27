@@ -32,6 +32,7 @@ Settings::Settings() :
 	CollisionRadius(15.0f),
 	EnemyHealth(100),
 	EnemySpeed(20.0f),
+	EnemyScale(20.0f),
 
 	NumBloodDrops(200),
 	ParticleGravity(100.0f),
@@ -91,6 +92,7 @@ bool Settings::Read()
 		READ(stream, fieldName, CollisionRadius)
 		READ(stream, fieldName, EnemyHealth)
 		READ(stream, fieldName, EnemySpeed)
+		READ(stream, fieldName, EnemyScale)
 		READ(stream, fieldName, NumBloodDrops)
 		READ(stream, fieldName, ParticleGravity)
 		READ(stream, fieldName, ParticleSpeed)
@@ -132,6 +134,7 @@ bool Settings::Write()
 		WRITE(CollisionRadius)
 		WRITE(EnemyHealth)
 		WRITE(EnemySpeed)
+		WRITE(EnemyScale)
 		WRITE(NumBloodDrops)
 		WRITE(ParticleGravity)
 		WRITE(ParticleSpeed)
