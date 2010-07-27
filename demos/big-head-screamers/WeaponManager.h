@@ -42,9 +42,9 @@ private:
 
 	// pimpl idiom
 	ptr_list<Bullet> bullets;
+	list<Bullet *> pList[NumWeapons];
 
-	BulletRenderer *pGrenadeRenderer;
-	BulletRenderer *pLaserRenderer;
+	auto_ptr<BulletRenderer> pRenderer[NumWeapons];
 
 public:
 	WeaponManager();
@@ -53,7 +53,7 @@ public:
 	~WeaponManager();
 
 	// Factory method
-	Bullet *NewBullet(const Point3 &p, const float yRot, const float xRot,
+	void NewBullet(const Point3 &p, const float yRot, const float xRot,
 		const float speed);
 
 	// handles input
