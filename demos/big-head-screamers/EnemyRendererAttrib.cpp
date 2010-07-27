@@ -29,6 +29,16 @@ static const char *AttribShaders[] = {
 	"data/shaders/SpriteAttrib.vert", "data/shaders/Sprite.frag",
 };
 
+static const Point2 v1(-0.5f, -1.0f);
+static const Point2 v2( 0.5f, -1.0f);
+static const Point2 v3( 0.5f,  1.0f);
+static const Point2 v4(-0.5f,  1.0f);
+static const Point2 t1( 0.0f,  1.0f);
+static const Point2 t2( 1.0f,  1.0f);
+static const Point2 t3( 1.0f,  0.0f);
+static const Point2 t4( 0.0f,  0.0f);
+
+
 EnemyRendererAttrib::EnemyRendererAttrib()
 {
 	assert(LoadShaders(AttribShaders, NUM_PROGRAMS));
@@ -66,6 +76,7 @@ Point2 EnemyRendererAttrib::TexCoord(Point2 coord, int index)
 	return coord;
 }
 
+// TODO: this is a minor bottleneck -> optimize
 bool EnemyRendererAttrib::Update(const ptr_vector<Enemy> &data, const float angle,
 							const float height)
 {
@@ -91,24 +102,24 @@ bool EnemyRendererAttrib::Update(const ptr_vector<Enemy> &data, const float angl
 		Vector3 translation = Point3(iter->pos[0], height, iter->pos[1]);
 	
 		// positions-texcoords loop
-		ptr->pos = Point2(-0.5f, -1.0f);
-		ptr->tex = TexCoord(Point2( 0.0f,  1.0f), texIndex);
-		ptr->SetAttributes(20.0f, radAngle, translation);
+		ptr->pos = v1;
+		ptr->tex = TexCoord(t1, texIndex);
+		ptr->SetAttributes(Settings::Instance().EnemyScale, radAngle, translation);
 		ptr++;
 		
-		ptr->pos = Point2( 0.5f, -1.0f);
-		ptr->tex = TexCoord(Point2( 1.0f,  1.0f), texIndex);
-		ptr->SetAttributes(20.0f, radAngle, translation);
+		ptr->pos = v2;
+		ptr->tex = TexCoord(t2, texIndex);
+		ptr->SetAttributes(Settings::Instance().EnemyScale, radAngle, translation);
 		ptr++;
 
-		ptr->pos = Point2( 0.5f,  1.0f);;
-		ptr->tex = TexCoord(Point2( 1.0f,  0.0f), texIndex);
-		ptr->SetAttributes(20.0f, radAngle, translation);
+		ptr->pos = v3;
+		ptr->tex = TexCoord(t3, texIndex);
+		ptr->SetAttributes(Settings::Instance().EnemyScale, radAngle, translation);
 		ptr++;
 		
-		ptr->pos = Point2(-0.5f,  1.0f);;
-		ptr->tex = TexCoord(Point2( 0.0f,  0.0f), texIndex);
-		ptr->SetAttributes(20.0f, radAngle, translation);
+		ptr->pos = v4;
+		ptr->tex = TexCoord(t4, texIndex);
+		ptr->SetAttributes(Settings::Instance().EnemyScale, radAngle, translation);
 		ptr++;
 	}
 	return true;
@@ -159,15 +170,15 @@ void EnemyRendererAttrib::Render(const ptr_vector<Enemy> &data, const float angl
 	
 	glBindTexture(GL_TEXTURE_2D, uiAtlas);
 
-	glEnableClientState(GL_VERTEX_ARRAY);	
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);	
+	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	// Choose program
 	GLuint program = UseProgram(P_SPRITE_ATTRIB);
 
 	// Bind regular vertex array and pass it to GL. MUST be used in the shader
-	glVertexPointer(2, GL_FLOAT, sizeof(SpriteVertexData), &attrib->pos);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(SpriteVertexData), &attrib->tex);
+	//glVertexPointer(2, GL_FLOAT, sizeof(SpriteVertexData), &attrib->pos);
+	//glTexCoordPointer(2, GL_FLOAT, sizeof(SpriteVertexData), &attrib->tex);
 
 	// Pass in attributes
 	// This ones shouldn't be necessary if glVertexPointer and
@@ -186,8 +197,8 @@ void EnemyRendererAttrib::Render(const ptr_vector<Enemy> &data, const float angl
 	for (unsigned int i = 0; i < P_ATTRIBS; i++)
 		UnsetAttribPointer(attribLoc[i]);
 
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);	
+	//glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	//glDisableClientState(GL_VERTEX_ARRAY);	
 }
 
 
