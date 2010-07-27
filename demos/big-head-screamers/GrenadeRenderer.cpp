@@ -55,8 +55,8 @@ void GrenadeRenderer::Render(const list<Bullet *> &bullets) const
 	glUseProgram(shader);
 	glUniform4fv(GetUniLoc(shader, "Color"), 1, color);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_NORMAL_ARRAY);
 
 	list<Bullet *>::const_iterator iter;
 	for (iter = bullets.begin(); iter != bullets.end(); iter++)
@@ -72,32 +72,6 @@ void GrenadeRenderer::Render(const list<Bullet *> &bullets) const
 		glPopMatrix();
 	}
 
-	glDisableClientState(GL_NORMAL_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-}
-
-void GrenadeRenderer::Render(const Bullet *bullet) const
-{
-	// TODO: This is pre-render (factor out as the function is templatized)
-	float color[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-	GLuint shader = Program(P_GRENADE);
-	glUseProgram(shader);
-	glUniform4fv(GetUniLoc(shader, "Color"), 1, color);
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
-
-	glPushMatrix();
-	const Point3 &pos = bullet->GetPosition();
-	glTranslatef(pos[0], pos[1], pos[2]);
-	glRotatef(-((Grenade *)bullet)->GetAngleY() * 180.0f / M_PI, 0.0f, 1.0f, 0.0f);
-	glRotatef(-((Grenade *)bullet)->GetAngleX() * 180.0f / M_PI, 1.0f, 0.0f, 0.0f);
-	glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
-	pMesh[0]->GetVBO()->Render(GL_TRIANGLES);
-	pMesh[1]->GetVBO()->Render(GL_TRIANGLES);
-	glPopMatrix();
-
-	glDisableClientState(GL_NORMAL_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-
+	//glDisableClientState(GL_NORMAL_ARRAY);
+	//glDisableClientState(GL_VERTEX_ARRAY);
 }
