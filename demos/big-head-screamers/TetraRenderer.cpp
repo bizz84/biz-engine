@@ -64,8 +64,8 @@ void TetraRenderer::Render(const list<Bullet *> &bullets) const
 	glUseProgram(shader);
 	glUniform4fv(GetUniLoc(shader, "Color"), 1, color);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	list<Bullet *>::const_iterator iter;
 	for (iter = bullets.begin(); iter != bullets.end(); iter++)
@@ -79,7 +79,7 @@ void TetraRenderer::Render(const list<Bullet *> &bullets) const
 	}
 
 	// TODO: This is post-render (factor out as the function is templatized)
-	glDisableClientState(GL_NORMAL_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	//glDisableClientState(GL_NORMAL_ARRAY);
+	//glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
