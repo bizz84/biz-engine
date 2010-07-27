@@ -221,8 +221,8 @@ bool AttribTest()
 
 	glUseProgram(program);
 
-	glEnableClientState(GL_VERTEX_ARRAY);	
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);	
+	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	float x = -0.5, y = -0.5, w = 1.0, h = 1.0, u0 = 0.0, v0 = 0.0, u1 = 1.0, v1 = 1.0;
 
@@ -257,8 +257,8 @@ bool AttribTest()
 	glDisableVertexAttribArray(attribLoc[1]);
 
 
-	glDisableClientState(GL_VERTEX_ARRAY);	
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	//glDisableClientState(GL_VERTEX_ARRAY);	
+	//glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	return true;
 }
