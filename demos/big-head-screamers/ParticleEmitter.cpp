@@ -84,7 +84,7 @@ bool BloodDropEmitter::ParticleUpdate(Particle *p, const float dt)
 
 void BloodDropEmitter::Render() const
 {
-	glBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
+	//glBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
 	glVertexPointer(4, GL_FLOAT, sizeof(BloodParticle), particle);
 	glDrawArrays(GL_POINTS, 0, numParticles);
 }
