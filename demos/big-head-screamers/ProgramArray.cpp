@@ -23,7 +23,7 @@ ProgramArray::~ProgramArray()
 bool ProgramArray::LoadShaders(const char *Shaders[], const unsigned int n)
 {
 	// Clear errors
-	glGetError();
+	//glGetError();
 	uiProgram = new GLuint[n];
 	GLResourceManager &loader = GLResourceManager::Instance();
 	for (unsigned int i = 0; i < n; i++)
