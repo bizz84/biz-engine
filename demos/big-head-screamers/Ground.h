@@ -25,6 +25,9 @@ class Ground : private ProgramArray
 	unsigned int uiInfPlaneVertices;
 	Vector3 vGround[5];
 
+	enum { L_ZFAR, L_TEX_REPEAT, L_POS_OFFSET, L_SCREEN_INV, NUM_LOCATIONS };
+	GLint loc[NUM_LOCATIONS];
+
 	enum { P_INFINITE, NUM_PROGRAMS };
 public:
 	Ground() : uiInfPlaneVertices(0) { }

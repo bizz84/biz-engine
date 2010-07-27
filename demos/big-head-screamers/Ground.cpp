@@ -28,6 +28,12 @@ bool Ground::Init()
 	glUseProgram(program);
 	glUniform1i(GetUniLoc(program, "sTexture"), 0);
 	glUniform1i(GetUniLoc(program, "sTexture2"), 1);
+
+	loc[L_ZFAR]       = GetUniLoc(program, "ZFar");
+	loc[L_TEX_REPEAT] = GetUniLoc(program, "TexRepeat");
+	loc[L_POS_OFFSET] = GetUniLoc(program, "PosOffset");
+	loc[L_SCREEN_INV] = GetUniLoc(program, "ScreenInv");
+
 	
 	return true;
 }
@@ -55,7 +61,7 @@ void Ground::Render(const Vector3 &eyePos, const float zfar,
 		arg[i] = -Vector4(vGround[i][0], vGround[i][1], vGround[i][2], 1.0f).dot(view[2]) / zfar;
 	}*/
 
-	glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);
 
 	GLuint shader = Program(P_INFINITE);
 
@@ -63,10 +69,10 @@ void Ground::Render(const Vector3 &eyePos, const float zfar,
 
 	float screeninv[] = { 1.0f / (float)width, 1.0f / (float)height };
 	float texoffset[] = { eyePos[0], eyePos[2] };
-	glUniform1f(GetUniLoc(shader, "ZFar"), zfar);
-	glUniform1f(GetUniLoc(shader, "TexRepeat"), zfar / 100.0f);
-	glUniform2fv(GetUniLoc(shader, "PosOffset"), 1, texoffset);
-	glUniform2fv(GetUniLoc(shader, "ScreenInv"), 1, screeninv);
+	glUniform1f(loc[L_ZFAR], zfar);
+	glUniform1f(loc[L_TEX_REPEAT], zfar / 100.0f);
+	glUniform2fv(loc[L_POS_OFFSET], 1, texoffset);
+	glUniform2fv(loc[L_SCREEN_INV], 1, screeninv);
 
 	// Pass additional value as attribute
 	// FIXME: Find out why this doesn't work
@@ -77,5 +83,5 @@ void Ground::Render(const Vector3 &eyePos, const float zfar,
 	glVertexPointer(3, GL_FLOAT, sizeof(Vector3), &vGround);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, uiInfPlaneVertices);
 
-	glDisableClientState(GL_VERTEX_ARRAY);	
+	//glDisableClientState(GL_VERTEX_ARRAY);	
 }
