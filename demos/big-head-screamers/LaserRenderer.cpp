@@ -28,22 +28,9 @@ LaserRenderer::LaserRenderer()
 {
 	assert(LoadShaders(Shaders, NUM_PROGRAMS));
 
-
-
 }
-
-LaserRenderer::~LaserRenderer()
-{
-
-}
-
 
 void LaserRenderer::Render(const list<Bullet *> &bullets) const
 {
-	
-}
-
-void LaserRenderer::Render(const Bullet *bullet) const
-{
-	cout << "Not implemented!" << endl;
+	// TODO: implement
 }

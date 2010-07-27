@@ -28,9 +28,8 @@ class LaserRenderer : public BulletRenderer, private ProgramArray
 
 public:
 	LaserRenderer();
-	~LaserRenderer();
+	~LaserRenderer() { }
 	virtual void Render(const list<Bullet *> &bullets) const;
-	virtual void Render(const Bullet *bullet) const;
 };
 
 #endif
