@@ -32,14 +32,15 @@
 #include "FBO.h"
 #include "Matrix.h"
 #include "CoordinateFrame.h"
-
+#include "ProgramArray.h"
 #include "BaseGraph.h"
 
 #include "CameraController.h"
-#include "Ground.h"
+
 
 using namespace std;
 
+class Ground;
 class AIManager;
 class WeaponManager;
 class ParticleRenderer;
@@ -59,6 +60,14 @@ class BigHeadScreamers : public SDLShell, private ProgramArray
 	};
 
 	enum { NUM_TEXTURES = 2 };
+
+	enum {
+		S_COLLISIONS,
+		S_REFLECTION,
+		S_INPUT,
+		NUM_STATES
+	};
+	int enabled[NUM_STATES];
 
 protected:
 
@@ -87,10 +96,9 @@ protected:
 	float fFOV;
 	// Inverted projection matrix (needed by infinite plane rendering)
 	Matrix4 mInvProj;
-	Ground ground;
+	auto_ptr<Ground> pGround;
 
 	BaseGraph fpsGraph;
-	BaseGraph mouseGraph[2];
 	FPSCamera fpsCamera;
 
 	// Game Data
@@ -100,15 +108,26 @@ protected:
 	auto_ptr<EnemyRenderer> pER;
 	auto_ptr<SkyBoxManager> pSkyBoxManager;
 
-	auto_ptr<CollisionDetector> pDetector;
+	enum {
+		DETECTOR_SEGMENT_SPHERE,
+		DETECTOR_SPHERE_SPHERE,
+		NUM_DETECTORS
+	};
+	auto_ptr<CollisionDetector> pDetector[NUM_DETECTORS];
 
 	float fCollisionTime;
 	// This is updated during render time
 	float fEnemiesTime;
+	// 
+	float fInputTime;
 
 protected:
 	// Overrides SDLShell version
 	virtual Pointer *NewPointer() { return new FPSPointer(this); }
+
+	void GroundInput();
+
+	void ReloadFBO();
 
 	// Resource loading
 	bool LoadTextures();
