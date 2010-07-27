@@ -28,10 +28,12 @@
 */
 
 /* Version History
+V0.1.0
+- Started porting to Boost
+- Boost pointer containers integration
 V0.0.9
 - Settings on a file
 - Added FOV control
-- Boost pointer containers integration
 V0.0.8
 - Proper Grenade model
 - Big classes redesign
@@ -60,7 +62,7 @@ V0.0.1
 */
 
 
-const char szAppVersion[] = "0.0.9";
+const char szAppVersion[] = "0.1.0";
 const char szAppName[] = "Big Head Screamers";
 
 
