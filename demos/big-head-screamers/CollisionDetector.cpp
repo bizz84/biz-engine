@@ -47,13 +47,9 @@ void CollisionDetector::Run()
 }
 
 
-/* CPU optimised write-execute-read template */
-bool CPUGrenadeEnemyCollisionDetector::Write()
-{
-	return true;
-}
 
-void CPUGrenadeEnemyCollisionDetector::Execute()
+
+void CPUCollisionDetector::Execute()
 {
 	ptr_list<Bullet> &bullets = (ptr_list<Bullet> &)GetWM()->GetBullets();
 	ptr_vector<Enemy> &enemies = (ptr_vector<Enemy> &)GetAI()->GetData();
@@ -63,9 +59,6 @@ void CPUGrenadeEnemyCollisionDetector::Execute()
 		
 	ptr_list<Bullet>::iterator b;
 	ptr_vector<Enemy>::iterator e;
-
-	Point3 prev, curr, target3;
-	Point2 target2;
 
 	for (b = bullets.begin(); b != bullets.end(); b++)
 	{
@@ -78,34 +71,41 @@ void CPUGrenadeEnemyCollisionDetector::Execute()
 			// Enemy has been killed already
 			if (e->health <= 0)
 				continue;
+
+			Point3 target3 = Point3(e->pos[0], Settings::Instance().EnemyHeight, e->pos[1]);
 				
-			curr = b->GetPosition();
-			prev = b->GetPrevPosition();
-			target2 = e->pos;
-			target3 = Point3(target2[0], Settings::Instance().EnemyHeight,target2[1]);
-				
-			if (CollisionSegmentSphere(prev, curr, target3, Settings::Instance().CollisionRadius))
+			//if (CollisionSphereSphere(curr, target3, Settings::Instance().CollisionRadius))
+			if (Collision(b->GetPrevPosition(), b->GetPosition(),
+				target3, Settings::Instance().CollisionRadius))
 			{
 				b->SetImpact();
 
 				e->health -= Settings::Instance().GrenadeDamage;
-				GetAI()->AddParticles(curr, e->health);
+				GetAI()->AddParticles(b->GetPosition(), e->health);
 			}				
 		}
 	}	
-	
 }
 
 
-bool CPUGrenadeEnemyCollisionDetector::Read()
+/* CPU optimised write-execute-read template */
+bool CPUSegmentSphereCollisionDetector::Collision(const Vector3 &a,
+	const Vector3 &b, const Vector3 &s, const float r)
 {
-	return true;
+	return CollisionSegmentSphere(a, b, s, r);
+}
+
+
+bool CPUSphereSphereCollisionDetector::Collision(const Vector3 &a,
+	const Vector3 &b, const Vector3 &s, const float r)
+{
+	return CollisionSphereSphere(b, s, r);
 }
 
 
 
 /* proper write-execute-read template */
-/*bool CPUGrenadeEnemyCollisionDetector::Write()
+/*bool CPUSegmentSphereCollisionDetector::Write()
 {
 	// get arrays
 	const list<Bullet *> &bullets = GetWM()->GetBullets();
@@ -144,7 +144,7 @@ bool CPUGrenadeEnemyCollisionDetector::Read()
 	return true;
 }
 
-void CPUGrenadeEnemyCollisionDetector::Execute()
+void CPUSegmentSphereCollisionDetector::Execute()
 {
 	// double loop using CollisionSegmentSphere
 	for (int i = 0; i < GetNumColliders(); i++)
@@ -171,7 +171,7 @@ void CPUGrenadeEnemyCollisionDetector::Execute()
 }
 
 
-bool CPUGrenadeEnemyCollisionDetector::Read()
+bool CPUSegmentSphereCollisionDetector::Read()
 {
 	// TODO: read & deallocate
 	// write back to data structures

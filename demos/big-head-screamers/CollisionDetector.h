@@ -13,6 +13,8 @@
 #ifndef _COLLISION_DETECTOR_H_
 #define _COLLISION_DETECTOR_H_
 
+#include "Vector.h"
+
 class WeaponManager;
 class AIManager;
 
@@ -57,40 +59,42 @@ public:
 		
 };*/
 
-class CPUGrenadeEnemyCollisionDetector : public CollisionDetector//GrenadeEnemyCollisionDetector
+class CPUCollisionDetector : public CollisionDetector
 {
-	/*struct BulletState
-	{
-		Vector3 prev;
-		Vector3 curr;
-		bool hit;
-	} *bullet;
 	
-	struct EnemyState
-	{
-		Vector3 pos;
-		int health;
-	} *enemy;*/
-	
-	//unsigned int uiNumColliders;
-	//unsigned int uiNumTargets;
 protected:
-	virtual bool Write();
+	virtual bool Write() { return true; }
 	virtual void Execute();
-	virtual bool Read();
-
-	//void SetNumTargets(const unsigned int targets) { uiNumTargets = targets; }
-	//void SetNumColliders(const unsigned int colliders) { uiNumColliders = colliders; }
-	//unsigned int GetNumColliders() const { return uiNumColliders; }
-	//unsigned int GetNumTargets() const { return uiNumTargets; }
-
+	virtual bool Read() { return true; }
+	virtual bool Collision(const Vector3 &a, const Vector3 &b,
+		const Vector3 &s, const float r) = 0;
 public:
-	CPUGrenadeEnemyCollisionDetector(WeaponManager *ws, AIManager *ai)
+	CPUCollisionDetector(WeaponManager *ws, AIManager *ai)
 		: CollisionDetector(ws, ai)
-		//bullet(NULL), enemy(NULL),
-		//uiNumColliders(0), uiNumTargets(0)
+		{ }
+
+};
+
+class CPUSegmentSphereCollisionDetector : public CPUCollisionDetector
+{
+public:
+	CPUSegmentSphereCollisionDetector(WeaponManager *ws, AIManager *ai)
+		: CPUCollisionDetector(ws, ai)
 		{ }
 		
+	virtual bool Collision(const Vector3 &a, const Vector3 &b,
+		const Vector3 &s, const float r);
+};
+
+class CPUSphereSphereCollisionDetector : public CPUCollisionDetector
+{
+public:
+	CPUSphereSphereCollisionDetector(WeaponManager *ws, AIManager *ai)
+		: CPUCollisionDetector(ws, ai)
+		{ }
+		
+	virtual bool Collision(const Vector3 &a, const Vector3 &b,
+		const Vector3 &s, const float r);
 };
 
 /*class OpenCLGrenadeEnemyCollisionDetector : GrenadeEnemyCollisionDetector
@@ -115,7 +119,7 @@ class CollisionDetectorFactory
 public:
 	static CollisionDetector *CreateCPU(WeaponManager *ws, AIManager *ai)
 	{
-		return new CPUGrenadeEnemyCollisionDetector(ws, ai);
+		return new CPUSegmentSphereCollisionDetector(ws, ai);
 	}
 	
 };
