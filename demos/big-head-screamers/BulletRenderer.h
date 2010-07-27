@@ -25,7 +25,6 @@ class BulletRenderer
 public:
 	virtual ~BulletRenderer() { }
 	virtual void Render(const list<Bullet *> &bullets) const = 0;
-	virtual void Render(const Bullet *bullet) const = 0;
 };
 
 #endif
