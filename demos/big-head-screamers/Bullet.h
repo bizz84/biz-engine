@@ -17,7 +17,6 @@
 #include "Matrix.h"
 #include "Settings.h"
 
-class BulletRenderer;
 
 /*****************************************************************************
  * Bullet class declaration
@@ -31,9 +30,9 @@ protected:
 	Vector3 vel;
 	float xRot, yRot;
 	bool impact;
-	BulletRenderer *renderer;
+
 public:
-	Bullet(BulletRenderer *renderer, const Point3 &p,
+	Bullet(const Point3 &p,
 		const float yRot, const float xRot, const float speed);
 	virtual ~Bullet() { }
 		
@@ -41,8 +40,8 @@ public:
 
 	const bool Impact() const { return impact; }
 
-	const Point3 GetPosition() const { return pos[1]; }
-	const Point3 GetPrevPosition() const { return pos[0]; }
+	const Point3 &GetPosition() const { return pos[1]; }
+	const Point3 &GetPrevPosition() const { return pos[0]; }
 	
 	void SetImpact() { impact = true; }
 	//void SetPosition(const Point3 &pos) { pos[1] = pos; }
@@ -50,8 +49,6 @@ public:
 	const float GetAngleY() const { return yRot; }
 
 	virtual const unsigned int Damage() const = 0;
-
-	void Render();
 };
 
 /*****************************************************************************
@@ -63,9 +60,9 @@ class Grenade : public Bullet
 	unsigned int bounces;
 
 public:
-	Grenade(BulletRenderer *renderer, const Point3 &p,
+	Grenade(const Point3 &p,
 		const float yRot, const float xRot, const float speed)
-		: Bullet(renderer, p, yRot, xRot, speed), bounces(0) { }
+		: Bullet(p, yRot, xRot, speed), bounces(0) { }
 	virtual bool Update(const float dt);
 
 	virtual const unsigned int Damage() const { return Settings::Instance().GrenadeDamage; }
@@ -79,9 +76,9 @@ class Laser : public Bullet
 {
 	float distance;
 public:
-	Laser(BulletRenderer *renderer, const Point3 &p,
+	Laser(const Point3 &p,
 		const float yRot, const float xRot, const float speed)
-		: Bullet(renderer, p, yRot, xRot, speed), distance(0.0f) { }
+		: Bullet(p, yRot, xRot, speed), distance(0.0f) { }
 
 	virtual bool Update(const float dt);
 

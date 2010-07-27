@@ -18,9 +18,9 @@
  * Bullet implementation
  *****************************************************************************/
 
- Bullet::Bullet(BulletRenderer *renderer, const Point3 &p,
+ Bullet::Bullet(const Point3 &p,
 	 const float yRot, const float xRot, const float speed)
-	 : renderer(renderer), xRot(xRot), yRot(yRot)
+	 : xRot(xRot), yRot(yRot)
 {
 	impact = false;
 	pos[1] = -p;
@@ -30,10 +30,7 @@
 		Vector3(0.0f, 0.0f, -speed));		
 }
 
- void Bullet::Render()
- {
-	 renderer->Render(this);
- }
+
 		
 /*****************************************************************************
  * Grenade implementation
