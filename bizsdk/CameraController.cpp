@@ -18,7 +18,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-const float ANG = 0.0003f;
+const float ANG = 0.001f;
 #define M_RAD (180.0 / M_PI)
 #define M_1_RAD (M_PI / 180.0)
 
@@ -37,19 +37,22 @@ void FPSCamera::Update(SDLShell *shell, float dt)
 {
 	float moveX = 0.0, moveY = 0.0f, moveZ = 0.0f;
 	
-	// alpha rotations
-	alpha += shell->GetPointer()->GetMotionX() * ANG;
-	if (alpha >= 360.0f)
-		alpha -= 360.0f;
-	else if (alpha <= -360.0f)
-	   alpha += 360.0f;
+	if (shell->GetPointer()->GetLock())
+	{
+		// alpha rotations
+		alpha += shell->GetPointer()->GetMotionX() * ANG;
+		if (alpha >= 360.0f)
+			alpha -= 360.0f;
+		else if (alpha <= -360.0f)
+		   alpha += 360.0f;
 
-	// beta rotations
-	beta -= shell->GetPointer()->GetMotionY() * ANG;
-	if (beta > 80.0)
-		beta = 80.0;
-	else if (beta < -80.0)
-		beta = -80.0;
+		// beta rotations
+		beta -= shell->GetPointer()->GetMotionY() * ANG;
+		if (beta > 80.0)
+			beta = 80.0;
+		else if (beta < -80.0)
+			beta = -80.0;
+	}
 
 	// Movement
 	if (shell->KeyPressing(KEY_A))
@@ -70,6 +73,8 @@ void FPSCamera::Update(SDLShell *shell, float dt)
 	if (shell->KeyPressing(KEY_S))
 		moveZ -= fTranslationFactor * dt;
 
+	if (shell->KeyPressing(KEY_R))
+		translation[1] = height;
 
 	// translation parameters procedure
 	float matrix00 = cos(alpha * M_1_RAD);
