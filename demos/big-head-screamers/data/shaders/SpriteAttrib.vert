@@ -16,15 +16,15 @@ attribute vec3 inTranslate;
 void main()
 {
 	// Find corresponding image in texture atlas
-	gl_TexCoord[0] = gl_MultiTexCoord0;
+	gl_TexCoord[0].xy = inTexCoord;
 	
-	/*Neighbor[0] = gl_TexCoord[0].st + vec2(-NeighborOffset.x,  NeighborOffset.y);
-	Neighbor[1] = gl_TexCoord[0].st + vec2( NeighborOffset.x,  NeighborOffset.y);
-	Neighbor[2] = gl_TexCoord[0].st + vec2( NeighborOffset.x, -NeighborOffset.y);
-	Neighbor[3] = gl_TexCoord[0].st + vec2(-NeighborOffset.x, -NeighborOffset.y);*/
+	/*Neighbor[0] = inTexCoord + vec2(-NeighborOffset.x,  NeighborOffset.y);
+	Neighbor[1] = inTexCoord + vec2( NeighborOffset.x,  NeighborOffset.y);
+	Neighbor[2] = inTexCoord + vec2( NeighborOffset.x, -NeighborOffset.y);
+	Neighbor[3] = inTexCoord + vec2(-NeighborOffset.x, -NeighborOffset.y);*/
 
 	// Instancing transformation
-	vec3 Pos = vec3(gl_Vertex.x, gl_Vertex.y, 0.0);
+	vec3 Pos = vec3(inVertex.x, inVertex.y, 0.0);
 	Pos *= inScale;
 	
 	float c = cos(inRotAngle);
