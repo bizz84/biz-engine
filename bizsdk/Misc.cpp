@@ -61,6 +61,17 @@ int LoadFileIntoMemory(const char *filename, char **result)
 	return size;
 }
 
+void DumpMemoryToFile(unsigned char *address, unsigned int size,
+					  const char *filename)
+{
+	FILE *fp = fopen(filename, "wb");
+	if (fp)
+	{
+		fwrite(address, 1, size, fp);
+		fclose(fp);
+	}
+}
+
 void FreeFileMemory(char **memory)
 {
 	free(*memory);
@@ -169,15 +180,15 @@ GLint GetUniLoc(GLuint program, const GLchar *name)
 		if (loc == -1)
 			printf("No such uniform named \"%s\"\n", name);
 	}
-	PrintOpenGLError();	
+	//PrintOpenGLError();	
 	return loc;
 }
 
 void RenderQuad2D(float x, float y, float w, float h,
 	float u0, float v0, float u1, float v1)
 {
-	glEnableClientState(GL_VERTEX_ARRAY);	
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);	
+	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	float afAttribs[] = {
 		x    , y    , u0, v1,
@@ -191,8 +202,8 @@ void RenderQuad2D(float x, float y, float w, float h,
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-	glDisableClientState(GL_VERTEX_ARRAY);	
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	//glDisableClientState(GL_VERTEX_ARRAY);	
+	//glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
 /*****************************************************************************
@@ -436,4 +447,10 @@ bool CollisionSegmentSphere(const Vector3 &a, const Vector3 &b, const Vector3 &s
 		return false;
 		
 	return (a + ab * lambda - s).Length() < r;	
+}
+
+
+bool CollisionSphereSphere(const Point3 &a, const Point3 &b, const float r)
+{
+	return (a - b).Length() < r;
 }

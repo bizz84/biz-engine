@@ -39,9 +39,11 @@ bool Verbose(VerboseLevel level);
 
 
 /*****************************************************************************
- * Loading files
+ * Files Handling
  *****************************************************************************/
 int LoadFileIntoMemory(const char *filename, char **result);
+void DumpMemoryToFile(unsigned char *address, unsigned int size,
+					  const char *filename);
 
 void FreeFileMemory(char **memory);
 
@@ -107,5 +109,7 @@ Matrix4 InverseMVP(const Matrix4 &invP, const Vector3 &T, const Matrix4 &R);
  *****************************************************************************/
 bool CollisionSegmentSphere(const Vector3 &a, const Vector3 &b,
 							const Vector3 &s, const float r);
+
+bool CollisionSphereSphere(const Point3 &a, const Point3 &b, const float r);
 
 #endif
