@@ -53,7 +53,7 @@ public:
 private:
 	int shellFrame;
 
-	Pointer *pPointer;
+	auto_ptr<Pointer> pPointer;
 	bool pressed[128];
 	bool pressing[128];
 	bool scrollUp;
@@ -85,7 +85,7 @@ protected:
 	
 public:
 	SDLShell();
-	virtual ~SDLShell();
+	virtual ~SDLShell() { }
 
 	virtual int Run(int argc, char *argv[]);
 
@@ -93,8 +93,8 @@ public:
 	void ShellSet(ShellParameter param, unsigned int value);
 
 	// Getters
-	const Pointer *GetPointer() const { return pPointer; }
-	Pointer *GetPointer() { return pPointer; }
+	const Pointer *GetPointer() const { return pPointer.get(); }
+	Pointer *GetPointer() { return pPointer.get(); }
 
 	const bool KeyPressed(Uint8 key) const { return pressed[key]; }
 	const bool KeyPressing(Uint8 key) const { return pressing[key]; }

@@ -47,11 +47,6 @@ SDLShell::SDLShell() : pPointer(NULL)
 	rightClick = false;
 }
 
-SDLShell::~SDLShell()
-{
-	delete pPointer;
-}
-
 void SDLShell::ResetPressed()
 {
 	for (unsigned int i = 0; i < 128; i++)
@@ -118,9 +113,9 @@ void SDLShell::ShellSet(ShellParameter param, unsigned int value)
 
 void SDLShell::CreatePointer()
 {
-	if (pPointer == NULL)
+	if (pPointer.get() == NULL)
 	{
-		pPointer = NewPointer();
+		pPointer = auto_ptr<Pointer>(NewPointer());
 	}
 }
 
@@ -391,8 +386,4 @@ int main(int argc, char *argv[])
 {
 	auto_ptr<Shell> shell(NewDemo());
 	return shell->Run(argc, argv);
-	/*shell = NewDemo(); // TODO: shared_ptr?
-	int ret = shell->Run(argc, argv);
-	delete shell;
-	return ret;*/
 }
