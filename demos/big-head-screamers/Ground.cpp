@@ -12,12 +12,34 @@
  *****************************************************************************/
 
 #include "BigHeadScreamers.h"
+#include "GLResourceManager.h"
 #include "Ground.h"
 #include "Misc.h"
 
 static const char *Shaders[] = {
 	"data/shaders/Infinite.vert", "data/shaders/Infinite.frag",
 };
+
+// Credit for textures (licensed under Creative Commons):
+// http://www.marcchehab.org/frozenmist
+static const char *Textures[] = {
+	"data/textures/TiZeta_pav2.bmp",
+	"data/textures/Rore_floor-tiles2.bmp"
+};
+
+bool Ground::LoadTextures()
+{
+	GLResourceManager &loader = GLResourceManager::Instance();
+
+	for (unsigned int i = 0; i < NUM_TEXTURES; i++)
+	{
+		// Load texture for ground
+		if (!loader.LoadTextureFromFile(Textures[i],
+			uiTexture[i], GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
+			return false;
+	}
+	return true;
+}
 
 bool Ground::Init()
 {
@@ -34,8 +56,7 @@ bool Ground::Init()
 	loc[L_POS_OFFSET] = GetUniLoc(program, "PosOffset");
 	loc[L_SCREEN_INV] = GetUniLoc(program, "ScreenInv");
 
-	
-	return true;
+	return LoadTextures();
 }
 
 void Ground::Input(const Matrix4 &invProjView,
@@ -54,6 +75,8 @@ void Ground::Input(const Matrix4 &invProjView,
 void Ground::Render(const Vector3 &eyePos, const float zfar,
 	const unsigned int width, const unsigned int height) const
 {
+	glBindTexture(GL_TEXTURE_2D, CurrentTexture());
+
 	// Additional value for mix computation can be passed to the vertex shader
 	/*float arg[5];
 	for (unsigned int i = 0; i < uiInfPlaneVertices; i++)

@@ -22,6 +22,11 @@
 // is-implemented-in-terms-of
 class Ground : private ProgramArray
 {
+	enum { NUM_TEXTURES = 2 };
+	// Ground texture data
+	unsigned int uiCurTexture;
+	GLuint uiTexture[NUM_TEXTURES];
+
 	unsigned int uiInfPlaneVertices;
 	Vector3 vGround[5];
 
@@ -29,8 +34,10 @@ class Ground : private ProgramArray
 	GLint loc[NUM_LOCATIONS];
 
 	enum { P_INFINITE, NUM_PROGRAMS };
+
+	bool LoadTextures();
 public:
-	Ground() : uiInfPlaneVertices(0) { }
+	Ground() : uiCurTexture(0), uiInfPlaneVertices(0) { }
 
 	bool Init();
 
@@ -46,6 +53,11 @@ public:
 
 	Vector3 &operator[](int i) { return vGround[i]; }
 	const Vector3 &operator[](int i) const { return vGround[i]; }
+
+	// Texture methods
+	const GLuint CurrentTexture() const { return uiTexture[uiCurTexture]; }
+	void NextTexture() { uiCurTexture = Next(uiCurTexture, NUM_TEXTURES); }
+	void PrevTexture() { uiCurTexture = Prev(uiCurTexture, NUM_TEXTURES); }
 };
 
 #endif
