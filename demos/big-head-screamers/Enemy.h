@@ -63,7 +63,7 @@ class EnemyRenderer
 {
 public:
 	// This needs to be accessible elsewhere
-	enum { NUM_SPRITES = 8 };
+	enum { NUM_SPRITES = 10 };
 public:
 	virtual ~EnemyRenderer() { }
 	virtual bool LoadSprites() = 0;
