@@ -116,18 +116,4 @@ void WeaponManager::Render()
 {
 	pRenderer[TypeGrenade]->Render(pList[TypeGrenade]);
 	pRenderer[TypeLaser]->Render(pList[TypeLaser]);
-	// Grout items, then render them via appropriate renderer
-	//list<Bullet *> grenade;
-	//list<Bullet *> laser;
-
-
-	/*ptr_list<Bullet>::iterator b;
-	for (b = bullets.begin(); b != bullets.end(); b++)
-	{
-		b->Render();
-	}*/
-
-	//pGrenadeRenderer->Render(grenade);
-	//pLaserRenderer->Render(laser);
-
 }
