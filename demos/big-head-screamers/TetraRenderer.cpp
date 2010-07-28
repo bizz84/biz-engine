@@ -67,6 +67,7 @@ void TetraRenderer::Render(const list<Bullet *> &bullets) const
 	//glEnableClientState(GL_VERTEX_ARRAY);
 	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
+	pTetraVBO->Bind();
 	list<Bullet *>::const_iterator iter;
 	for (iter = bullets.begin(); iter != bullets.end(); iter++)
 	{
@@ -74,9 +75,10 @@ void TetraRenderer::Render(const list<Bullet *> &bullets) const
 		const Point3 &pos = (*iter)->GetPosition();
 		glTranslatef(pos[0], pos[1], pos[2]);
 		glScalef(AmmoSize, AmmoSize, AmmoSize);
-		pTetraVBO->Render(GL_TRIANGLES);
+		pTetraVBO->Draw(GL_TRIANGLES);
 		glPopMatrix();
 	}
+	pTetraVBO->Unbind();
 
 	// TODO: This is post-render (factor out as the function is templatized)
 	//glDisableClientState(GL_NORMAL_ARRAY);
