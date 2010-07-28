@@ -14,6 +14,7 @@
 
 #include "GLResourceManager.h"
 #include "Misc.h"
+#include "Mesh.h"
 
 #include <stdio.h>
 #include <malloc.h>
@@ -55,7 +56,7 @@ GLResourceManager::Shader::~Shader()
 }
 
 bool GLResourceManager::Shader::SameAs(const char *vertexShader,
-	const char *fragmentShader)
+	const char *fragmentShader) const
 {
 	return sVertShader == vertexShader &&
 	       sFragShader == fragmentShader;
@@ -76,7 +77,7 @@ GLResourceManager::Texture::~Texture()
 	glDeleteTextures(1, &uiTexture);
 }
 
-bool GLResourceManager::Texture::SameAs(const char *textureFile)
+bool GLResourceManager::Texture::SameAs(const char *textureFile) const
 {
 	return sTextureFile == textureFile;
 }
@@ -97,7 +98,7 @@ GLResourceManager::File3DS::~File3DS()
 	lib3ds_file_free(f);
 }
 
-bool GLResourceManager::File3DS::SameAs(const char *file)
+bool GLResourceManager::File3DS::SameAs(const char *file) const
 {
 	return s3DSFile == file;
 }
@@ -164,6 +165,8 @@ GLenum GLResourceManager::PrintShaderError(GLuint obj, bool bCompile)
 		if (Verbose(VerboseAll))
 			printf ("%s", infoLog);
         free(infoLog);
+		// Force error
+		//err = GL_INVALID_OPERATION;
     }
 
 	return err;
@@ -172,11 +175,12 @@ GLenum GLResourceManager::PrintShaderError(GLuint obj, bool bCompile)
 bool GLResourceManager::LoadShaderFromMemory(const char *vertexShader,
 	const char *fragmentShader, GLuint &program)
 {
-	for (unsigned int i = 0; i < apShader.size(); i++)
+	ptr_vector<Shader>::const_iterator iter;
+	for (iter = apShader.begin(); iter != apShader.end(); iter++)
 	{
-		if (apShader[i]->SameAs(vertexShader, fragmentShader))
+		if (iter->SameAs(vertexShader, fragmentShader))
 		{
-			program = apShader[i]->GetProgram();
+			program = iter->GetProgram();
 			return true;
 		}
 	}
@@ -266,11 +270,12 @@ bool GLResourceManager::LoadShaderFromMemory(const char *vertexShader,
 bool GLResourceManager::LoadShaderFromFile(const char *vertexShader,
 	const char *fragmentShader, GLuint &program)
 {
-	for (unsigned int i = 0; i < apShader.size(); i++)
+	ptr_vector<Shader>::const_iterator iter;
+	for (iter = apShader.begin(); iter != apShader.end(); iter++)
 	{
-		if (apShader[i]->SameAs(vertexShader, fragmentShader))
+		if (iter->SameAs(vertexShader, fragmentShader))
 		{
-			program = apShader[i]->GetProgram();
+			program = iter->GetProgram();
 			return true;
 		}
 	}
@@ -320,6 +325,7 @@ bool GLResourceManager::LoadShaderFromFile(const char *vertexShader,
 	if (!vertCompiled)
 	{
 		printf("\nUnable to compile %s\n", vertexShader);
+		PrintShaderError(uiVS, true);
 		return false;
 	}
    	if (PrintShaderError(uiVS, true)
@@ -334,6 +340,7 @@ bool GLResourceManager::LoadShaderFromFile(const char *vertexShader,
 	if (!fragCompiled)
 	{
 		printf("\nUnable to compile %s\n", fragmentShader);
+		PrintShaderError(uiVS, true);
 		return false;
 	}
     if (PrintShaderError(uiFS, true)
@@ -377,10 +384,6 @@ bool GLResourceManager::LoadShaderFromFile(const char *vertexShader,
 
 bool GLResourceManager::ReleaseShaders()
 {
-	for (unsigned int i = 0; i < apShader.size(); i++)
-	{
-		delete apShader[i];
-	}
 	apShader.clear();
 	return true;
 }
@@ -393,13 +396,14 @@ bool GLResourceManager::ReleaseShaders()
 bool GLResourceManager::LoadTextureFromFile(const char *textureFile,
 	GLuint &texture, GLint minFilter, GLint magFilter)
 {
-	for (unsigned int i = 0; i < apTexture.size(); i++)
+	ptr_vector<Texture>::const_iterator iter;
+	for (iter = apTexture.begin(); iter != apTexture.end(); iter++)
 	{
-		if (apTexture[i]->SameAs(textureFile))
+		if (iter->SameAs(textureFile))
 		{
+			texture = iter->GetTexture();
 			if (Verbose(VerboseAll))
 				printf("Texture %s already loaded\n", textureFile);
-			texture = apTexture[i]->GetTexture();
 			return true;
 		}
 	}
@@ -463,10 +467,6 @@ bool GLResourceManager::LoadTextureFromFile(const char *textureFile,
 
 bool GLResourceManager::ReleaseTextures()
 {
-	for (unsigned int i = 0; i < apTexture.size(); i++)
-	{
-		delete apTexture[i];
-	}
 	apTexture.clear();
 	return true;
 }
@@ -478,9 +478,11 @@ bool GLResourceManager::ReleaseTextures()
 
 bool GLResourceManager::Load3DSFile(const char *file, unsigned int &index)
 {
-	for (unsigned int i = 0; i < ap3DS.size(); i++)
+	unsigned int i = 0;
+	ptr_vector<File3DS>::const_iterator iter;
+	for (iter = ap3DS.begin(); iter != ap3DS.end(); iter++, i++)
 	{
-		if (ap3DS[i]->SameAs(file))
+		if (iter->SameAs(file))
 		{
 			if (Verbose(VerboseAll))
 				printf("3DS file %s already loaded\n", file);
@@ -504,7 +506,7 @@ bool GLResourceManager::Load3DSFile(const char *file, unsigned int &index)
 
 void GLResourceManager::ListMeshNames(unsigned int index3DS)
 {
-	Lib3dsFile *f = ap3DS[index3DS]->GetFile();
+	Lib3dsFile *f = ap3DS[index3DS].GetFile();
 	Lib3dsMesh *mesh = f->meshes;
 	printf("Listing meshes:\n");
 	while (mesh)
@@ -516,7 +518,7 @@ void GLResourceManager::ListMeshNames(unsigned int index3DS)
 
 Lib3dsMesh *GLResourceManager::FindMesh(unsigned int index3DS, const char *name)
 {
-	Lib3dsFile *f = ap3DS[index3DS]->GetFile();
+	Lib3dsFile *f = ap3DS[index3DS].GetFile();
 	Lib3dsMesh *mesh = f->meshes;
 
 	while (mesh)
@@ -582,10 +584,6 @@ float GLResourceManager::MeshSize(unsigned int index3DS, const char *name)
 
 bool GLResourceManager::Release3DSFiles()
 {
-	for (unsigned int i = 0; i < ap3DS.size(); i++)
-	{
-		delete ap3DS[i];
-	}
 	ap3DS.clear();
 	return true;
 }

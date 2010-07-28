@@ -14,14 +14,17 @@
 #ifndef _GL_RESOURCE_MANAGER_H_
 #define _GL_RESOURCE_MANAGER_H_
 
-#include <vector>
 #include "Extensions.h"
 #include "Misc.h"
 #include "VBO.h"
 
 #include <lib3ds/file.h>
 
-using namespace std;
+#include "boost/ptr_container/ptr_vector.hpp"
+using namespace boost;
+
+//#include <vector>
+//using namespace std;
 
 class GLResourceManager
 {
@@ -43,11 +46,11 @@ class GLResourceManager
 			GLuint fs, GLuint program);
 		~Shader();
 
-		bool SameAs(const char *vertexShader, const char *fragmentShader);
-		GLuint GetProgram() { return uiProgram; }
+		bool SameAs(const char *vertexShader, const char *fragmentShader) const;
+		GLuint GetProgram() const { return uiProgram; }
 	};
 
-	vector<Shader *> apShader;
+	ptr_vector<Shader> apShader;
 	
 	/*************************************************************************
 	 * Texture definition
@@ -64,12 +67,12 @@ class GLResourceManager
 		Texture(const char *textureFile, GLuint texture);
 		~Texture();
 
-		bool SameAs(const char *textureFile);
+		bool SameAs(const char *textureFile) const;
 
-		GLuint GetTexture() { return uiTexture; }
+		GLuint GetTexture() const { return uiTexture; }
 	};
 
-	vector<Texture *> apTexture;
+	ptr_vector<Texture> apTexture;
 
 	/*************************************************************************
 	 * 3DS files definition
@@ -83,12 +86,12 @@ class GLResourceManager
 		File3DS(const char *file, Lib3dsFile *obj);
 		~File3DS();
 
-		bool SameAs(const char *file);
+		bool SameAs(const char *file) const;
 
-		Lib3dsFile *GetFile() { return f; }
+		Lib3dsFile *GetFile() const { return f; }
 	};
 
-	vector<File3DS *> ap3DS;
+	ptr_vector<File3DS> ap3DS;
 
 protected:
 	GLResourceManager() { }
