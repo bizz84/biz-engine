@@ -60,7 +60,10 @@ public:
 class SkyBoxTransition : public SkyBox
 {
 protected:
+	GLint locMix;
 	virtual bool ShaderSetup();
+	
+	SkyBoxTransition() : locMix(~0) { }
 public:
 	static SkyBoxTransition &Instance();
 	virtual void SetUniforms() { }

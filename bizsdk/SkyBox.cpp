@@ -111,9 +111,9 @@ void SkyBox::Render() const
 
 	//glDisable(GL_CULL_FACE);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);
 	vboCube->Render(GL_QUADS);
-	glDisableClientState(GL_VERTEX_ARRAY);
+	//glDisableClientState(GL_VERTEX_ARRAY);
 
 	glDepthMask(1);
 
@@ -158,6 +158,8 @@ bool SkyBoxTransition::ShaderSetup()
 	glUseProgram(uiProgram);
 	glUniform1i(GetUniLoc(uiProgram, "sTexture"), 0);
 	glUniform1i(GetUniLoc(uiProgram, "sTexture2"), 1);
+
+	locMix = GetUniLoc(uiProgram, "Mix");
 	return true;
 }
 
@@ -168,12 +170,11 @@ void SkyBoxTransition::Render(const float mix) const
 	glDepthMask(0);
 	glUseProgram(uiProgram);
 
-	//glDisable(GL_CULL_FACE);
-	glUniform1f(GetUniLoc(uiProgram, "Mix"), mix);
+	glUniform1f(locMix, mix);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);
 	vboCube->Render(GL_QUADS);
-	glDisableClientState(GL_VERTEX_ARRAY);
+	//glDisableClientState(GL_VERTEX_ARRAY);
 
 	glDepthMask(1);
 }
