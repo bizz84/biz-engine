@@ -69,10 +69,10 @@ bool EnemyRendererAttrib::LoadSprites()
 
 Point2 EnemyRendererAttrib::TexCoord(Point2 coord, int index)
 {
-	coord[0] *= 0.25f;
+	coord[0] *= 0.2f;
 	coord[1] *= 0.5f;
-	coord[0] += (index % 4) * 0.25f;
-	coord[1] += (index / 4) * 0.5f;
+	coord[0] += (index / 2) * 0.2f;
+	coord[1] += (index % 2) * 0.5f;
 	return coord;
 }
 
