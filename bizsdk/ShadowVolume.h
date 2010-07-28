@@ -23,6 +23,9 @@
 #include "VBO.h"
 #include "Mesh.h"
 
+#include <vector>
+using namespace std;
+
 class ShadowVolumeMesh : public Mesh
 {
 protected:
@@ -78,15 +81,13 @@ protected:
 	static void Dump(vector<VectorAndNormal> &buffer, FILE *fp);
 	static bool Read(unsigned int &elements, float *&data, FILE *fp);
 
-	VBO *pShadowVolumeVBO;
+	auto_ptr<VBO> pShadowVolumeVBO;
 
 public:
 	ShadowVolumeMesh(Lib3dsMesh *mesh, float scale = 1.0f,
 	                 bool flipNormals = false, int *permutation = NULL);
-	~ShadowVolumeMesh();
 
-	const VBO *GetShadowVolumeVBO() const { return pShadowVolumeVBO; }
-
+	const VBO *GetShadowVolumeVBO() const { return pShadowVolumeVBO.get(); }
 };
 
 #endif

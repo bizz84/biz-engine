@@ -33,10 +33,6 @@ VBO::VBO(void *data, GLsizei stride, unsigned int count)
 VBO::~VBO()
 {
 	glDeleteBuffers(1, &uiVBO);
-	for (unsigned int i = 0; i < aEntry.size(); i++)
-	{
-		delete aEntry[i];
-	}
 }
 
 void VBO::SetVertexData(unsigned int offset, unsigned int size)
@@ -82,10 +78,11 @@ void VBO::AddEntry(ArrayFuncPointer pointer, GLint size, GLenum type,
 void VBO::Bind() const
 {
 	glBindBuffer(GL_ARRAY_BUFFER_ARB, uiVBO);
-	for (unsigned int i = 0; i < aEntry.size(); i++)
+	ptr_list<VBOEntry>::const_iterator iter;
+	for (iter = aEntry.begin(); iter != aEntry.end(); iter++)
 	{
-		(*aEntry[i]->fnPointer)(aEntry[i]->iSize, aEntry[i]->eType, uiStride,
-			aEntry[i]->pOffset);
+		(*iter->fnPointer)(iter->iSize, iter->eType, uiStride,
+			iter->pOffset);
 	}
 	if (usFlags & VERTEX_POINTER_FLAG)
 	{

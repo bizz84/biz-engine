@@ -21,7 +21,7 @@ using namespace std;
 
 ShadowVolumeMesh::ShadowVolumeMesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/,
 	bool flipNormals/* = false*/, int *permutation/* = NULL*/)
-	: Mesh(mesh, scale, flipNormals, permutation), pShadowVolumeVBO(NULL)
+	: Mesh(mesh, scale, flipNormals, permutation)
 {
 	char szShadowVolumeFile[50];
 	sprintf(szShadowVolumeFile, "data/scenes/%s.sv", pMesh->name);
@@ -88,8 +88,8 @@ ShadowVolumeMesh::ShadowVolumeMesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/,
 			   vertices. Written into %s\n",
 			tsw.Update(), buffer.size(), szShadowVolumeFile);
 
-		pShadowVolumeVBO = new VBO(
-			(float *)&buffer[0], sizeof(VectorAndNormal), buffer.size());
+		pShadowVolumeVBO = auto_ptr<VBO>(new VBO(
+			(float *)&buffer[0], sizeof(VectorAndNormal), buffer.size()));
 		pShadowVolumeVBO->SetNormalData(sizeof(Vector3));
 	}
 	else
@@ -98,7 +98,8 @@ ShadowVolumeMesh::ShadowVolumeMesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/,
 		float *data;
 		if (Read(elements, data, fp))
 		{
-			pShadowVolumeVBO = new VBO(data, sizeof(float) * 6, elements);
+			pShadowVolumeVBO = auto_ptr<VBO>
+				(new VBO(data, sizeof(float) * 6, elements));
 			pShadowVolumeVBO->SetNormalData(sizeof(float) * 3);
 		}
 		else
@@ -107,11 +108,6 @@ ShadowVolumeMesh::ShadowVolumeMesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/,
 				szShadowVolumeFile);
 		}
 	}
-}
-
-ShadowVolumeMesh::~ShadowVolumeMesh()
-{
-	delete pShadowVolumeVBO;
 }
 
 

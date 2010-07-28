@@ -15,9 +15,12 @@
 #define _VBO_H_
 
 #include "Extensions.h"
-#include <vector>
 
-using namespace std;
+#include "boost/ptr_container/ptr_list.hpp"
+using namespace boost;
+
+//#include <vector>
+//using namespace std;
 
 typedef void (*ArrayFuncPointer)(GLint size, GLenum type, GLsizei stride,
 	const GLvoid *pointer);
@@ -45,7 +48,7 @@ protected:
 			: fnPointer(pointer), iSize(size), eType(type),
 			pOffset((void *)offset) { }
 	};
-	vector<VBOEntry *> aEntry;
+	ptr_list<VBOEntry> aEntry;
 	
 	// class VBOGenericEntry
 

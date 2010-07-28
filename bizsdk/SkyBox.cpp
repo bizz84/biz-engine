@@ -59,16 +59,11 @@ static const char SkyBoxFragmentShader[] =
 	"}";
 
 SkyBox::SkyBox()
-	: init(false),
-	vboCube(NULL)
+	: init(false)
 {
 
 }
 
-SkyBox::~SkyBox()
-{
-	delete vboCube;
-}
 
 SkyBox &SkyBox::Instance()
 {
@@ -97,7 +92,8 @@ bool SkyBox::Init()
 	if (!ShaderSetup())
 		return false;
 
-	vboCube = new IndexedVBO((void *)VertexAttrib, sizeof(float) * 3, 8, (void *)ElementAttrib, 24);
+	pVBOCube = auto_ptr<IndexedVBO>(new IndexedVBO((void *)VertexAttrib,
+		sizeof(float) * 3, 8, (void *)ElementAttrib, 24));
 
 	return (init = true);
 }
@@ -112,7 +108,7 @@ void SkyBox::Render() const
 	//glDisable(GL_CULL_FACE);
 
 	//glEnableClientState(GL_VERTEX_ARRAY);
-	vboCube->Render(GL_QUADS);
+	pVBOCube->Render(GL_QUADS);
 	//glDisableClientState(GL_VERTEX_ARRAY);
 
 	glDepthMask(1);
@@ -173,7 +169,7 @@ void SkyBoxTransition::Render(const float mix) const
 	glUniform1f(locMix, mix);
 
 	//glEnableClientState(GL_VERTEX_ARRAY);
-	vboCube->Render(GL_QUADS);
+	pVBOCube->Render(GL_QUADS);
 	//glDisableClientState(GL_VERTEX_ARRAY);
 
 	glDepthMask(1);

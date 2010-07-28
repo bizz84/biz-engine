@@ -17,6 +17,8 @@
 #include "Extensions.h"
 #include "VBO.h"
 
+using namespace std;
+
 /*****************************************************************************
  * CubeMap class (loads GL_TEXTURE_CUBE_MAP from 6 textures
  *****************************************************************************/
@@ -41,12 +43,12 @@ protected:
 	static const float VertexAttrib[3 * 8];
 	static const int ElementAttrib[24];
 
-	IndexedVBO *vboCube;
+	auto_ptr<IndexedVBO> pVBOCube;
 
 	virtual bool ShaderSetup();
 
 	SkyBox();
-	virtual ~SkyBox();
+	virtual ~SkyBox() { }
 public:
 	static SkyBox &Instance();
 	bool Init();
