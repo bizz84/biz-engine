@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\bizsdk;&quot;E:\lib\glew-1.5.3\include&quot;;&quot;E:\lib\lib3ds-1.3.0\lib3ds-1.3.0&quot;;&quot;E:\lib\SDL-devel-1.2.14-VC8\SDL-1.2.14\include&quot;;&quot;E:\lib\SDL_ttf-devel-2.0.9-VC8\SDL_ttf-2.0.9\include&quot;;&quot;C:\Program Files (x86)\ATI Stream\include&quot;"
+				AdditionalIncludeDirectories="..\..\..\..\bizsdk;&quot;E:\lib\glew-1.5.3\include&quot;;&quot;E:\lib\lib3ds-1.3.0\lib3ds-1.3.0&quot;;&quot;E:\lib\SDL-devel-1.2.14-VC8\SDL-1.2.14\include&quot;;&quot;E:\lib\SDL_ttf-devel-2.0.9-VC8\SDL_ttf-2.0.9\include&quot;;E:\lib\boost_1_43_0;&quot;C:\Program Files (x86)\ATI Stream\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -251,21 +251,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\UnitTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\UnitTest.h"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\version.h"
 				>
 			</File>
@@ -306,6 +291,14 @@
 				</File>
 				<File
 					RelativePath="..\..\GrenadeRenderer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\LaserRenderer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\LaserRenderer.h"
 					>
 				</File>
 				<File
