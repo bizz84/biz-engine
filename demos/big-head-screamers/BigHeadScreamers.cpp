@@ -12,11 +12,18 @@
  *****************************************************************************/
 
 #include "BigHeadScreamers.h"
+// Tools includes
+#include "Keys.h"
 #include "Misc.h"
+#include "GLResourceManager.h"
+#include "SkyBoxManager.h"
+#include "BaseGraph.h"
+#include "FBO.h"
+#include "TTFont.h"
+
+// App includes
 #include "EnemyRendererAttrib.h"
 #include "EnemyRendererBasic.h"
-#include <iostream>
-
 #include "Ground.h"
 #include "AIManager.h"
 #include "WeaponManager.h"
@@ -26,10 +33,8 @@
 
 #include "GrenadeRenderer.h"
 #include "Settings.h"
-#include "SkyBoxManager.h"
 
-#include "UnitTest.h"
-
+#include <iostream>
 
 // Shaders
 static const char *Shaders[] = {
@@ -37,34 +42,30 @@ static const char *Shaders[] = {
 	"data/shaders/ColorOffset.vert", "data/shaders/ColorOffset.frag"
 };
 
-// Credit for textures (licensed under Creative Commons):
-// http://www.marcchehab.org/frozenmist
-static const char *Textures[] = {
-	"data/textures/TiZeta_pav2.bmp",
-	"data/textures/Rore_floor-tiles2.bmp"
+static const char *TimerStrings[] = {
+	"Input",
+	"Weapons",
+	"AI",
+	"Collisions",
+	"Enemies"
 };
-
 
 BigHeadScreamers::BigHeadScreamers() : 
 	iShowInfo(0),
-	uiCurTexture(0),
+	bReflectionFlag(false),
 	fSetTime(0.0f),
 	fRandomTime(0.0f),
-	bReflectionFlag(false),
-	pReflectionFBO(NULL),
-	pAI(NULL),
-	pWM(NULL),
-	pExpR(NULL),
-	pER(NULL),
-	fCollisionTime(0.0f), // debug
-	fEnemiesTime(0.0f)
+	fFOV(90.0f)
 {
 	// initialize random number generator
 	Timer::InitRand();
 
-	enabled[S_COLLISIONS] = 1 + DETECTOR_SEGMENT_SPHERE;
-	enabled[S_REFLECTION] = 1;
-	enabled[S_INPUT] = 1;
+	bFeatureEnabled[F_REFLECTION] = true;
+	bFeatureEnabled[F_COLLISIONS] = true;
+	bFeatureEnabled[F_INPUT] = true;
+
+	for (unsigned int i = 0; i < NUM_TIMERS; i++)
+		afTimeOf[i] = 0.0f;
 
 
 	//TestList();
@@ -94,21 +95,6 @@ bool BigHeadScreamers::InitApp()
 	return true;
 }
 
-
-bool BigHeadScreamers::LoadTextures()
-{
-	GLResourceManager &loader = GLResourceManager::Instance();
-
-	for (unsigned int i = 0; i < NUM_TEXTURES; i++)
-	{
-		// Load texture for ground
-		if (!loader.LoadTextureFromFile(Textures[i],
-			uiTexture[i], GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR))
-			return false;
-	}
-	return true;
-}
-
 void BigHeadScreamers::ReloadFBO()
 {
 	// Initialize fbo used for drawing reflection
@@ -116,13 +102,33 @@ void BigHeadScreamers::ReloadFBO()
 		ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT), true));
 }
 
+bool BigHeadScreamers::OptionalInit()
+{
+	if (iShowInfo >= 1)
+	{
+		// Load font used for overlay rendering
+		pttFont = auto_ptr<TTFont>(new TTFont());
+		if (!pttFont->LoadFont("data/fonts/LucidaBrightDemiBold.ttf", 20))
+			return false;
+	}
+	
+	if (iShowInfo >= 2)
+	{
+		// Initialize FPS graph
+		pFPSGraph = auto_ptr<BaseGraph>(new BaseGraph());
+		if (!pFPSGraph->Init(4.0f, 3000, 0.6f, 0.60f, 0.98f, 0.95f, false))
+			return false;
+	}
+	return true;
+}
 
 bool BigHeadScreamers::InitGL()
 {
-	fpsCamera.Init(5.0f * 20.0f, -20.0f);
+	// Initialize camera
+	pFPSCamera = auto_ptr<FPSCamera>(new FPSCamera());
+	pFPSCamera->Init(5.0f * 20.0f, -20.0f);
 
-	GLResourceManager &loader = GLResourceManager::Instance();
-
+	// Initialize Ground
 	pGround = auto_ptr<Ground>(new Ground());
 	if (!pGround->Init())
 		return false;
@@ -131,62 +137,57 @@ bool BigHeadScreamers::InitGL()
 	if (!LoadShaders(Shaders, NUM_PROGRAMS))
 		return false;
 
-	if (!LoadTextures())
-		return false;
-
-	// Load font used for overlay rendering
-	if (!ttFont.LoadFont("data/fonts/LucidaBrightDemiBold.ttf", 20))
-		return false;	
-	
-	// Initialize FPS graph
-	if (!fpsGraph.Init(4.0f, 3000, -0.98f, 0.60f, -0.6f, 0.95f, false))
-		return false;
-
 	// Initialize skybox singleton
 	pSkyBoxManager = auto_ptr<SkyBoxManager>(new SkyBoxManager());
 
-	// Initialize coordinate frame
+	// Initialize coordinate frame. TODO: this class needs redefining
+	// to get rid of deprecated GL calls
 	CoordinateFrame::Instance().Make(400);
 
 	// Initialize fbo used for drawing reflection
-	ReloadFBO();
+	//ReloadFBO(); // Commented out since it's called by Resize() later on
 
 	// Initialize AI 
-	pAI = auto_ptr<AIManager>(new AIManager(fpsCamera.GetPosition()));
+	pAI = auto_ptr<AIManager>(new AIManager(pFPSCamera->GetPosition()));
 
 	// Initialize weapon system
 	pWM = auto_ptr<WeaponManager>(new WeaponManager());
 
 	// Initialize weapon renderer
-	pExpR = auto_ptr<ParticleRenderer>(new ParticleRenderer());
+	pPR = auto_ptr<ParticleRenderer>(new ParticleRenderer());
 
-	
+	// Initialize enemy renderer	
 	pER = auto_ptr<EnemyRendererAttrib>(new EnemyRendererAttrib());
 
+	// Enable two collision detectors (used to compare at runtime)
 	pDetector[DETECTOR_SEGMENT_SPHERE] = 
 		auto_ptr<CollisionDetector>(new CPUSegmentSphereCollisionDetector(pWM.get(), pAI.get()));
 	pDetector[DETECTOR_SPHERE_SPHERE] = 
 		auto_ptr<CollisionDetector>(new CPUSphereSphereCollisionDetector(pWM.get(), pAI.get()));
 
+	// Initialize optional components
+	OptionalInit();
 
+	/* GL state setup */
 
-	// GL state setup
 	glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
 
+	// Used by particle renderer
 	glPointSize(Settings::Instance().PointSize);
 
-	// As first element to be drawn is always the skybox
-
+	// Loads default value (FOV can be changed by user)
 	fFOV = Settings::Instance().Fov;
 
+	// Sets projection and modelview matrices, loads reflection FBO
 	Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 
 	// These operations are performed in Input() but are set here to update the state
 	// in case Input() is not used (benchmarking)
-	fpsCamera.Update(this, 0.0f);
-	pER->Update(pAI->GetData(), -fpsCamera.GetAlpha(), Settings::Instance().EnemyHeight);
+	pFPSCamera->Update(this, 0.0f);
+	pER->Update(pAI->GetData(), -pFPSCamera->GetAlpha(), Settings::Instance().EnemyHeight);
 	GroundInput();
 
+	// This is for GL state variables won't change across the whole program
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnableClientState(GL_VERTEX_ARRAY);	
@@ -197,11 +198,8 @@ bool BigHeadScreamers::InitGL()
 	return true;
 }
 
-bool BigHeadScreamers::Resize(unsigned int width, unsigned int height)
+void BigHeadScreamers::SetupProjection(unsigned int width, unsigned int height)
 {
-
-
-	//printf("Reshaping Screen to %dx%d\n", width, height);
 	// Select and setup the projection matrix
 	glMatrixMode( GL_PROJECTION );
 	float fov = fFOV * M_PI / 180.0f;
@@ -211,22 +209,28 @@ bool BigHeadScreamers::Resize(unsigned int width, unsigned int height)
 	glLoadTransposeMatrixf(proj.data());
 	// Calculate inverse (used to draw infinite plane)
 	mInvProj = InverseProjectionRHInfinite(fov, 1.0/aspect, Settings::Instance().Near);
-
 	// Alternatively use standard gluPerspective method
 	//glLoadIdentity();
 	//gluPerspective( fov, (GLfloat)width/(GLfloat)height, Near, Far);
-	// Select and setup the modelview matrix
+	// Select modelview matrix
 	glMatrixMode( GL_MODELVIEW );
+}
+
+
+bool BigHeadScreamers::Resize(unsigned int width, unsigned int height)
+{
+	SetupProjection(width, height);
+	ReloadFBO();
 	return true;
 }
 
 void BigHeadScreamers::GroundInput()
 {
 	// Ground input
-	Matrix4 rot = AlphaBetaRotation(fpsCamera.GetAlpha() * M_PI / 180.0f, fpsCamera.GetBeta() * M_PI / 180.0f);
-	Vector3 translationNoXZ = Vector3(0.0f, fpsCamera.GetTranslation()[1], 0.0f);
+	Matrix4 rot = AlphaBetaRotation(pFPSCamera->GetAlpha() * M_PI / 180.0f, pFPSCamera->GetBeta() * M_PI / 180.0f);
+	Vector3 translationNoXZ = Vector3(0.0f, pFPSCamera->GetTranslation()[1], 0.0f);
 	Matrix4 projViewInv = InverseMVP(mInvProj, translationNoXZ, rot);
-	pGround->Input(projViewInv, fpsCamera.GetPosition(), Settings::Instance().Far);
+	pGround->Input(projViewInv, pFPSCamera->GetPosition(), Settings::Instance().Far);
 }
 
 void BigHeadScreamers::Input()
@@ -241,43 +245,45 @@ void BigHeadScreamers::Input()
 	/* User Input */
 	// Visual options input: ground and cubemap textures
 	if (KeyPressed(KEY_1))
-		uiCurTexture = Prev(uiCurTexture, NUM_TEXTURES);
+		pGround->PrevTexture();
 	if (KeyPressed(KEY_2))
-		uiCurTexture = Next(uiCurTexture, NUM_TEXTURES);
+		pGround->NextTexture();
 
 	if (KeyPressed(KEY_3))
 		pSkyBoxManager->CubemapUpdate(false, t);
 	if (KeyPressed(KEY_4))
 		pSkyBoxManager->CubemapUpdate(true, t);
 
+	// Update FOV
 	if (KeyPressing(KEY_5))
 	{
 		if ((fFOV /= (1.0f + 0.25 * dt)) < 40.0f)
 			fFOV = 40.0f;
-		Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
+		SetupProjection(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 	}
 	if (KeyPressing(KEY_6))
 	{
 		if ((fFOV *= (1.0f + 0.25 * dt)) > 150.0f)
 			fFOV = 150.0f;
-		Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
+		SetupProjection(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 	}
-	if (KeyPressing(KEY_7))
+	// Restore original fov
+	if (KeyPressed(KEY_7))
 	{
 		fFOV = Settings::Instance().Fov;
 		Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 	}
 	if (KeyPressed(KEY_8))
 	{
-		enabled[S_COLLISIONS] = Next(enabled[S_COLLISIONS], NUM_DETECTORS + 1);
+		bFeatureEnabled[F_COLLISIONS] = !bFeatureEnabled[F_COLLISIONS];
 	}
 	if (KeyPressed(KEY_9))
 	{
-		enabled[S_REFLECTION] = Next(enabled[S_REFLECTION], 2);
+		bFeatureEnabled[F_REFLECTION] = !bFeatureEnabled[F_REFLECTION];
 	}
 	if (KeyPressed(KEY_0))
 	{
-		enabled[S_INPUT] = Next(enabled[S_INPUT], 2);
+		bFeatureEnabled[F_INPUT] = !bFeatureEnabled[F_INPUT];
 	}
 
 	// Change weapon
@@ -293,11 +299,15 @@ void BigHeadScreamers::Input()
 	}
 
 	// Update camera position
-	fpsCamera.Update(this, dt);
+	pFPSCamera->Update(this, dt);
 
 	GroundInput();
 
-	if (enabled[S_INPUT])
+	
+	if (RightClick())
+		GetPointer()->ToggleLock();
+
+	if (bFeatureEnabled[F_INPUT])
 	{
 		// Loop through cubemaps
 		if (Settings::Instance().MinRandomCycle != 0.0f && t - fSetTime > fRandomTime)
@@ -306,41 +316,51 @@ void BigHeadScreamers::Input()
 			fRandomTime = RandRange(Settings::Instance().MinRandomCycle, Settings::Instance().MaxRandomCycle);
 			pSkyBoxManager->CubemapUpdate(true, t);
 		}
-		pSkyBoxManager->Update(t)	;
+		pSkyBoxManager->Update(t);
 
 
 		// Game input
+		Timer timer;
 		// Weapons input
-		pWM->Input(dt, fpsCamera, LeftClick() || KeyPressing(KEY_SPACE));
+		timer.Start();
+		pWM->Input(dt, *pFPSCamera, LeftClick() || KeyPressing(KEY_SPACE));
+		afTimeOf[TIME_WEAPON] = timer.Update();		
 
 		// AI input
-		pAI->Input(t, dt, fpsCamera.GetPosition(), RightClick());
+		timer.Start();
+		pAI->Input(t, dt, pFPSCamera->GetPosition());
+		afTimeOf[TIME_AI] = timer.Update();
 
-		if (enabled[S_COLLISIONS])
-		{
-			Timer temp;
-			pDetector[enabled[S_COLLISIONS] - 1]->Run();
-			fCollisionTime = temp.Update();
-		}
+		// Collisions
+		timer.Start();
+		if (bFeatureEnabled[F_COLLISIONS])
+			pDetector[0]->Run();
+		afTimeOf[TIME_COLLISIONS] = timer.Update();
 
-		fEnemiesTime = 0.0f;
-
+		// Weapons update
+		timer.Start();
 		pWM->UpdateState();
-		pAI->UpdateState(fpsCamera.GetPosition());
+		afTimeOf[TIME_WEAPON] += timer.Update();
 
-		Timer temp;
-		pER->Update(pAI->GetData(), -fpsCamera.GetAlpha(), Settings::Instance().EnemyHeight);
-		fEnemiesTime = temp.Update();
+		// AI update
+		timer.Start();
+		pAI->UpdateState(pFPSCamera->GetPosition());
+		afTimeOf[TIME_AI] += timer.Update();
+
+		// Enemy Renderer update
+		timer.Start();
+		pER->Update(pAI->GetData(), -pFPSCamera->GetAlpha(), Settings::Instance().EnemyHeight);
+		afTimeOf[TIME_ENEMY_RENDERER] = timer.Update();
 
 		// Overlay update
 		if (iShowInfo >= 2)
 		{
 			// Graph input
-			fpsGraph.Input(1.0f / dt, t);
+			pFPSGraph->Input(1.0f / dt, t);
 		}
 	}
 
-	fInputTime = inputTime.Update();
+	afTimeOf[TIME_INPUT] = inputTime.Update();
 }
 
 
@@ -351,7 +371,7 @@ bool BigHeadScreamers::Render()
 	
 	/* Rendering */
 	// First render mirrored content to FBO
-	if (enabled[S_REFLECTION])
+	if (bFeatureEnabled[F_REFLECTION])
 		RenderReflection();
 
 	// Then, render normally
@@ -367,13 +387,9 @@ void BigHeadScreamers::RenderScene() const
 {
 	// Clear color and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	//glDisable(GL_DEPTH_TEST);
-	
+		
 	// Render skybox to framebuffer
 	RenderSkyBox();
-
-	//glEnable(GL_DEPTH_TEST);
 
 	if (!bReflectionFlag)
 	{
@@ -381,9 +397,7 @@ void BigHeadScreamers::RenderScene() const
 		RenderGround();
 	}
 	// sets modelview matrix to LoadMatrix()
-	RenderFire();
-	// Uses previous modelview matrix
-	RenderSprites();
+	RenderContent();
 }
 
 void BigHeadScreamers::MultMirror() const
@@ -413,9 +427,9 @@ void BigHeadScreamers::SkyBoxRotate() const
 {
 	glLoadIdentity();
 	// first rotate beta angle to avoid spin
-	glRotatef(fpsCamera.GetBeta(), 1.0, 0.0, 0.0);
+	glRotatef(pFPSCamera->GetBeta(), 1.0, 0.0, 0.0);
 	// then rotate alpha angle to orient
-	glRotatef(fpsCamera.GetAlpha(), 0.0, 1.0, 0.0);
+	glRotatef(pFPSCamera->GetAlpha(), 0.0, 1.0, 0.0);
 
 	// Anything more than diagonal(cube) * Near
 	float scale = 10.0f * Settings::Instance().Near;
@@ -441,43 +455,33 @@ void BigHeadScreamers::RenderSkyBox() const
 
 void BigHeadScreamers::RenderGround() const
 {
-	fpsCamera.LoadMatrixNoXZ();
+	pFPSCamera->LoadMatrixNoXZ();
 
-	glBindTexture(GL_TEXTURE_2D, CurrentTexture());
 
 	// Set reflection texture (the shader in Ground expects it)
 	glActiveTexture(GL_TEXTURE1);
 	pReflectionFBO->BindTexture();
 	glActiveTexture(GL_TEXTURE0);
 
-	pGround->Render(fpsCamera.GetPosition(), Settings::Instance().Far,
+	pGround->Render(pFPSCamera->GetPosition(), Settings::Instance().Far,
 		ShellGet(SDLShell::SHELL_WIDTH), ShellGet(SDLShell::SHELL_HEIGHT));
 }
 
 
 
 
-void BigHeadScreamers::RenderFire() const
+void BigHeadScreamers::RenderContent() const
 {
-	//glPushMatrix();
-	fpsCamera.LoadMatrix();
+	pFPSCamera->LoadMatrix();
 	MultMirror();
 
 	pWM->Render();
 
 	if (!bReflectionFlag)
-		pExpR->Render(pAI->GetParticles());
-
-	//glPopMatrix();
-}
-
-void BigHeadScreamers::RenderSprites() const
-{
-	//fpsCamera.LoadMatrix();
-	//MultMirror();
+		pPR->Render(pAI->GetParticles());
 
 	// Note alpha mask is needed since the polygons z-fight otherwise
-	pER->Render(pAI->GetData(), -fpsCamera.GetAlpha(), Settings::Instance().EnemyHeight);
+	pER->Render(pAI->GetData(), -pFPSCamera->GetAlpha(), Settings::Instance().EnemyHeight);
 }
 
 
@@ -495,8 +499,8 @@ void BigHeadScreamers::DrawCoordinateFrame() const
 
 	// FIXME: define translation for coordinate frame
 	glTranslatef(0.0f, 0.0f, -250);
-	glRotatef(fpsCamera.GetBeta(), 1.0f, 0.0f, 0.0f);
-	glRotatef(fpsCamera.GetAlpha(), 0.0f, 1.0f, 0.0f);
+	glRotatef(pFPSCamera->GetBeta(), 1.0f, 0.0f, 0.0f);
+	glRotatef(pFPSCamera->GetAlpha(), 0.0f, 1.0f, 0.0f);
 
 	CoordinateFrame::Instance().Render();
 	glPopMatrix();
@@ -541,7 +545,7 @@ void BigHeadScreamers::ShowInfo()
 			
 			RenderReflectionFBO();
 
-			fpsGraph.Draw();
+			pFPSGraph->Draw();
 
 		}
 
@@ -561,67 +565,40 @@ void BigHeadScreamers::ShowInfo()
 		color.g = 255;
 		color.b = 255;
 
-		if (iShowInfo == 1)
+
+		position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
+		position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.95f);
+
+		pttFont->SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
+
+		if (iShowInfo >= 2)
 		{
-			position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
-			position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.95f);
-
-			ttFont.SDL_GL_RenderText(color, &position, "%.1f",  1.0f / timer.GetDeltaTime());
+			position.y -= position.h * 1.2f;
+			pttFont->SDL_GL_RenderText(color, &position, "%.2fms", timer.GetDeltaTime() * 1000.0f);
 
 			position.y -= position.h * 1.2f;
-			ttFont.SDL_GL_RenderText(color, &position, "%.2fms", timer.GetDeltaTime() * 1000.0f);
+			pttFont->SDL_GL_RenderText(color, &position, "bullets=%d", pWM->GetBullets().size());
 
-			position.x = (int)(ShellGet(SHELL_WIDTH) * 0.85f);
-			position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.95f);
+			for (unsigned int i = 0; i < NUM_TIMERS; i++)
+			{
+				position.y -= position.h * 1.2f;
+				pttFont->SDL_GL_RenderText(color, &position, "%s=%.2fms", TimerStrings[i], afTimeOf[i] * 1000.0f);
+			}
 
-			ttFont.SDL_GL_RenderText(color, &position, "bullets=%d", pWM->GetBullets().size());
-
-			position.y -= position.h * 1.2f;
-			ttFont.SDL_GL_RenderText(color, &position, "input=%.2fms", fInputTime * 1000.0f);
-
-			position.y -= position.h * 1.2f;
-			ttFont.SDL_GL_RenderText(color, &position, "collisions[%s]=%.2fms", enabled[S_COLLISIONS] ? "E" : "D", fCollisionTime * 1000.0f);
-
-			position.y -= position.h * 1.2f;
-			ttFont.SDL_GL_RenderText(color, &position, "reflection=%s", enabled[S_REFLECTION] ? "yes" : "no");
-		}
-		else
-		{
-			position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
-			position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.75f);
-
-			ttFont.SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
-			position.y -= position.h * 1.2f;
-		
-			ttFont.SDL_GL_RenderText(color, &position, "FOV=%.2f", fFOV);
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "collisions=%.2fms", fCollisionTime * 1000.0f);
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "enemies=%.2fms", fEnemiesTime * 1000.0f);
+			pttFont->SDL_GL_RenderText(color, &position, "FOV=%.2f", fFOV);
 			position.y -= position.h * 1.2f;
 
 			if (iShowInfo >= 3)
 			{
-				ttFont.SDL_GL_RenderText(color, &position, "alpha=%.1f", fpsCamera.GetAlpha());
+				pttFont->SDL_GL_RenderText(color, &position, "alpha=%.1f", pFPSCamera->GetAlpha());
 				position.y -= position.h * 1.2f;
 
-				ttFont.SDL_GL_RenderText(color, &position, "beta=%.1f", fpsCamera.GetBeta());
+				pttFont->SDL_GL_RenderText(color, &position, "beta=%.1f", pFPSCamera->GetBeta());
 				position.y -= position.h * 1.2f;
 
-				const Vector3 tr = fpsCamera.GetPosition();
-				ttFont.SDL_GL_RenderText(color, &position, "pos=[%.1f,%.1f,%.1f]", tr[0], tr[1], tr[2]);
+				const Vector3 tr = pFPSCamera->GetPosition();
+				pttFont->SDL_GL_RenderText(color, &position, "pos=[%.1f,%.1f,%.1f]", tr[0], tr[1], tr[2]);
 				position.y -= position.h * 1.2f;
-
-				ttFont.SDL_GL_RenderText(color, &position, "#=%d", pGround->VisibleVertices());
-				position.y -= position.h * 1.2f;
-
-				for (int i = 0; i < pGround->VisibleVertices(); i++)
-				{
-					ttFont.SDL_GL_RenderText(color, &position, "w[%d]=[%.1f,%.1f,%.1f]", i, (*pGround)[i][0], (*pGround)[i][1], (*pGround)[i][2]);
-					position.y -= position.h * 1.2f;
-				}
 			}
 		}
 

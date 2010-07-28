@@ -16,30 +16,16 @@
 
 #include "version.h"
 
-#include "Extensions.h"
 #include "SDLShell.h"
-#include "Misc.h"
+#include "ProgramArray.h"
+
 #include "Timer.h"
-#include "TTFont.h"
-#include "Keys.h"
-
-#define _USE_MATH_DEFINES
-#include <math.h>
-#include <stdio.h>
-
-#include "GLResourceManager.h"
-#include "VBO.h"
-#include "FBO.h"
 #include "Matrix.h"
 #include "CoordinateFrame.h"
-#include "ProgramArray.h"
-#include "BaseGraph.h"
 
-#include "CameraController.h"
+using namespace std; // for auto_ptr
 
-
-using namespace std;
-
+class FBO;
 class Ground;
 class AIManager;
 class WeaponManager;
@@ -47,8 +33,10 @@ class ParticleRenderer;
 class BulletRenderer;
 class EnemyRenderer;
 class CollisionDetector;
-
 class SkyBoxManager;
+class FPSCamera;
+class BaseGraph;
+class TTFont;
 
 // is-a SDLShell, is-implemented-in-terms-of ProgramArray
 class BigHeadScreamers : public SDLShell, private ProgramArray
@@ -57,29 +45,17 @@ class BigHeadScreamers : public SDLShell, private ProgramArray
 		P_LOOKUP,		// used for font
 		P_COLOR_OFFSET, // used for coordinate frame
 		NUM_PROGRAMS 
-	};
+	};	
 
-	enum { NUM_TEXTURES = 2 };
-
-	enum {
-		S_COLLISIONS,
-		S_REFLECTION,
-		S_INPUT,
-		NUM_STATES
-	};
-	int enabled[NUM_STATES];
+	enum { F_COLLISIONS, F_REFLECTION, F_INPUT, NUM_FEATURES };
+	bool bFeatureEnabled[NUM_FEATURES];
 
 protected:
 
+	// Used in ShowInfo
+	auto_ptr<TTFont> pttFont;
 	int iShowInfo;
 
-	// Ground texture data
-	unsigned int uiCurTexture;
-	GLuint uiTexture[NUM_TEXTURES];
-	const GLuint CurrentTexture() const { return uiTexture[uiCurTexture]; }
-	void NextTexture() { uiCurTexture = Next(uiCurTexture, NUM_TEXTURES); }
-	void PrevTexture() { uiCurTexture = Prev(uiCurTexture, NUM_TEXTURES); }
-	
 	// mutable since it's changed by RenderReflection() but restored at the end
 	// aka logical constness
 	mutable bool bReflectionFlag;
@@ -90,48 +66,53 @@ protected:
 	float fSetTime;
 	float fRandomTime;
 
-	// Used in ShowInfo
-	TTFont ttFont;
+	// Timers used to measure input stages
+	enum { TIME_INPUT, TIME_WEAPON, TIME_AI, TIME_COLLISIONS,
+		TIME_ENEMY_RENDERER, NUM_TIMERS };
+	float afTimeOf[NUM_TIMERS];
 
+	// Projection matrix related variables
 	float fFOV;
 	// Inverted projection matrix (needed by infinite plane rendering)
 	Matrix4 mInvProj;
+	
+	// Ground renderer
 	auto_ptr<Ground> pGround;
-
-	BaseGraph fpsGraph;
-	FPSCamera fpsCamera;
-
-	// Game Data
+	// Handles generation and rendering of bullets
 	auto_ptr<WeaponManager> pWM;
-	auto_ptr<ParticleRenderer> pExpR;
+	// Particle renderer, used to draw blood particles
+	auto_ptr<ParticleRenderer> pPR;
+	// AI Manager, handles enemies
 	auto_ptr<AIManager> pAI;
+	// Base class for enemy renderer
 	auto_ptr<EnemyRenderer> pER;
+	// Contains cubemaps and skybox load, update and rendering code
 	auto_ptr<SkyBoxManager> pSkyBoxManager;
-
-	enum {
-		DETECTOR_SEGMENT_SPHERE,
-		DETECTOR_SPHERE_SPHERE,
-		NUM_DETECTORS
-	};
+	// Collision detectors
+	enum { DETECTOR_SEGMENT_SPHERE, DETECTOR_SPHERE_SPHERE,	NUM_DETECTORS };
 	auto_ptr<CollisionDetector> pDetector[NUM_DETECTORS];
 
-	float fCollisionTime;
-	// This is updated during render time
-	float fEnemiesTime;
-	// 
-	float fInputTime;
+	// Game camera
+	auto_ptr<FPSCamera> pFPSCamera;
+
+	// Utility
+	auto_ptr<BaseGraph> pFPSGraph;
 
 protected:
 	// Overrides SDLShell version
 	virtual Pointer *NewPointer() { return new FPSPointer(this); }
 
+	// Updates matrices and ground state
 	void GroundInput();
 
+	bool OptionalInit();
+	// Loads reflection FBO. Actually reload since this is called
+	// each time the window is resized
 	void ReloadFBO();
 
-	// Resource loading
-	bool LoadTextures();
-	
+	// Sets up projection matrix. Called by Resize() and fov update ops.
+	void SetupProjection(unsigned int width, unsigned int height);
+
 	// All input is processed here (called by Render())
 	// TODO implement into SDLShell as non-const, make Render() const
 	void Input();
@@ -145,8 +126,7 @@ protected:
 	void RenderScene() const;
 	void RenderSkyBox() const;
 	void RenderGround() const;
-	void RenderFire() const;	
-	void RenderSprites() const;
+	void RenderContent() const;
 	void DrawCoordinateFrame() const;
 	void RenderReflectionFBO() const;
 	void ShowInfo(); // TODO const
@@ -157,6 +137,7 @@ protected:
 	virtual bool Render(); // TODO: const once Input is moved out
 	virtual bool ReleaseGL();
 	virtual bool ReleaseApp();	
+	// Sets projection and modelview matrices, loads reflection FBO
 	virtual bool Resize(unsigned int width, unsigned int height);
 
 	virtual bool RequiresOpenGL2() { return true; }
