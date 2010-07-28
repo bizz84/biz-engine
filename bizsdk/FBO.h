@@ -28,7 +28,7 @@ class FBO
 	GLuint uiTexture;
 	GLuint uiDepthBuffer;
 	
-	GLint aiPrevViewport[4];
+	//GLint aiPrevViewport[4];
 public:
 	FBO(GLenum internalFormat, GLenum format, unsigned int width,
 		unsigned int height, bool attachDepthBuffer = true);

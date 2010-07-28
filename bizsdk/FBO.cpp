@@ -20,7 +20,7 @@ FBO::FBO(GLenum internalFormat, GLenum format, unsigned int width,
 	uiFBO(~0), uiOriginalFBO(~0), uiTexture(~0), uiDepthBuffer(~0)
 {
 	// Save viewport
-	glGetIntegerv( GL_VIEWPORT, aiPrevViewport );
+	//glGetIntegerv( GL_VIEWPORT, aiPrevViewport );
 
 	// Texture setup
 	// Generate texture to be used with the frame buffer
