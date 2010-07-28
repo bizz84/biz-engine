@@ -47,8 +47,12 @@ enum ExitStage
 
 class SDLShell : public Shell
 {
+public:
+	enum ShellParameter { SHELL_WIDTH = 0, SHELL_HEIGHT, SHELL_BPP,
+		SHELL_FULLSCREEN, SHELL_RESIZABLE, SHELL_VSYNC, SHELL_NUM_PARAMETERS };
+private:
 	int shellFrame;
-protected:
+
 	Pointer *pPointer;
 	bool pressed[128];
 	bool pressing[128];
@@ -56,6 +60,15 @@ protected:
 	bool scrollDown;
 	bool leftClick;
 	bool rightClick;
+	
+	vector<CmdLineParameter> aCmdLineParams;
+	unsigned int auiShellParams[SHELL_NUM_PARAMETERS];
+
+	void SetPressed(Uint8 key, bool value) { pressed[key] = value; }
+	void SetPressing(Uint8 key, bool value) { pressing[key] = value; }
+	void ResetPressed();
+	void ResetMouse();	
+protected:
 
 	void Exit(ExitStage stage);
 
@@ -76,14 +89,12 @@ public:
 
 	virtual int Run(int argc, char *argv[]);
 
-	enum ShellParameter { SHELL_WIDTH = 0, SHELL_HEIGHT, SHELL_BPP,
-		SHELL_FULLSCREEN, SHELL_RESIZABLE, SHELL_VSYNC, SHELL_NUM_PARAMETERS };
-
 	const unsigned int ShellGet(ShellParameter param) const;
 	void ShellSet(ShellParameter param, unsigned int value);
 
 	// Getters
-	const Pointer *GetPointer() { return pPointer; }
+	const Pointer *GetPointer() const { return pPointer; }
+	Pointer *GetPointer() { return pPointer; }
 
 	const bool KeyPressed(Uint8 key) const { return pressed[key]; }
 	const bool KeyPressing(Uint8 key) const { return pressing[key]; }
@@ -95,14 +106,6 @@ public:
 	const bool RightClick() const { return rightClick; }
 
 	const int GetCurrentFrame() const { return shellFrame; }
-private:
-	vector<CmdLineParameter> aCmdLineParams;
-	unsigned int auiShellParams[SHELL_NUM_PARAMETERS];
-
-	void SetPressed(Uint8 key, bool value) { pressed[key] = value; }
-	void SetPressing(Uint8 key, bool value) { pressing[key] = value; }
-	void ResetPressed();
-	void ResetMouse();
 };
 
 #endif

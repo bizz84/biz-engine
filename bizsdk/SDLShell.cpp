@@ -20,6 +20,8 @@
 
 #include "Extensions.h"
 
+
+
 // Must be defined by the application
 extern Shell *NewDemo();
 Shell *shell = NULL;
@@ -331,6 +333,10 @@ int SDLShell::Run(int argc, char *argv[])
 				{
 					leftClick = true;
 				}
+				if (event.button.button == SDL_BUTTON_RIGHT)
+				{
+					rightClick = true;
+				}
 				pPointer->UpdateMouseButton(event.button);
 				/*if (Verbose(VerboseAll))
 				{
@@ -383,8 +389,10 @@ int SDLShell::Run(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-	shell = NewDemo();
+	auto_ptr<Shell> shell(NewDemo());
+	return shell->Run(argc, argv);
+	/*shell = NewDemo(); // TODO: shared_ptr?
 	int ret = shell->Run(argc, argv);
 	delete shell;
-	return ret;
+	return ret;*/
 }
