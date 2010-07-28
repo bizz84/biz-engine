@@ -28,6 +28,8 @@
 */
 
 /* Version History
+V0.1.1
+- Some code cleanup
 V0.1.0
 - Started porting to Boost
 - Boost pointer containers integration
@@ -62,7 +64,7 @@ V0.0.1
 */
 
 
-const char szAppVersion[] = "0.1.0";
+const char szAppVersion[] = "0.1.1";
 const char szAppName[] = "Big Head Screamers";
 
 
