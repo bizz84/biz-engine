@@ -179,8 +179,9 @@ PointerInputSample Pointer::GenerateSample(SDL_MouseMotionEvent &event,
 	return sample;
 }
 
-FPSPointer::FPSPointer(Shell *shell) : Pointer(shell)
+FPSPointer::FPSPointer(Shell *shell) : Pointer(shell), bMouseLock(true)
 {
+	// TODO: Free when leaving the window
 	SDL_WM_GrabInput(SDL_GRAB_ON);
 	SDL_ShowCursor(0);
 }
@@ -188,4 +189,19 @@ FPSPointer::FPSPointer(Shell *shell) : Pointer(shell)
 const bool FPSPointer::MotionCondition() const 
 {
 	return ((SDLShell *)pShell)->GetCurrentFrame() > 0;
+}
+
+bool FPSPointer::ToggleLock()
+{
+	if ((bMouseLock = !bMouseLock))
+	{
+		SDL_WM_GrabInput(SDL_GRAB_ON);
+		SDL_ShowCursor(0);
+	}
+	else
+	{
+		SDL_WM_GrabInput(SDL_GRAB_OFF);
+		SDL_ShowCursor(1);
+	}
+	return bMouseLock;
 }

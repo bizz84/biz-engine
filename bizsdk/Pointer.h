@@ -95,15 +95,22 @@ public:
 
 	const size_t NumSamples() const { return samples.size(); }
 
+	virtual bool ToggleLock() { return false; }
+	virtual bool GetLock() const { return false; }
+
 	static const float MaxMotion;
 };
 
 class FPSPointer : public Pointer
 {
+	bool bMouseLock;
 protected:
 	virtual const bool MotionCondition() const;
 public:
 	FPSPointer(Shell *shell);
+	virtual bool ToggleLock();
+	virtual bool GetLock() const { return bMouseLock; }
+
 };
 
 
