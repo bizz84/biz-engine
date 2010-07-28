@@ -89,7 +89,7 @@ bool FBO::BindBuffer() const
 	glBindFramebuffer(GL_FRAMEBUFFER, uiFBO);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
 	{
-		glViewport(0, 0, uiWidth, uiHeight);
+		//glViewport(0, 0, uiWidth, uiHeight);
 		return true;
 	}
 	return false;
@@ -99,8 +99,8 @@ void FBO::UnbindBuffer() const
 {
 	// TODO: unbind only if currently bound?
 	glBindFramebuffer(GL_FRAMEBUFFER, uiOriginalFBO);
-	glViewport(aiPrevViewport[0], aiPrevViewport[1],
-	           aiPrevViewport[2], aiPrevViewport[3]);
+	//glViewport(aiPrevViewport[0], aiPrevViewport[1],
+	//           aiPrevViewport[2], aiPrevViewport[3]);
 }
 
 void FBO::BindTexture() const
