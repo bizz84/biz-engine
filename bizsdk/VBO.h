@@ -46,6 +46,8 @@ protected:
 			pOffset((void *)offset) { }
 	};
 	vector<VBOEntry *> aEntry;
+	
+	// class VBOGenericEntry
 
 	GLuint uiVBO;
 	GLsizei uiStride;
@@ -62,12 +64,19 @@ public:
 
 	void AddEntry(ArrayFuncPointer pointer, GLint size, GLenum type,
 		unsigned int offset);
+		
+	// void AddGenericEntry(GLint loc, GLint size, size_t stride,
+	//	unsigned int offset);
 
 	virtual void Bind() const;
 	virtual void Bind(ArrayFuncPointer funcPointer, GLint size, GLenum type,
 		unsigned int offset) const ;
 
+	// Binds and unbinds
 	virtual void Render(GLenum mode) const;
+	// Just draws the array
+	virtual void Draw(GLenum mode) const;
+
 
 	const unsigned int GetCount() const { return uiCount; }
 
@@ -91,7 +100,10 @@ public:
 	virtual void Bind() const;
 	virtual void Unbind() const;
 
+	// Binds and unbinds
 	virtual void Render(GLenum mode) const;
+	// Just draws the array
+	virtual void Draw(GLenum mode) const;
 
 	const unsigned int GetElements() const { return uiElements; }
 

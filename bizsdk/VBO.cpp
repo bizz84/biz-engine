@@ -73,6 +73,12 @@ void VBO::AddEntry(ArrayFuncPointer pointer, GLint size, GLenum type,
 	aEntry.push_back(new VBOEntry(pointer, size, type, offset));
 }
 
+// void VBO::AddGenericEntry(GLint loc, GLint size, size_t stride,
+//	unsigned int offset)
+//{
+
+//}
+
 void VBO::Bind() const
 {
 	glBindBuffer(GL_ARRAY_BUFFER_ARB, uiVBO);
@@ -111,9 +117,12 @@ void VBO::Bind(ArrayFuncPointer funcPointer, GLint size, GLenum type,
 void VBO::Render(GLenum mode) const
 {
 	Bind();
+	Draw(mode);
+}
+void VBO::Draw(GLenum mode) const
+{
 	glDrawArrays(mode, 0, GetCount());
 }
-
 
 /*****************************************************************************
  * IndexedVBO class implementation
@@ -144,7 +153,11 @@ void IndexedVBO::Unbind() const
 void IndexedVBO::Render(GLenum mode) const
 {
 	Bind();
-	glDrawElements(mode, GetElements(), GL_UNSIGNED_INT, 0);
+	Draw(mode);
 	Unbind();
 }
 
+void IndexedVBO::Draw(GLenum mode) const
+{
+	glDrawElements(mode, GetElements(), GL_UNSIGNED_INT, 0);
+}
