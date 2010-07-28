@@ -88,8 +88,8 @@ Mesh::Mesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/,
 	}
 
 
-	pVBO = new IndexedVBO(attribs, sizeof(float) * offset, pMesh->points,
-		indices, pMesh->faces * 3);
+	pVBO = auto_ptr<IndexedVBO>(new IndexedVBO(attribs, sizeof(float) * offset,
+		pMesh->points, indices, pMesh->faces * 3));
 	pVBO->SetVertexData(0, 3);
 	pVBO->SetNormalData(sizeof(float) * 3);
 	if (pMesh->texelL)
@@ -101,10 +101,6 @@ Mesh::Mesh(Lib3dsMesh *mesh, float scale/* = 1.0f*/,
 	delete [] normalL;
 }
 
-Mesh::~Mesh()
-{
-	delete pVBO;
-}
 
 
 

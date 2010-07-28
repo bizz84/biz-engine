@@ -24,6 +24,9 @@
 #include "VBO.h"
 #include <lib3ds/mesh.h>
 
+using namespace std;
+
+// TODO: Find elegant solution for this
 extern const int permutation[3];
 
 class Mesh
@@ -34,15 +37,14 @@ protected:
 	int iPermutation[3];
 	Lib3dsMesh *pMesh;
 
-	IndexedVBO *pVBO;
+	auto_ptr<IndexedVBO> pVBO;
 
 	const float NormalsSign() const { return bFlipNormals ? -1.0f : 1.0f; }
 public:
 	Mesh(Lib3dsMesh *mesh, float scale = 1.0f, bool flipNormals = false,
 		int *permutation = NULL);
-	~Mesh();
 
-	const IndexedVBO *GetVBO() const { return pVBO; }
+	const IndexedVBO *GetVBO() const { return pVBO.get(); }
 
 	const int GetNumTriangles() const { return pMesh->faces; }
 };
