@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Filename			CoordinateFrame.h
+ * Filename			BaseGraph.h
  * 
  * License			LGPL
  *
@@ -81,11 +81,11 @@ public:
 	virtual ~BaseGraph();
 
 	bool Init(float timeFrame, unsigned int samples, 
-		float x0, float y0,  float x1, float y1, bool negative, float max = 0.0f);
+		float x0, float y0, float x1, float y1, bool negative, float max = 0.0f);
 
-	virtual void Input(float value, float time = 0.0f);
+	void Input(float value, float time = 0.0f);
 
-	virtual void Draw() const;
+	void Draw() const;
 
 	const bool IsOverflow() const { return bOverflow; }
 	const bool IsUnderflow() const { return bUnderflow; }
