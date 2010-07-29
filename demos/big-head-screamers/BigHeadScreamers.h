@@ -35,8 +35,8 @@ class EnemyRenderer;
 class CollisionDetector;
 class SkyBoxManager;
 class FPSCamera;
-class BaseGraph;
-class TTFont;
+class TextGraph;
+class FontManager;
 
 // is-a SDLShell, is-implemented-in-terms-of ProgramArray
 class BigHeadScreamers : public SDLShell, private ProgramArray
@@ -50,10 +50,6 @@ class BigHeadScreamers : public SDLShell, private ProgramArray
 	enum { F_COLLISIONS, F_REFLECTION, F_INPUT, NUM_FEATURES };
 	bool bFeatureEnabled[NUM_FEATURES];
 
-protected:
-
-	// Used in ShowInfo
-	auto_ptr<TTFont> pttFont;
 	int iShowInfo;
 
 	// mutable since it's changed by RenderReflection() but restored at the end
@@ -89,14 +85,15 @@ protected:
 	// Contains cubemaps and skybox load, update and rendering code
 	auto_ptr<SkyBoxManager> pSkyBoxManager;
 	// Collision detectors
-	enum { DETECTOR_SEGMENT_SPHERE, DETECTOR_SPHERE_SPHERE,	NUM_DETECTORS };
+	enum { DETECTOR_SEGMENT_SPHERE,	DETECTOR_SPHERE_SPHERE, NUM_DETECTORS };
 	auto_ptr<CollisionDetector> pDetector[NUM_DETECTORS];
 
 	// Game camera
 	auto_ptr<FPSCamera> pFPSCamera;
 
 	// Utility
-	auto_ptr<BaseGraph> pFPSGraph;
+	auto_ptr<TextGraph> pFPSGraph;
+	auto_ptr<FontManager> pFont;
 
 protected:
 	// Overrides SDLShell version
@@ -105,7 +102,6 @@ protected:
 	// Updates matrices and ground state
 	void GroundInput();
 
-	bool OptionalInit();
 	// Loads reflection FBO. Actually reload since this is called
 	// each time the window is resized
 	void ReloadFBO();
@@ -148,7 +144,6 @@ protected:
 
 public:
 	BigHeadScreamers();
-	~BigHeadScreamers();
 };
 
 #endif

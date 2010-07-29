@@ -17,9 +17,9 @@
 #include "Misc.h"
 #include "GLResourceManager.h"
 #include "SkyBoxManager.h"
-#include "BaseGraph.h"
+#include "TextGraph.h"
 #include "FBO.h"
-#include "TTFont.h"
+//#include "FontManager.h"
 
 // App includes
 #include "EnemyRendererAttrib.h"
@@ -33,6 +33,7 @@
 
 #include "GrenadeRenderer.h"
 #include "Settings.h"
+#include "FontGothic.h"
 
 #include <iostream>
 
@@ -66,17 +67,7 @@ BigHeadScreamers::BigHeadScreamers() :
 
 	for (unsigned int i = 0; i < NUM_TIMERS; i++)
 		afTimeOf[i] = 0.0f;
-
-
-	//TestList();
 }
-
-BigHeadScreamers::~BigHeadScreamers()
-{
-
-
-}
-
 
 bool BigHeadScreamers::InitApp()
 {
@@ -100,26 +91,6 @@ void BigHeadScreamers::ReloadFBO()
 	// Initialize fbo used for drawing reflection
 	pReflectionFBO = auto_ptr<FBO>(new FBO(GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
 		ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT), true));
-}
-
-bool BigHeadScreamers::OptionalInit()
-{
-	if (iShowInfo >= 1)
-	{
-		// Load font used for overlay rendering
-		pttFont = auto_ptr<TTFont>(new TTFont());
-		if (!pttFont->LoadFont("data/fonts/LucidaBrightDemiBold.ttf", 20))
-			return false;
-	}
-	
-	if (iShowInfo >= 2)
-	{
-		// Initialize FPS graph
-		pFPSGraph = auto_ptr<BaseGraph>(new BaseGraph());
-		if (!pFPSGraph->Init(4.0f, 3000, 0.6f, 0.60f, 0.98f, 0.95f, false))
-			return false;
-	}
-	return true;
 }
 
 bool BigHeadScreamers::InitGL()
@@ -165,8 +136,15 @@ bool BigHeadScreamers::InitGL()
 	pDetector[DETECTOR_SPHERE_SPHERE] = 
 		auto_ptr<CollisionDetector>(new CPUSphereSphereCollisionDetector(pWM.get(), pAI.get()));
 
-	// Initialize optional components
-	OptionalInit();
+	pFont = auto_ptr<FontManager>(new FontGothic("data/textures/font_gray.bmp"));
+	if (!pFont->Init())
+		return false;
+
+	// Initialize FPS graph
+	pFPSGraph = auto_ptr<TextGraph>(new TextGraph());
+	if (!pFPSGraph->Init(true, true, true, true, "%.1f", 0.075f, 4.0f, 3000, 0.6f, 0.55f, 0.98f, 0.90f, false))
+		return false;
+
 
 	/* GL state setup */
 
@@ -193,6 +171,7 @@ bool BigHeadScreamers::InitGL()
 	glEnableClientState(GL_VERTEX_ARRAY);	
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	timer.Start();
 	return true;
@@ -334,7 +313,7 @@ void BigHeadScreamers::Input()
 		// Collisions
 		timer.Start();
 		if (bFeatureEnabled[F_COLLISIONS])
-			pDetector[0]->Run();
+			pDetector[DETECTOR_SPHERE_SPHERE]->Run();
 		afTimeOf[TIME_COLLISIONS] = timer.Update();
 
 		// Weapons update
@@ -353,7 +332,7 @@ void BigHeadScreamers::Input()
 		afTimeOf[TIME_ENEMY_RENDERER] = timer.Update();
 
 		// Overlay update
-		if (iShowInfo >= 2)
+		if (iShowInfo >= 1)
 		{
 			// Graph input
 			pFPSGraph->Input(1.0f / dt, t);
@@ -362,7 +341,6 @@ void BigHeadScreamers::Input()
 
 	afTimeOf[TIME_INPUT] = inputTime.Update();
 }
-
 
 
 bool BigHeadScreamers::Render()
@@ -437,8 +415,6 @@ void BigHeadScreamers::SkyBoxRotate() const
 	
 	MultMirror();
 }
-
-
 	
 void BigHeadScreamers::RenderSkyBox() const
 {
@@ -451,12 +427,9 @@ void BigHeadScreamers::RenderSkyBox() const
 	glPopMatrix();
 }
 
-
-
 void BigHeadScreamers::RenderGround() const
 {
 	pFPSCamera->LoadMatrixNoXZ();
-
 
 	// Set reflection texture (the shader in Ground expects it)
 	glActiveTexture(GL_TEXTURE1);
@@ -466,9 +439,6 @@ void BigHeadScreamers::RenderGround() const
 	pGround->Render(pFPSCamera->GetPosition(), Settings::Instance().Far,
 		ShellGet(SDLShell::SHELL_WIDTH), ShellGet(SDLShell::SHELL_HEIGHT));
 }
-
-
-
 
 void BigHeadScreamers::RenderContent() const
 {
@@ -537,80 +507,58 @@ void BigHeadScreamers::ShowInfo()
 
 	if (iShowInfo)
 	{
-		glDisable(GL_DEPTH_TEST);
 		if (iShowInfo >= 2)
 		{
 			// Clears depth buffer
-			DrawCoordinateFrame();			
-			
-			RenderReflectionFBO();
-
-			pFPSGraph->Draw();
-
+			DrawCoordinateFrame();
 		}
 
-		/* Draw font */
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_ONE, GL_ONE);
-		//glEnable(GL_TEXTURE_2D);
-
-		glUseProgram(Program(P_LOOKUP));
-
-		TTFont::glEnable2D();
+		glDisable(GL_DEPTH_TEST);
 		
-		SDL_Color color;
-		SDL_Rect position;
+		if (iShowInfo >= 2)
+		{			
+			RenderReflectionFBO();
+		}
 
-		color.r = 255;
-		color.g = 255;
-		color.b = 255;
+		pFPSGraph->Draw();
 
+		glEnable(GL_BLEND);
+		pFont->Bind();
 
-		position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
-		position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.95f);
-
-		pttFont->SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / timer.GetDeltaTime());
+		pFPSGraph->TextDraw(pFont.get());
 
 		if (iShowInfo >= 2)
 		{
-			position.y -= position.h * 1.2f;
-			pttFont->SDL_GL_RenderText(color, &position, "%.2fms", timer.GetDeltaTime() * 1000.0f);
+			// font parameters
+			float color[] = {1.0,1.0,0.0,1.0};
+			float scale = 0.06f;
+			float x = -1.0f;
+			float y = 1.0f + scale;
 
-			position.y -= position.h * 1.2f;
-			pttFont->SDL_GL_RenderText(color, &position, "bullets=%d", pWM->GetBullets().size());
+			FontManager::HorzAlign horz = FontManager::LeftAlign;
+			FontManager::VertAlign vert = FontManager::TopAlign;
+
+			pFont->Render(x, y -= scale, scale, color, horz, vert,
+				"%.2fms", timer.GetDeltaTime() * 1000.0f);
+
+			pFont->Render(x, y -= scale, scale, color, horz, vert,
+				"B=%d", pWM->GetBullets().size());
 
 			for (unsigned int i = 0; i < NUM_TIMERS; i++)
 			{
-				position.y -= position.h * 1.2f;
-				pttFont->SDL_GL_RenderText(color, &position, "%s=%.2fms", TimerStrings[i], afTimeOf[i] * 1000.0f);
+				pFont->Render(x, y -= scale, scale, color, horz, vert,
+					"%s=%.2fms", TimerStrings[i], afTimeOf[i] * 1000.0f);
 			}
 
-			pttFont->SDL_GL_RenderText(color, &position, "FOV=%.2f", fFOV);
-			position.y -= position.h * 1.2f;
-
-			if (iShowInfo >= 3)
-			{
-				pttFont->SDL_GL_RenderText(color, &position, "alpha=%.1f", pFPSCamera->GetAlpha());
-				position.y -= position.h * 1.2f;
-
-				pttFont->SDL_GL_RenderText(color, &position, "beta=%.1f", pFPSCamera->GetBeta());
-				position.y -= position.h * 1.2f;
-
-				const Vector3 tr = pFPSCamera->GetPosition();
-				pttFont->SDL_GL_RenderText(color, &position, "pos=[%.1f,%.1f,%.1f]", tr[0], tr[1], tr[2]);
-				position.y -= position.h * 1.2f;
-			}
+			pFont->Render(x, y -= scale, scale, color, horz, vert,
+				"FOV=%.2f", fFOV);
 		}
 
-		TTFont::glDisable2D();
 		glDisable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		glEnable(GL_DEPTH_TEST);
-
 	}
 }
-
 
 bool BigHeadScreamers::ReleaseGL()
 {
@@ -628,5 +576,3 @@ Shell *NewDemo()
 {
 	return new BigHeadScreamers();
 }
-
-
