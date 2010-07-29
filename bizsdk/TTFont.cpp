@@ -102,7 +102,7 @@ void TTFont::SDL_GL_RenderText(const char *text,
 
 	
 	/* Bad things happen if we delete the texture before it finishes */
-	glFinish();
+	//glFinish();
 	
 	/* return the deltas in the unused w,h part of the rect */
 	location->w = initial->w;
