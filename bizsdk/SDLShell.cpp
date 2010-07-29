@@ -73,7 +73,6 @@ void SDLShell::Exit(ExitStage stage)
 		case EXIT_NO_FONT:
 		case EXIT_INIT_APP:
 			ReleaseApp();
-			delete shell;
 			SDL_Quit();
 			exit(1);
 			break;
