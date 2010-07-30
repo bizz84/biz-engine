@@ -125,7 +125,8 @@ protected:
 	void RenderContent() const;
 	void DrawCoordinateFrame() const;
 	void RenderReflectionFBO() const;
-	void ShowInfo(); // TODO const
+	void ShowInfo() const;
+	void ShowIntro(float t) const;
 	
 	// Virtuals
 	virtual bool InitApp();
@@ -139,8 +140,8 @@ protected:
 	virtual bool RequiresOpenGL2() { return true; }
 	virtual bool RequiresTTF()  { return true; }
 
-	virtual const char *GetAppName() { return szAppName; }
-	virtual const char *GetAppVersion()  { return szAppVersion; }
+	virtual const char *GetAppName() const { return szAppName; }
+	virtual const char *GetAppVersion() const { return szAppVersion; }
 
 public:
 	BigHeadScreamers();

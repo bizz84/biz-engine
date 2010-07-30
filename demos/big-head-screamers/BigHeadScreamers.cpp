@@ -19,7 +19,6 @@
 #include "SkyBoxManager.h"
 #include "TextGraph.h"
 #include "FBO.h"
-//#include "FontManager.h"
 
 // App includes
 #include "EnemyRendererAttrib.h"
@@ -34,6 +33,7 @@
 #include "GrenadeRenderer.h"
 #include "Settings.h"
 #include "FontGothic.h"
+#include "FontTechno.h"
 
 #include <iostream>
 
@@ -136,13 +136,15 @@ bool BigHeadScreamers::InitGL()
 	pDetector[DETECTOR_SPHERE_SPHERE] = 
 		auto_ptr<CollisionDetector>(new CPUSphereSphereCollisionDetector(pWM.get(), pAI.get()));
 
-	pFont = auto_ptr<FontManager>(new FontGothic("data/textures/font_gray.bmp"));
+	//pFont = auto_ptr<FontManager>(new FontGothic("data/textures/font_gray.bmp"));
+	pFont = auto_ptr<FontManager>(new FontTechno("data/textures/FontB.bmp"));
 	if (!pFont->Init())
 		return false;
 
 	// Initialize FPS graph
 	pFPSGraph = auto_ptr<TextGraph>(new TextGraph());
-	if (!pFPSGraph->Init(true, true, true, true, "%.1f", 0.075f, 4.0f, 3000, 0.6f, 0.55f, 0.98f, 0.90f, false))
+	//if (!pFPSGraph->Init(true, true, true, true, "%.1f", 0.075f, 4.0f, 3000, 0.6f, 0.55f, 0.98f, 0.90f, false))
+	if (!pFPSGraph->Init(true, true, true, true, "%.1f", 0.08f, 4.0f, 3000, 0.45f, 0.55f, 0.98f, 0.90f, false))
 		return false;
 
 
@@ -165,7 +167,7 @@ bool BigHeadScreamers::InitGL()
 	pER->Update(pAI->GetData(), -pFPSCamera->GetAlpha(), Settings::Instance().EnemyHeight);
 	GroundInput();
 
-	// This is for GL state variables won't change across the whole program
+	// This is for GL state variables that won't change across the whole program
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnableClientState(GL_VERTEX_ARRAY);	
@@ -250,7 +252,7 @@ void BigHeadScreamers::Input()
 	if (KeyPressed(KEY_7))
 	{
 		fFOV = Settings::Instance().Fov;
-		Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
+		SetupProjection(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 	}
 	if (KeyPressed(KEY_8))
 	{
@@ -450,8 +452,10 @@ void BigHeadScreamers::RenderContent() const
 	if (!bReflectionFlag)
 		pPR->Render(pAI->GetParticles());
 
+	glEnable(GL_BLEND);
 	// Note alpha mask is needed since the polygons z-fight otherwise
 	pER->Render(pAI->GetData(), -pFPSCamera->GetAlpha(), Settings::Instance().EnemyHeight);
+	glDisable(GL_BLEND);
 }
 
 
@@ -500,7 +504,7 @@ void BigHeadScreamers::RenderReflectionFBO() const
 }
 
 
-void BigHeadScreamers::ShowInfo()
+void BigHeadScreamers::ShowInfo() const
 {
 	if (!iShowInfo)
 		printf("FPS=%.1f\n", 1.0f / timer.GetDeltaTime());
@@ -525,6 +529,8 @@ void BigHeadScreamers::ShowInfo()
 		glEnable(GL_BLEND);
 		pFont->Bind();
 
+		ShowIntro(timer.GetTime());
+
 		pFPSGraph->TextDraw(pFont.get());
 
 		if (iShowInfo >= 2)
@@ -532,31 +538,48 @@ void BigHeadScreamers::ShowInfo()
 			// font parameters
 			float color[] = {1.0,1.0,0.0,1.0};
 			float scale = 0.06f;
+			float mscale = 0.07f;
 			float x = -1.0f;
 			float y = 1.0f + scale;
 
 			FontManager::HorzAlign horz = FontManager::LeftAlign;
 			FontManager::VertAlign vert = FontManager::TopAlign;
 
-			pFont->Render(x, y -= scale, scale, color, horz, vert,
+			pFont->Render(x, y -= mscale, scale, color, horz, vert,
 				"%.2fms", timer.GetDeltaTime() * 1000.0f);
 
-			pFont->Render(x, y -= scale, scale, color, horz, vert,
+			pFont->Render(x, y -= mscale, scale, color, horz, vert,
 				"B=%d", pWM->GetBullets().size());
 
 			for (unsigned int i = 0; i < NUM_TIMERS; i++)
 			{
-				pFont->Render(x, y -= scale, scale, color, horz, vert,
+				pFont->Render(x, y -= mscale, scale, color, horz, vert,
 					"%s=%.2fms", TimerStrings[i], afTimeOf[i] * 1000.0f);
 			}
 
-			pFont->Render(x, y -= scale, scale, color, horz, vert,
+			pFont->Render(x, y -= mscale, scale, color, horz, vert,
 				"FOV=%.2f", fFOV);
+
+			// Uncomment this to see all available characters on scren
+			//pFont->TestFont();
 		}
 
 		glDisable(GL_BLEND);
 
 		glEnable(GL_DEPTH_TEST);
+	}
+}
+
+void BigHeadScreamers::ShowIntro(float t) const
+{
+	if (t < 3.0f)
+	{
+		float c = (3.0f - t) / 3.0f;
+		float red[] = {1.0,0.0,0.0,c};
+		float yellow[] = {1.0,1.0,0.0,c};
+		
+		pFont->Render(0.0,  0.1f, 0.15f, red, FontManager::CenterAlign, FontManager::MiddleAlign, GetAppName());
+		pFont->Render(0.0, -0.1f, 0.15f, yellow, FontManager::CenterAlign, FontManager::MiddleAlign, GetAppVersion());
 	}
 }
 
