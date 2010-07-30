@@ -86,8 +86,8 @@ bool LoadImage(const char *filename, SDL_Surface *&surface,
     SDL_Surface* loadedImage = NULL;
     
     //Load the image
-    //loadedImage = SDL_LoadBMP( filename );
-    loadedImage = IMG_Load( filename ); // Uses SDL_image
+    loadedImage = SDL_LoadBMP( filename );
+    //loadedImage = IMG_Load( filename ); // Note this doesn't load alpha!!
 
     
     //If nothing went wrong in loading the image
