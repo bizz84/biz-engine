@@ -63,8 +63,12 @@ bool EnemyRendererAttrib::LoadSprites()
 {
 	GLResourceManager &loader = GLResourceManager::Instance();
 	// Load texture atlas
-	return loader.LoadTextureFromFile("data/textures/sprites/Atlas.tga",
+	return loader.LoadTextureFromFile("data/textures/sprites/Atlas.bmp",
 			uiAtlas, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR);
+  
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
 }
 
 Point2 EnemyRendererAttrib::TexCoord(Point2 coord, int index)
