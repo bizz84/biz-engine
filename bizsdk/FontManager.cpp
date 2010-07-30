@@ -41,7 +41,7 @@ bool FontManager::LoadShaders()
 		"void main()" \
 		"{" \
 			"gl_FragColor = texture2D(sTexture, TexCoord);" \
-			"gl_FragColor.a = gl_FragColor.r * 4.0 * Color.a;" \
+			"gl_FragColor.a = 4.0 * gl_FragColor.r * Color.a;" \
 			"gl_FragColor.xyz *= Color.xyz;" \
 		"}";
 		
@@ -97,7 +97,7 @@ const float FontManager::Width(const char *str, float height) const
 	{
 		unsigned char c = str[i];
 		const Glyph &g = glyph[GlyphIndex(str[i])];
-		width += g.Ratio() * height;
+		width += g.Ratio(FontAspect()) * height;
 	}
 	return width;
 }
@@ -139,7 +139,7 @@ void FontManager::Render(float posX, float posY, float height, float *color,
 	{
 		int index = GlyphIndex(str[i]);
 		const Glyph &g = glyph[index];
-		float w = g.Ratio() * height;
+		float w = g.Ratio(FontAspect()) * height;
 		*a++ = startX;
 		*a++ = startY;
 		*a++ = g.x;

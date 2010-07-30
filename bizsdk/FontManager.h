@@ -19,9 +19,6 @@
 #include <string>
 using namespace std;
 
-#include "boost/ptr_container/ptr_vector.hpp"
-using namespace boost;
-
 // Simple font manager class. Not particularly well designed, supports only
 // one Font type stored in a texture
 // No caching or other techiques are used to increase efficiency
@@ -44,12 +41,12 @@ protected:
 		const float Width() const { return w; }
 		const float Height() const { return h; }
 
-		const float Ratio() const { return h == 0.0 ? 1.0f : w / h; }
+		const float Ratio(float intrinsic = 1.0f) const { return h == 0.0 ? intrinsic : intrinsic * w / h; }
 	};
-	ptr_vector<Glyph> glyph;
 	
 	enum { NUM_GLYPHS = 128 };
 	int aiGlyphLookup[NUM_GLYPHS];
+	Glyph glyph[NUM_GLYPHS];
 
 	bool fixedWidth;
 
@@ -60,6 +57,7 @@ protected:
 	GLint locColor;
 
 	virtual void GenerateGlyphs() = 0;
+	virtual float FontAspect() const { return 1.0f; }
 	bool LoadShaders();
 	bool LoadTexture();
 public:
@@ -82,6 +80,9 @@ public:
 	const int GlyphIndex(unsigned char ch) const { return aiGlyphLookup[ch]; }	
 
 	const bool FixedWidth() const { return fixedWidth; }
+
+	virtual void TestFont() { }
+
 };
 
 
