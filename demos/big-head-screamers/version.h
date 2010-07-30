@@ -16,13 +16,16 @@
 
 /* TODO
 
-- Crosshair
-- OpenAL integration
-- Big Head meshes
-- Jumping. Space bar calls for it!
-- Explosions
+- Improve collision detection:
+http://www.gamedev.net/reference/programming/features/AbsPolyOpt/
 - Laser gun
+- OpenAL integration
+- 3D Meshes
+- Jumping
+- Explosions
+- Armageddon mode (with particles and stuff exploding everywhere)
 - Game logic
+- Crosshair
 - HUD
 
 */
@@ -30,6 +33,7 @@
 /* Version History
 V0.1.1
 - Some code cleanup
+- Added FontManager and TextGraph, FontGothic, FontTechno
 V0.1.0
 - Started porting to Boost
 - Boost pointer containers integration
