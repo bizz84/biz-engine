@@ -28,8 +28,8 @@ protected:
 	virtual bool RequiresOpenGL2() = 0;
 	virtual bool RequiresTTF() = 0;
 
-	virtual const char *GetAppName() = 0;
-	virtual const char *GetAppVersion() = 0;
+	virtual const char *GetAppName() const = 0;
+	virtual const char *GetAppVersion() const = 0;
 public:
 	Shell() { }
 	virtual ~Shell() { }
