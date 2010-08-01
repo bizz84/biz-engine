@@ -28,7 +28,7 @@ using namespace boost;
 /*
 General algorithm: A list of bullets can collide with a list of enemies.
 Initially all bullets are un-exploded and as the double loop in Execute()
-finds collisions, the "hit" flag is set to true in Grenade objects and the
+finds collisions, the "hit" flag is set to true in bullet objects and the
 health is diminished in monsters.
 When results are read back, hit bullets are removed from the array and
 originate instances of BloodParticleSystems.
@@ -80,7 +80,7 @@ void CPUCollisionDetector::Execute()
 			{
 				b->SetImpact();
 
-				e->health -= Settings::Instance().GrenadeDamage;
+				e->health -= b->Damage();
 				GetAI()->AddParticles(b->GetPosition(), e->health);
 			}				
 		}
@@ -164,7 +164,7 @@ void CPUSegmentSphereCollisionDetector::Execute()
 			if (CollisionSegmentSphere(bullet[i].prev, bullet[i].curr, enemy[j].pos, AIManager::CollisionRadius))
 			{
 				bullet[i].hit = true;
-				enemy[j].health -= Grenade::DAMAGE;
+				enemy[j].health -= GravityBullet::DAMAGE;
 			}
 		}
 	}
