@@ -67,8 +67,8 @@ void GrenadeRenderer::Render(const list<Bullet *> &bullets) const
 		glPushMatrix();
 		const Point3 &pos = (*iter)->GetPosition();
 		glTranslatef(pos[0], pos[1], pos[2]);
-		glRotatef(-((Grenade *)*iter)->GetAngleY() * 180.0f / M_PI, 0.0f, 1.0f, 0.0f);
-		glRotatef(-((Grenade *)*iter)->GetAngleX() * 180.0f / M_PI, 1.0f, 0.0f, 0.0f);
+		glRotatef(-(*iter)->GetAngleY() * 180.0f / M_PI, 0.0f, 1.0f, 0.0f);
+		glRotatef(-(*iter)->GetAngleX() * 180.0f / M_PI, 1.0f, 0.0f, 0.0f);
 		glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
 		pMesh[0]->GetVBO()->Draw(GL_TRIANGLES);
 		glPopMatrix();
@@ -82,8 +82,8 @@ void GrenadeRenderer::Render(const list<Bullet *> &bullets) const
 		glPushMatrix();
 		const Point3 &pos = (*iter)->GetPosition();
 		glTranslatef(pos[0], pos[1], pos[2]);
-		glRotatef(-((Grenade *)*iter)->GetAngleY() * 180.0f / M_PI, 0.0f, 1.0f, 0.0f);
-		glRotatef(-((Grenade *)*iter)->GetAngleX() * 180.0f / M_PI, 1.0f, 0.0f, 0.0f);
+		glRotatef(-(*iter)->GetAngleY() * 180.0f / M_PI, 0.0f, 1.0f, 0.0f);
+		glRotatef(-(*iter)->GetAngleX() * 180.0f / M_PI, 1.0f, 0.0f, 0.0f);
 		glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
 		pMesh[0]->GetVBO()->Draw(GL_TRIANGLES);
 		glPopMatrix();
