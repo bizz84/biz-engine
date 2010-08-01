@@ -52,15 +52,15 @@ public:
 };
 
 /*****************************************************************************
- * Grenade class declaration
+ * GravityBullet class declaration
  *****************************************************************************/
-
-class Grenade : public Bullet
+// TODO: rename to GravityBullet
+class GravityBullet : public Bullet
 {
 	unsigned int bounces;
 
 public:
-	Grenade(const Point3 &p,
+	GravityBullet(const Point3 &p,
 		const float yRot, const float xRot, const float speed)
 		: Bullet(p, yRot, xRot, speed), bounces(0) { }
 	virtual bool Update(const float dt);
@@ -69,14 +69,14 @@ public:
 };
 
 /*****************************************************************************
- * Laser class declaration
+ * StraightBullet class declaration
  *****************************************************************************/
-
-class Laser : public Bullet
+// TODO: Rename to Straight Bullet
+class StraightBullet : public Bullet
 {
 	float distance;
 public:
-	Laser(const Point3 &p,
+	StraightBullet(const Point3 &p,
 		const float yRot, const float xRot, const float speed)
 		: Bullet(p, yRot, xRot, speed), distance(0.0f) { }
 

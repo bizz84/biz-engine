@@ -33,10 +33,10 @@
 
 		
 /*****************************************************************************
- * Grenade implementation
+ * GravityBullet implementation
  *****************************************************************************/
 
-bool Grenade::Update(const float dt)
+bool GravityBullet::Update(const float dt)
 {
 	pos[0] = pos[1];
 	float speed = dt * Settings::Instance().BulletSpeed;
@@ -65,9 +65,9 @@ bool Grenade::Update(const float dt)
 
 
 /*****************************************************************************
- * Grenade implementation
+ * GravityBullet implementation
  *****************************************************************************/
-bool Laser::Update(float dt)
+bool StraightBullet::Update(float dt)
 {
 	float speed = dt * Settings::Instance().LaserSpeed;
 	pos[0] = pos[1];
