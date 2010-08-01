@@ -447,15 +447,16 @@ void BigHeadScreamers::RenderContent() const
 	pFPSCamera->LoadMatrix();
 	MultMirror();
 
+	glEnable(GL_BLEND);
+	// Note alpha mask is needed since the polygons z-fight otherwise
+	pER->Render(pAI->GetData(), -pFPSCamera->GetAlpha(), Settings::Instance().EnemyHeight);
+	glDisable(GL_BLEND);
+
 	pWM->Render();
 
 	if (!bReflectionFlag)
 		pPR->Render(pAI->GetParticles());
 
-	glEnable(GL_BLEND);
-	// Note alpha mask is needed since the polygons z-fight otherwise
-	pER->Render(pAI->GetData(), -pFPSCamera->GetAlpha(), Settings::Instance().EnemyHeight);
-	glDisable(GL_BLEND);
 }
 
 
@@ -572,9 +573,10 @@ void BigHeadScreamers::ShowInfo() const
 
 void BigHeadScreamers::ShowIntro(float t) const
 {
-	if (t < 3.0f)
+	const float titleTime = 3.0f;
+	if (t < titleTime)
 	{
-		float c = (3.0f - t) / 3.0f;
+		float c = (titleTime - t) / titleTime;
 		float red[] = {1.0,0.0,0.0,c};
 		float yellow[] = {1.0,1.0,0.0,c};
 		
