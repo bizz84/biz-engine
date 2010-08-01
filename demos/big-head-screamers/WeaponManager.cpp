@@ -31,11 +31,12 @@ WeaponManager::WeaponManager()
 {
 	reloadTime[TypeGrenade] = Settings::Instance().GrenadeReload;
 	reloadTime[TypeLaser] = Settings::Instance().LaserReload;
+	reloadTime[TypeTetra] = Settings::Instance().LaserReload;
 
-	// Initialize GrenadeRenderer
+	
 	pRenderer[TypeGrenade] = auto_ptr<BulletRenderer>(new GrenadeRenderer());
-	pRenderer[TypeLaser] = auto_ptr<BulletRenderer>(new TetraRenderer());
-		//auto_ptr<BulletRenderer>(new LaserRenderer());
+	pRenderer[TypeLaser] = auto_ptr<BulletRenderer>(new LaserRenderer());
+	pRenderer[TypeTetra] = auto_ptr<BulletRenderer>(new TetraRenderer());
 
 }	
 
@@ -52,11 +53,13 @@ void WeaponManager::NewBullet(const Point3 &p, const float yRot,
 	switch (CurrWeapon())
 	{
 	case TypeGrenade:
-		bullet = new Grenade(p, yRot, xRot, speed);
+		bullet = new GravityBullet(p, yRot, xRot, speed);
 		break;
+	// Both of these have the same update logic
 	case TypeLaser:
+	case TypeTetra:
 	default:
-		bullet = new Laser(p, yRot, xRot, speed);
+		bullet = new StraightBullet(p, yRot, xRot, speed);
 		break;
 	}
 	pList[CurrWeapon()].push_back(bullet);
@@ -103,7 +106,6 @@ bool EraseCondition(const Bullet &bullet)
 
 void WeaponManager::UpdateState()
 {
-	// FIXME: This causes memory leaks!!
 	// This is called after collision detection
 	for (unsigned int i = 0; i < NumWeapons; i++)
 	{
@@ -115,5 +117,8 @@ void WeaponManager::UpdateState()
 void WeaponManager::Render()
 {
 	pRenderer[TypeGrenade]->Render(pList[TypeGrenade]);
+	pRenderer[TypeTetra]->Render(pList[TypeTetra]);
+	glEnable(GL_BLEND);
 	pRenderer[TypeLaser]->Render(pList[TypeLaser]);
+	glDisable(GL_BLEND);
 }

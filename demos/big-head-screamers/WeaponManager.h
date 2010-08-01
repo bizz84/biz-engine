@@ -31,7 +31,7 @@ class BulletRenderer;
 class WeaponManager
 {
 public:
-	enum WeaponType { TypeGrenade, TypeLaser, NumWeapons };
+	enum WeaponType { TypeGrenade, TypeLaser, TypeTetra, NumWeapons };
 private:
 
 	float reloadTime[NumWeapons];
