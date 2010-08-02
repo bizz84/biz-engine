@@ -18,12 +18,13 @@
 
 - Improve collision detection:
 http://www.gamedev.net/reference/programming/features/AbsPolyOpt/
-- Laser gun
+- StraightBullet gun
 - OpenAL integration
 - 3D Meshes
 - Jumping
 - Explosions
 - Armageddon mode (with particles and stuff exploding everywhere)
+- Bloody rain
 - Game logic
 - Crosshair
 - HUD
@@ -31,6 +32,8 @@ http://www.gamedev.net/reference/programming/features/AbsPolyOpt/
 */
 
 /* Version History
+V0.1.2
+- Added laser gun
 V0.1.1
 - Some code cleanup
 - Added FontManager and TextGraph, FontGothic, FontTechno
@@ -41,7 +44,7 @@ V0.0.9
 - Settings on a file
 - Added FOV control
 V0.0.8
-- Proper Grenade model
+- Proper GravityBullet model
 - Big classes redesign
 V0.0.7
 - Working istancing
@@ -68,7 +71,7 @@ V0.0.1
 */
 
 
-const char szAppVersion[] = "0.1.1";
+const char szAppVersion[] = "0.1.2";
 const char szAppName[] = "Big Head Screamers";
 
 
