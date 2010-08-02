@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shadows", "shadows.vcproj", "{840A46AC-FEDC-4343-8ECD-3795ABB45E91}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shadows", "shadows.vcproj", "{44078D47-C3C9-43E1-B2C1-546984CDFDBB}"
 	ProjectSection(ProjectDependencies) = postProject
 		{0F9D4807-8E15-4861-BFF8-B3713753B0F8} = {0F9D4807-8E15-4861-BFF8-B3713753B0F8}
 	EndProjectSection
@@ -14,10 +14,10 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{840A46AC-FEDC-4343-8ECD-3795ABB45E91}.Debug|Win32.ActiveCfg = Debug|Win32
-		{840A46AC-FEDC-4343-8ECD-3795ABB45E91}.Debug|Win32.Build.0 = Debug|Win32
-		{840A46AC-FEDC-4343-8ECD-3795ABB45E91}.Release|Win32.ActiveCfg = Release|Win32
-		{840A46AC-FEDC-4343-8ECD-3795ABB45E91}.Release|Win32.Build.0 = Release|Win32
+		{44078D47-C3C9-43E1-B2C1-546984CDFDBB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{44078D47-C3C9-43E1-B2C1-546984CDFDBB}.Debug|Win32.Build.0 = Debug|Win32
+		{44078D47-C3C9-43E1-B2C1-546984CDFDBB}.Release|Win32.ActiveCfg = Release|Win32
+		{44078D47-C3C9-43E1-B2C1-546984CDFDBB}.Release|Win32.Build.0 = Release|Win32
 		{0F9D4807-8E15-4861-BFF8-B3713753B0F8}.Debug|Win32.ActiveCfg = Debug|Win32
 		{0F9D4807-8E15-4861-BFF8-B3713753B0F8}.Debug|Win32.Build.0 = Debug|Win32
 		{0F9D4807-8E15-4861-BFF8-B3713753B0F8}.Release|Win32.ActiveCfg = Release|Win32
