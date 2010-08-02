@@ -46,7 +46,7 @@ GrenadeRenderer::~GrenadeRenderer()
 	delete pMesh[1];
 }
 
-
+// TODO: Implement same approach as in LaserRenderer
 void GrenadeRenderer::Render(const list<Bullet *> &bullets) const
 {
 	// TODO: This is pre-render (factor out as the function is templatized)
