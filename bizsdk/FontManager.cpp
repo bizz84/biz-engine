@@ -41,7 +41,7 @@ bool FontManager::LoadShaders()
 		"void main()" \
 		"{" \
 			"gl_FragColor = texture2D(sTexture, TexCoord);" \
-			"gl_FragColor.a = 4.0 * gl_FragColor.r * Color.a;" \
+			"gl_FragColor.a = (1.0 - gl_FragColor.a) * Color.a;" \
 			"gl_FragColor.xyz *= Color.xyz;" \
 		"}";
 		
