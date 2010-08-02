@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;E:\lib\glew-1.5.3\include&quot;;&quot;E:\lib\lib3ds-1.3.0\lib3ds-1.3.0&quot;;&quot;E:\lib\SDL-devel-1.2.14-VC8\SDL-1.2.14\include&quot;;&quot;E:\lib\SDL_ttf-devel-2.0.9-VC8\SDL_ttf-2.0.9\include&quot;"
+				AdditionalIncludeDirectories="&quot;E:\lib\glew-1.5.3\include&quot;;&quot;E:\lib\lib3ds-1.3.0\lib3ds-1.3.0&quot;;&quot;E:\lib\SDL-devel-1.2.14-VC8\SDL-1.2.14\include&quot;;&quot;E:\lib\SDL_ttf-devel-2.0.9-VC8\SDL_ttf-2.0.9\include&quot;;&quot;E:\lib\SDL_image-1.2.10\include&quot;;E:\lib\boost_1_43_0"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -104,7 +104,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;E:\lib\glew-1.5.3\include&quot;;&quot;E:\lib\lib3ds-1.3.0\lib3ds-1.3.0&quot;;&quot;E:\lib\SDL-devel-1.2.14-VC8\SDL-1.2.14\include&quot;;&quot;E:\lib\SDL_ttf-devel-2.0.9-VC8\SDL_ttf-2.0.9\include&quot;"
+				AdditionalIncludeDirectories="&quot;E:\lib\glew-1.5.3\include&quot;;&quot;E:\lib\lib3ds-1.3.0\lib3ds-1.3.0&quot;;&quot;E:\lib\SDL-devel-1.2.14-VC8\SDL-1.2.14\include&quot;;&quot;E:\lib\SDL_ttf-devel-2.0.9-VC8\SDL_ttf-2.0.9\include&quot;;&quot;E:\lib\SDL_image-1.2.10\include&quot;;E:\lib\boost_1_43_0"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -192,6 +192,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\FBO.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\FBO.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\FontManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\FontManager.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\GLResourceManager.cpp"
 				>
 			</File>
@@ -269,6 +285,14 @@
 			</File>
 			<File
 				RelativePath="..\..\SkyBox.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\TextGraph.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\TextGraph.h"
 				>
 			</File>
 			<File
