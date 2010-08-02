@@ -30,10 +30,11 @@ protected:
 	Vector3 vel;
 	float xRot, yRot;
 	bool impact;
+	float damage;
 
 public:
 	Bullet(const Point3 &p,
-		const float yRot, const float xRot, const float speed);
+		const float yRot, const float xRot, const float speed, const float damage);
 	virtual ~Bullet() { }
 		
 	virtual bool Update(const float dt) = 0;
@@ -48,7 +49,7 @@ public:
 	const float GetAngleX() const { return xRot; }
 	const float GetAngleY() const { return yRot; }
 
-	virtual const unsigned int Damage() const = 0;
+	const unsigned int Damage() const { return damage; }
 };
 
 /*****************************************************************************
@@ -62,10 +63,8 @@ class GravityBullet : public Bullet
 public:
 	GravityBullet(const Point3 &p,
 		const float yRot, const float xRot, const float speed)
-		: Bullet(p, yRot, xRot, speed), bounces(0) { }
+		: Bullet(p, yRot, xRot, speed, Settings::Instance().GrenadeDamage), bounces(0) { }
 	virtual bool Update(const float dt);
-
-	virtual const unsigned int Damage() const { return Settings::Instance().GrenadeDamage; }
 };
 
 /*****************************************************************************
@@ -78,11 +77,9 @@ class StraightBullet : public Bullet
 public:
 	StraightBullet(const Point3 &p,
 		const float yRot, const float xRot, const float speed)
-		: Bullet(p, yRot, xRot, speed), distance(0.0f) { }
+		: Bullet(p, yRot, xRot, speed, Settings::Instance().LaserDamage), distance(0.0f) { }
 
 	virtual bool Update(const float dt);
-
-	virtual const unsigned int Damage() const { return Settings::Instance().LaserDamage; }
 };
 
 #endif

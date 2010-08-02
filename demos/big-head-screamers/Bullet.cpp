@@ -19,8 +19,8 @@
  *****************************************************************************/
 
  Bullet::Bullet(const Point3 &p,
-	 const float yRot, const float xRot, const float speed)
-	 : xRot(xRot), yRot(yRot)
+	 const float yRot, const float xRot, const float speed, const float damage)
+	 : xRot(xRot), yRot(yRot), damage(damage)
 {
 	impact = false;
 	pos[1] = -p;
