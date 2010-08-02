@@ -219,6 +219,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\FontGothic.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\FontGothic.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\FontTechno.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\FontTechno.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Ground.cpp"
 				>
 			</File>
