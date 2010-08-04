@@ -327,6 +327,18 @@
 				RelativePath="..\..\Vector.h"
 				>
 			</File>
+			<Filter
+				Name="Fonts"
+				>
+				<File
+					RelativePath="..\..\Fonts\FontTechno.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Fonts\FontTechno.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>
