@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Filename			Matrix.h
  * 
- * License			LGPL
+ * License			GPLv3
  *
  * Author			Andrea Bizzotto (bizz84@gmail.com)
  *
