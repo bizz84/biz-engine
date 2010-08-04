@@ -15,6 +15,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <stdio.h>
+#include <memory.h>
 
 static const float z = 0.0f;
 static const float u = 1.0f;

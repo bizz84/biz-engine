@@ -14,6 +14,8 @@
 #include "TextGraph.h"
 #include "FontManager.h"
 
+#include <string.h>
+
 static const float z = 0.0f;
 static const float u = 1.0f;
 static const float v = 1.0f;

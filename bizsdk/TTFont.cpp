@@ -122,9 +122,9 @@ int TTFont::SDL_GL_RenderText(SDL_Color color,
     int retval = 0;
     va_list va_args;
     va_start( va_args, text );
-    retval = _vsnprintf( intBuffer, 1024, text, va_args );
+    retval = vsnprintf( intBuffer, 1024, text, va_args );
     va_end(va_args);
-	SDL_GL_RenderText(intBuffer, color, location);
+    SDL_GL_RenderText(intBuffer, color, location);
     return retval;
 
 }

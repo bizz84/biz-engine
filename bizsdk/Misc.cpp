@@ -20,8 +20,11 @@
 #include <stdio.h>
 #include <assert.h>
 
+#ifdef __linux__
+#include <SDL/SDL_image.h>
+#else
 #include "SDL_image.h"
-
+#endif
 
 static const float u = 1.0f;
 static const float z = 0.0f;

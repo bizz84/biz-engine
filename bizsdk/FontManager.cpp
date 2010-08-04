@@ -109,7 +109,7 @@ void FontManager::Render(float posX, float posY, float height, float *color,
 	char str[1024];
 	va_list va_args;
     va_start( va_args, text );
-    int retval = _vsnprintf( str, 1024, text, va_args );
+    int retval = vsnprintf( str, 1024, text, va_args );
     va_end(va_args);
 
 	// Adjust to aspect ratio
