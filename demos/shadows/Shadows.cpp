@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Filename			Shadows.cpp
  * 
- * License			LGPL
+ * License			GPLv3
  *
  * Author			Andrea Bizzotto (bizz84@gmail.com)
  *
@@ -14,6 +14,8 @@
  *****************************************************************************/
 
 #include "Shadows.h"
+#include "TextGraph.h"
+#include "Fonts/FontTechno.h"
 
 enum DisplayMode {
 	E_SHADOWS,
@@ -149,12 +151,8 @@ bool Shadows::InitGL()
 	if (!LoadShaders())
 		return false;
 
-	// Load font used for overlay rendering
-	if (!ttFont.LoadFont("data/fonts/LucidaBrightDemiBold.ttf", 20))
-		return false;	
-
 	if (!loader.LoadTextureFromFile("data/textures/crate-base.bmp",
-		uiBGTexture, GL_LINEAR, GL_LINEAR))
+		uiBGTexture, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR))
 		return false;
 	
 	unsigned int handle3DSFile[2];
@@ -200,11 +198,15 @@ bool Shadows::InitGL()
 	                           (void *)TetraIndices, 12);
 
 
-	if (!fpsGraph.Init(4.0f, 3000, -0.98f, 0.60f, -0.6f, 0.95f, false))
-	{
+	pFont = auto_ptr<FontManager>(new FontTechno("data/textures/FontB.bmp"));
+	if (!pFont->Init())
 		return false;
-	}
 
+	// Initialize FPS graph
+	pFPSGraph = auto_ptr<TextGraph>(new TextGraph());
+	//if (!pFPSGraph->Init(true, true, true, true, "%.1f", 0.075f, 4.0f, 3000, 0.6f, 0.55f, 0.98f, 0.90f, false))
+	if (!pFPSGraph->Init(true, true, true, true, "%.1f", 0.08f, 4.0f, 7000, 0.45f, 0.55f, 0.98f, 0.90f, false))
+		return false;
 
 	glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
 
@@ -216,6 +218,12 @@ bool Shadows::InitGL()
 	fMaxDistance *= 3.0f;
 
 	fpsCamera.Init(fDefDistance, -20.0f);
+
+	glEnable(GL_TEXTURE_2D);
+	glEnableClientState(GL_VERTEX_ARRAY);	
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);	
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	timer.Start();
 	return true;
@@ -282,7 +290,7 @@ bool Shadows::Render()
 
 	float dt = timer.GetDeltaTime();
 
-	fpsGraph.Input(1.0f / dt, timer.GetTime());
+	pFPSGraph->Input(1.0f / dt, timer.GetTime());
 
 
 	/* User input */
@@ -426,56 +434,46 @@ bool Shadows::Render()
 
 	if (iShowInfo)
 	{
-		fpsGraph.Draw();
+		pFPSGraph->Draw();
 
-		/* Draw font */
 		glEnable(GL_BLEND);
-		glBlendFunc(GL_ONE, GL_ONE);
-		glEnable(GL_TEXTURE_2D);
+		pFont->Bind();
 
-		glUseProgram(uiProgram[E_LOOKUP]);
+		pFPSGraph->TextDraw(pFont.get());
 
-		TTFont::glEnable2D();
-		
-		SDL_Color color;
-		SDL_Rect position;
+		// font parameters
+		float yellow[] = {1.0,1.0,0.0,1.0};
+		float red[] = {1.0,0.0,0.0,1.0};
+		float scale = 0.06f;
+		float mscale = 0.07f;
+		float x = -1.0f;
+		float y = 1.0f;
 
-		color.r = 255;
-		color.g = 255;
-		color.b = 255;
+		FontManager::HorzAlign horz = FontManager::LeftAlign;
+		FontManager::VertAlign vert = FontManager::TopAlign;
 
-		position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
-		position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.75f);
-
-		if (iShowInfo == 1)
+		if (iShowInfo >= 2)
 		{
-			ttFont.SDL_GL_RenderText(color, &position, "%.1f",  1.0f / dt);
-		}
-		else if (iShowInfo == 2)
-		{
-			ttFont.SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / dt);
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "[LEFT,RIGHT] Extent=%.1f", fShadowExtent);
-			position.y -= position.h * 1.2f;
+			pFont->Render(x, y -= mscale, scale, red, horz, vert,
+				"[LEFT,RIGHT] Extent=%.1f", fShadowExtent);
 
 			char text[200];
 			CurrentGroupDesc(text);
-			ttFont.SDL_GL_RenderText(color, &position, text);
-			position.y -= position.h * 1.2f;			
 
-			ttFont.SDL_GL_RenderText(color, &position, "[ENTER] Render Mode=%s",
-				DisplayMoreStr[eDisplayMode]);
-			position.y -= position.h * 1.2f;
+			pFont->Render(x, y -= mscale, scale, red, horz, vert,
+				text);
 
-			ttFont.SDL_GL_RenderText(color, &position, "[8] Double Stencil=%d", bUseDoubleStencil ? 1 : 0);
-			position.y -= position.h * 1.2f;
-			
-			ttFont.SDL_GL_RenderText(color, &position, "[0] Wireframe=%d", bWireframe ? 1 : 0);
-			position.y -= position.h * 1.2f;
+			pFont->Render(x, y -= mscale, scale, red, horz, vert,
+				"[ENTER] Render Mode=%s", DisplayMoreStr[eDisplayMode]);
+
+			pFont->Render(x, y -= mscale, scale, red, horz, vert,
+				"[8] Double Stencil=%d", bUseDoubleStencil ? 1 : 0);
+
+			pFont->Render(x, y -= mscale, scale, red, horz, vert,
+				"[0] Wireframe=%d", bWireframe ? 1 : 0);
+
 		}
 
-		TTFont::glDisable2D();
 		glDisable(GL_BLEND);
 	}
 	iFrameCounter++;
@@ -491,18 +489,18 @@ void Shadows::PreRenderGeometry(GLuint program)
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, uiBGTexture);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	///glEnableClientState(GL_VERTEX_ARRAY);
+	///glEnableClientState(GL_NORMAL_ARRAY);
+	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	glCullFace(GL_BACK);
 }
 
 void Shadows::PostRenderGeometry(GLuint program)
 {
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
+	//glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	//glDisableClientState(GL_NORMAL_ARRAY);
+	//glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void Shadows::RenderGeometry(GLuint program)
@@ -584,15 +582,15 @@ void Shadows::ShowShadowVolume(unsigned int lightIndex)
 	glUniform1f(GetUniLoc(program, "ShadowExtent"), fShadowExtent);
 	glUniform1i(GetUniLoc(program, "InfiniteShadowVolume"), false);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_NORMAL_ARRAY);
 
 	RenderCurrentGroup(true);
 
 	glDisable(GL_BLEND);
 
-	glDisableClientState(GL_NORMAL_ARRAY);	
-	glDisableClientState(GL_VERTEX_ARRAY);
+	//glDisableClientState(GL_NORMAL_ARRAY);	
+	//glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void Shadows::RenderShadowVolumes(unsigned int lightIndex)
@@ -618,8 +616,8 @@ void Shadows::RenderShadowVolumes(unsigned int lightIndex)
 	glDepthMask(0); // do not write to the depth (Z) buffer
 	glEnable(GL_STENCIL_TEST); // enable stencil testing
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_NORMAL_ARRAY);
 
 	// set the reference stencil value to 0
 	glStencilFunc(GL_ALWAYS, 0, ~0);
@@ -660,8 +658,8 @@ void Shadows::RenderShadowVolumes(unsigned int lightIndex)
 
 
 
-	glDisableClientState(GL_NORMAL_ARRAY);	
-	glDisableClientState(GL_VERTEX_ARRAY);
+	//glDisableClientState(GL_NORMAL_ARRAY);	
+	//glDisableClientState(GL_VERTEX_ARRAY);
 
 	if (eDisplayMode == E_SHADOW_VOLUMES)
 		glDisable(GL_BLEND);
@@ -682,7 +680,7 @@ void Shadows::RenderPlane(GLuint program, const float *color)
 		1.0f, 1.0f,
 	};
 
-	glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);
 
 	glVertexPointer(2, GL_FLOAT, 0, vertexAttrib);
 
@@ -690,7 +688,7 @@ void Shadows::RenderPlane(GLuint program, const float *color)
 
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-	glDisableClientState(GL_VERTEX_ARRAY);
+	//glDisableClientState(GL_VERTEX_ARRAY);
 
 }
 
@@ -818,9 +816,9 @@ void Shadows::DrawLightMarker(float *lightPos)
 	glPushMatrix();
 	glTranslatef(lightPos[0], lightPos[1], lightPos[2]);
 	glScalef(10.0f, 10.0f, 10.0f);
-	glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_VERTEX_ARRAY);
 	pTetraVBO->Render(GL_TRIANGLES);
-	glDisableClientState(GL_VERTEX_ARRAY);
+	//glDisableClientState(GL_VERTEX_ARRAY);
 	glPopMatrix();
 }
 

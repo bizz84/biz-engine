@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Filename			Shadows.h
  * 
- * License			LGPL
+ * License			GPLv3
  *
  * Author			Andrea Bizzotto (bizz84@gmail.com)
  *
@@ -19,7 +19,6 @@
 #include "SDLShell.h"
 #include "Misc.h"
 #include "Timer.h"
-#include "TTFont.h"
 #include "Keys.h"
 
 #define _USE_MATH_DEFINES
@@ -38,6 +37,8 @@
 
 #include "CameraController.h"
 
+class TextGraph;
+class FontManager;
 
 #define GROUPS_COUNT 3
 #define MAX_LIGHTS 4
@@ -106,8 +107,6 @@ protected:
 
 	Timer timer;
 
-	TTFont ttFont;
-
 	GLuint uiBGTexture;
 	GLuint uiCoordFrameList;
 
@@ -163,7 +162,8 @@ protected:
 
 	int eDisplayMode;
 
-	BaseGraph fpsGraph;
+	auto_ptr<TextGraph> pFPSGraph;
+	auto_ptr<FontManager> pFont;
 
 	FPSCamera fpsCamera;
 	//RollingSpinCamera spinCamera;
@@ -202,8 +202,8 @@ protected:
 	virtual bool RequiresOpenGL2() { return true; }
 	virtual bool RequiresTTF()  { return true; }
 
-	virtual const char *GetAppName() { return szAppName; }
-	virtual const char *GetAppVersion()  { return szAppVersion; }
+	virtual const char *GetAppName() const { return szAppName; }
+	virtual const char *GetAppVersion() const { return szAppVersion; }
 
 public:
 	Shadows();
