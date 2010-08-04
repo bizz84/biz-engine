@@ -13,7 +13,7 @@
 
 #include "Fountain.h"
 #include "TextGraph.h"
-#include "FontTechno.h"
+#include "Fonts/FontTechno.h"
 
 #include <CL/cl.hpp>
 
