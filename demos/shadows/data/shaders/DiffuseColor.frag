@@ -1,20 +1,27 @@
 //
 uniform sampler2D sTexture;
-//varying vec2 TexCoord;
 
 uniform vec4 Color;
 
-//varying float Intensity;
+uniform int NumLights;
+
+#define MAX_LIGHTS 4
+
 varying vec3 Normal;
-varying vec3 LightDir;
+varying vec3 LightDir[MAX_LIGHTS];
 
 
 void main()
 {
 	vec4 texColor = texture2D(sTexture, gl_TexCoord[0].st);
 
-	float Intensity = max(0.0, dot(Normal, LightDir));
+	float Intensity = max(0.0, dot(Normal, LightDir[0]));
+	
+	for (int i = 1; i < NumLights; i++)
+		Intensity += max(0.0, dot(Normal, LightDir[i]));
 		
-	gl_FragColor = Color * texColor * vec4(Intensity);
+	//Intensity /= NumLights;	
+		
+	gl_FragColor = Intensity * Color * texColor;
 	gl_FragColor.a = 0.5;
 }

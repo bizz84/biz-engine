@@ -1,6 +1,7 @@
 
 uniform float ShadowExtent;
 uniform bool  InfiniteShadowVolume;
+uniform int   LightIndex;
 
 varying vec3 Normal;
 varying vec3 LightDir;
@@ -9,7 +10,7 @@ void main(void)
 {
 	vec3 EyePos = vec3(gl_ModelViewMatrix * gl_Vertex);
 	
-	vec3 LightPos = vec3(gl_LightSource[0].position);
+	vec3 LightPos = vec3(gl_LightSource[LightIndex].position);
 	
 	LightDir = normalize(LightPos - EyePos);
 	
