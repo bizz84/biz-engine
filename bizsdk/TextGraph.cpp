@@ -40,6 +40,8 @@ bool TextGraph::Init(bool showMax, bool showMin, bool showAvg, bool showCur,
 	fTextScale = textScale;
 
 	strcpy(szPrecision, precision);
+
+	return true;
 }
 
 
