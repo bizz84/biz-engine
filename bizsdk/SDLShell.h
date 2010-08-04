@@ -23,6 +23,7 @@
 
 #include "Pointer.h"
 
+#include <memory>
 #include <vector>
 #include <string>
 
