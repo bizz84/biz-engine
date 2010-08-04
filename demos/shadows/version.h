@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Filename			version.h
  * 
- * License			LGPL
+ * License			GPLv3
  *
  * Author			Andrea Bizzotto (bizz84@gmail.com)
  *
@@ -20,7 +20,9 @@
 */
 
 /* Version History 
-
+V1.1.7
+- MipMapped texture
+- Added new font, removed GL state changes
 V1.1.6
 - Added First Person Shooter Camera mode
 
@@ -42,7 +44,7 @@ V1.1.3
 */
 
 
-const char szAppVersion[] = "1.1.5";
+const char szAppVersion[] = "1.1.7";
 const char szAppName[] = "Vertex Shader Depth-fail Shadow Volumes";
 
 
