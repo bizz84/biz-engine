@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Filename			Fountain.h
  * 
- * License			LGPL
+ * License			GPLv3
  *
  * Author			Andrea Bizzotto (bizz84@gmail.com)
  *
@@ -17,7 +17,6 @@
 #include "SDLShell.h"
 #include "Misc.h"
 #include "Timer.h"
-#include "TTFont.h"
 #include "Keys.h"
 
 #define _USE_MATH_DEFINES
@@ -39,11 +38,13 @@
 
 #include "version.h"
 
+class TextGraph;
+class FontManager;
+
 
 class Fountain : public SDLShell, public CLContext
 {
 	int iShowInfo;
-	TTFont ttFont;
 	GLuint uiTextProgram;
 
 	GLuint uiParticleProgram, uiCoordFrame;
@@ -55,6 +56,7 @@ class Fountain : public SDLShell, public CLContext
 	//unsigned int nParticles;
 	float fPointSize;
 	float camRotate;
+	bool bModeChanged;
 
 	float angle;
 
@@ -128,7 +130,9 @@ class Fountain : public SDLShell, public CLContext
 	void UpdatePID(float dt, unsigned int &nParticles);
 
 	// Timing
-	BaseGraph fpsGraph;
+	auto_ptr<TextGraph> pFPSGraph;
+	auto_ptr<TextGraph> pPartGraph;
+	auto_ptr<FontManager> pFont;
 	Timer timer;
 
 
@@ -165,8 +169,8 @@ protected:
 	virtual bool RequiresOpenGL2() { return true; }
 	virtual bool RequiresTTF()  { return true; }
 
-	virtual const char *GetAppName() { return szAppName; }
-	virtual const char *GetAppVersion()  { return szAppVersion; }
+	virtual const char *GetAppName() const { return szAppName; }
+	virtual const char *GetAppVersion() const { return szAppVersion; }
 
 public:
 	Fountain();

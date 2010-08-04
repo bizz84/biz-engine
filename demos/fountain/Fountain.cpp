@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Filename			Fountain.cpp
  * 
- * License			LGPL
+ * License			GPLv3
  *
  * Author			Andrea Bizzotto (bizz84@gmail.com)
  *
@@ -12,28 +12,34 @@
  *****************************************************************************/
 
 #include "Fountain.h"
+#include "TextGraph.h"
+#include "FontTechno.h"
 
 #include <CL/cl.hpp>
 
 const char *aszModes[] = {
-	"OpenCL Arrays",
-	"OpenCL Struct", 
-	"CPU Reference"
+	"OPENCL ARRAYS",
+	"OPENCL STRUCT", 
+	"CPU REFERENCE"
 };
 
 #define BUFFERS_SIZE (1 << 20)
 #define MIN_SIZE (1 << 8)
 
 #define TARGET_FRAMERATE 30.0f
+#define TARGET_FRAMETIME (1.0f / TARGET_FRAMERATE)
 
-Fountain::Fountain()
+Fountain::Fountain() :
+	pos(NULL),
+	vel(NULL),
+	hash(NULL),
+	strFountainProgram(NULL),
+	pParticleVBOArray(NULL),
+	pParticleVBOStride(NULL),
+
+	bModeChanged(false)
 {
-	pos = vel = NULL;
-	hash = NULL;
-	strFountainProgram = NULL;
 
-	pParticleVBOArray = NULL;
-	pParticleVBOStride = NULL;
 }
 
 Fountain::~Fountain()
@@ -352,10 +358,6 @@ bool Fountain::InitGL()
 
 	GLResourceManager &loader = GLResourceManager::Instance();
 
-	// Load font used for overlay rendering
-	if (!ttFont.LoadFont("data/fonts/LucidaBrightDemiBold.ttf", 20))
-		return false;	
-
 	if (!loader.LoadShaderFromFile("data/shaders/Lookup.vert", "data/shaders/Lookup.frag", uiTextProgram))
 		return false;
 
@@ -365,14 +367,27 @@ bool Fountain::InitGL()
 	if (!loader.LoadShaderFromFile("data/shaders/ColorOffset.vert", "data/shaders/ColorOffset.frag", uiCoordFrame))
 		return false;
 
-	if (!fpsGraph.Init(4.0f, 3000, -0.98f, 0.65f, -0.65f, 0.95f, false))
-		return false;
-
 	fPointSize = 3.0f;
 	fDistance = 2.0f;
 	fDefDistance = 10.0f;
 
 	CoordinateFrame::Instance().Make(fDefDistance);
+
+
+	pFont = auto_ptr<FontManager>(new FontTechno("data/textures/FontB.bmp"));
+	if (!pFont->Init())
+		return false;
+
+	// Initialize FPS graph
+	pFPSGraph = auto_ptr<TextGraph>(new TextGraph());
+	//if (!pFPSGraph->Init(true, true, true, true, "%.1f", 0.075f, 4.0f, 3000, 0.6f, 0.55f, 0.98f, 0.90f, false))
+	if (!pFPSGraph->Init(true, true, true, true, "%.1f", 0.08f, 4.0f, 3000, 0.35f, 0.55f, 0.98f, 0.90f, false))
+		return false;
+
+	pPartGraph = auto_ptr<TextGraph>(new TextGraph());
+	if (!pPartGraph->Init(true, true, true, true, "%.0f", 0.08f, 4.0f, 3000, 0.35f, -0.1f, 0.98f, 0.35f, false))
+		return false;
+
 
 	Resize(ShellGet(SHELL_WIDTH), ShellGet(SHELL_HEIGHT));
 
@@ -394,7 +409,13 @@ bool Fountain::InitGL()
 
 	iCurPIDParam = -1;
 
-	pidController.Init(TARGET_FRAMERATE, 1.0f, 0.0f, 0.0f, 200.0f);
+	pidController.Init(TARGET_FRAMETIME, 1.0f, 0.0f, 0.0f, 200000.0f);
+
+
+	glEnable(GL_TEXTURE_2D);
+	glEnableClientState(GL_VERTEX_ARRAY);	
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	timer.Start();
 
@@ -451,9 +472,9 @@ void Fountain::CPUReference(float g, float dt)
 
 void Fountain::UpdatePID(float dt, unsigned int &nParticles)
 {
-	float out = pidController.Update(dt, 1.0f / dt);
+	float out = pidController.Update(dt, dt);
 
-	nParticles -= out;
+	nParticles += out;
 	if ((nParticles /= 1.02f) < MIN_SIZE)
 		nParticles = MIN_SIZE;
 	if ((nParticles *= 1.02f) > BUFFERS_SIZE)
@@ -469,11 +490,11 @@ void Fountain::UpdatePID(float dt, unsigned int &nParticles)
 
 bool Fountain::Input(float t, float dt)
 {
-	fpsGraph.Input(1.0f / dt, t);
+	pFPSGraph->Input(1.0f / dt, t);
 
-	if (KeyPressed(KEY_1))
+	if ((bModeChanged = KeyPressed(KEY_1)))
 	{
-		eMode = eMode < NUM_IMPLEMENTATIONS - 1 ? eMode + 1 : 0;
+		eMode = Next(eMode, NUM_IMPLEMENTATIONS);
 	}
 	if (KeyPressed(KEY_2))
 	{
@@ -500,21 +521,36 @@ bool Fountain::Input(float t, float dt)
 	{
 		if (KeyPressed(KEY_LEFT))
 		{
-			pidController.UpdateParam(iCurPIDParam, iCurPIDParam == 3 || iCurPIDParam == -1 ? -1.0f : -0.1f);
+			// Convert to fps and back
+			if (iCurPIDParam == -1)
+			{
+				float f = 1.0f / pidController.fTarget - 1.0f;
+				pidController.fTarget = 1.0f / f;
+			}
+			else
+				pidController.UpdateParam(iCurPIDParam, iCurPIDParam == 3 ? -1.0f : -0.1f);
 		}
 		if (KeyPressed(KEY_RIGHT))
 		{
-			pidController.UpdateParam(iCurPIDParam, iCurPIDParam == 3 || iCurPIDParam == -1 ? 1.0f : 0.1f);
+			if (iCurPIDParam == -1)
+			{
+				float f = 1.0f / pidController.fTarget + 1.0f;
+				pidController.fTarget = 1.0f / f;
+			}
+			else
+				pidController.UpdateParam(iCurPIDParam, iCurPIDParam == 3 ? 1.0f : 0.1f);
 		}
 		if (KeyPressed(KEY_UP))
 		{
-			iCurPIDParam = iCurPIDParam > 0 ? iCurPIDParam - 1 : 3;
+			iCurPIDParam = iCurPIDParam > -1 ? iCurPIDParam - 1 : 3;
 		}
 		if (KeyPressed(KEY_DOWN))
 		{
 			iCurPIDParam = iCurPIDParam < 3 ? iCurPIDParam + 1 : -1;
 		}
-		UpdatePID(dt, sImpl[eMode].nParticles);
+		if (!bModeChanged)
+			UpdatePID(dt, sImpl[eMode].nParticles);
+		pPartGraph->Input((float)sImpl[eMode].nParticles, t);
 	}
 	else
 	{
@@ -699,8 +735,6 @@ bool Fountain::RunGL(float t, float dt)
 		glRotatef(xRot, 1.0f, 0.0f, 0.0f);
 		glRotatef(yRot, 0.0f, 1.0f, 0.0f);
 
-		glEnableClientState(GL_VERTEX_ARRAY);
-
 		// Draw Particle System
 		glUseProgram(uiParticleProgram);
 		if (eMode == OPENCL_STRUCT)
@@ -724,73 +758,71 @@ bool Fountain::RunGL(float t, float dt)
 	// Draw Coordinate frame
 	DrawCoordinateFrame(xRot, yRot);
 
-	glDisableClientState(GL_VERTEX_ARRAY);
-
 
 	if (iShowInfo > 0 || bUsePID)
 	{
-		fpsGraph.Draw();
-		
-		glUseProgram(uiTextProgram);
+		pFPSGraph->Draw();
+		if (bUsePID)
+			pPartGraph->Draw();
 
-		TTFont::glEnable2D();
-		
-		SDL_Color color;
-		SDL_Rect position;
+		glEnable(GL_BLEND);
+		pFont->Bind();
 
-		color.r = 255;
-		color.g = 255;
-		color.b = 255;
+		pFPSGraph->TextDraw(pFont.get());
+		if (bUsePID)
+			pPartGraph->TextDraw(pFont.get());
 
-		position.x = (int)(ShellGet(SHELL_WIDTH) * 0.01f);
-		position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.75f);
+		// font parameters
+		float yellow[] = {1.0,1.0,0.0,1.0};
+		float red[] = {1.0,0.0,0.0,1.0};
+		float scale = 0.06f;
+		float mscale = 0.07f;
+		float x = -1.0f;
+		float y = 1.0f;
 
-		if (iShowInfo == 1)
+		FontManager::HorzAlign horz = FontManager::LeftAlign;
+		FontManager::VertAlign vert = FontManager::TopAlign;
+
+		if (iShowInfo >= 2)
 		{
-			ttFont.SDL_GL_RenderText(color, &position, "%.1f",  1.0f / dt);
+			pFont->Render(x, y, scale * 1.5f, red, horz, vert,
+				aszModes[eMode]);
+
+			y -= mscale * 1.5f;
+
+			/*pFont->Render(x, y -= mscale, scale, yellow, horz, vert,
+				"ms=%.1f",  dt * 1000.0f);*/
+
+			if (!bUsePID)
+				pFont->Render(x, y -= mscale, scale, yellow, horz, vert,
+					"Particles=%d", sImpl[eMode].nParticles);
+
+			pFont->Render(x, y -= mscale, scale, yellow, horz, vert,
+				"PointSize=%.0f", fPointSize);
+
+			pFont->Render(x, y -= mscale, scale, yellow, horz, vert,
+				"RunTime=%.3f", sImpl[eMode].fRunTime);
 		}
-		else if (iShowInfo == 2)
-		{
-			ttFont.SDL_GL_RenderText(color, &position, aszModes[eMode]);
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "FPS=%.1f",  1.0f / dt);
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "ms=%.1f",  dt * 1000.0f);
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "Particles=%d", sImpl[eMode].nParticles);
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "PointSize=%.0f", fPointSize);
-			position.y -= position.h * 1.2f;
-
-			ttFont.SDL_GL_RenderText(color, &position, "RunTime=%.3f", sImpl[eMode].fRunTime);
-			position.y -= position.h * 1.2f;
-		}
-
 		if (bUsePID)
 		{
-			position.y = (int)(ShellGet(SHELL_HEIGHT) * 0.4f);
+			y -= mscale;
 
-			ttFont.SDL_GL_RenderText(color, &position, "%starget=%.1f", iCurPIDParam == -1 ? "> " : "", pidController.fTarget);
-			position.y -= position.h * 1.2f;
+			float green[] = {0.0,1.0,0.0,1.0};
+			pFont->Render(x, y -= mscale, scale, iCurPIDParam == -1 ? green : yellow, horz, vert,
+				"target=%.1f", 1.0f / pidController.fTarget);
 
-			ttFont.SDL_GL_RenderText(color, &position, "%sKp=%.1f", iCurPIDParam == 0 ? "> " : "", pidController.Kp);
-			position.y -= position.h * 1.2f;
+			pFont->Render(x, y -= mscale, scale, iCurPIDParam == 0 ? green : yellow, horz, vert,
+				"Kp=%.1f", pidController.Kp);
 
-			ttFont.SDL_GL_RenderText(color, &position, "%sKi=%.1f", iCurPIDParam == 1 ? "> " : "", pidController.Ki);
-			position.y -= position.h * 1.2f;
+			pFont->Render(x, y -= mscale, scale, iCurPIDParam == 1 ? green : yellow, horz, vert,
+				"Ki=%.1f", pidController.Ki);
 
-			ttFont.SDL_GL_RenderText(color, &position, "%sKd=%.1f", iCurPIDParam == 2 ? "> " : "", pidController.Kd);
-			position.y -= position.h * 1.2f;
+			pFont->Render(x, y -= mscale, scale, iCurPIDParam == 2 ? green : yellow, horz, vert,
+				"Kd=%.1f", pidController.Kd);
 
-			ttFont.SDL_GL_RenderText(color, &position, "%sKg=%.1f", iCurPIDParam == 3 ? "> " : "", pidController.Kg);
-			position.y -= position.h * 1.2f;
-
-		}
-		TTFont::glDisable2D();
+			pFont->Render(x, y -= mscale, scale, iCurPIDParam == 3 ? green : yellow, horz, vert,
+				"Kg=%.1f", pidController.Kg);
+		}		
 		glDisable(GL_BLEND);
 	}
 	return true;
