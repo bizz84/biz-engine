@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Filename			BigHeadScreamers.cpp
  * 
- * License			LGPL
+ * License			GPLv3
  *
  * Author			Andrea Bizzotto (bizz84@gmail.com)
  *
@@ -32,8 +32,8 @@
 
 #include "GrenadeRenderer.h"
 #include "Settings.h"
-#include "FontGothic.h"
-#include "FontTechno.h"
+#include "Fonts/FontGothic.h"
+#include "Fonts/FontTechno.h"
 
 #include <iostream>
 
