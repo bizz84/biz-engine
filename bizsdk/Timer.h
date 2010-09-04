@@ -21,21 +21,40 @@
 #include <windows.h>
 #endif
 
+//! Class providing a high resolution cross platform timer
 class Timer
 {
-	float fTimeCur, fTimePrev;
+	//! current time
+	float fTimeCur;
+	//! previous time
+	float fTimePrev;
+	//! Origin of time
 	struct timeval start;
-	void Set(timeval &tv);
+	//! Read current time into tv 
+	static void Set(timeval &tv);
 public:
+	//! Constructor
+	/*!
+	 Starts the timer
+	 */
 	Timer();
 
+	//! Starts the timer
 	void Start();
 
+	//! Updates the timer.
 	float Update();
 
+	//! Getter for time of last Update() invocation
 	const float GetTime() const { return fTimeCur; }
+	//! Difference between last and previous Update() invocations
+	/*!
+	 Note: Returns time between two consecutive frames if Update is called each
+	 frame
+	 */
 	const float GetDeltaTime() const { return fTimeCur - fTimePrev; }
 
+	//! Sets the random number generator with a random seed
 	static void InitRand();
 };
 
