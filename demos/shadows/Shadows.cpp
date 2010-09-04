@@ -112,8 +112,8 @@ bool Shadows::InitApp()
 	bFPSMode = false;
 
 	// Custom command line processing
-	vector<CmdLineParameter>::iterator iter;
-	vector<CmdLineParameter> &params = GetCommandLineParams();
+	vector<CmdLineParameter>::const_iterator iter;
+	const vector<CmdLineParameter> &params = GetCommandLineParams();
 
 	for (iter = params.begin(); iter != params.end(); iter++)
 	{
