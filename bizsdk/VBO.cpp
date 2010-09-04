@@ -69,11 +69,6 @@ void VBO::AddEntry(ArrayFuncPointer pointer, GLint size, GLenum type,
 	aEntry.push_back(new VBOEntry(pointer, size, type, offset));
 }
 
-// void VBO::AddGenericEntry(GLint loc, GLint size, size_t stride,
-//	unsigned int offset)
-//{
-
-//}
 
 void VBO::Bind() const
 {
@@ -81,8 +76,8 @@ void VBO::Bind() const
 	ptr_list<VBOEntry>::const_iterator iter;
 	for (iter = aEntry.begin(); iter != aEntry.end(); iter++)
 	{
-		(*iter->fnPointer)(iter->iSize, iter->eType, uiStride,
-			iter->pOffset);
+		// Calls functor
+		(*iter)(uiStride);
 	}
 	if (usFlags & VERTEX_POINTER_FLAG)
 	{
@@ -156,5 +151,7 @@ void IndexedVBO::Render(GLenum mode) const
 
 void IndexedVBO::Draw(GLenum mode) const
 {
+	// TODO: Use a member variable to switch between GL_UNSIGNED_INT and
+	// GL_UNSIGNED_SHORT
 	glDrawElements(mode, GetElements(), GL_UNSIGNED_INT, 0);
 }
