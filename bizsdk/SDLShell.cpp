@@ -69,6 +69,7 @@ void SDLShell::Exit(ExitStage stage)
 		case EXIT_INIT_GL:
 			ReleaseGL();
 			// Don't break here since everything else needs to be released
+		case EXIT_NO_GL2_SUPPORT:
 		case EXIT_NO_SCREEN:
 		case EXIT_NO_FONT:
 		case EXIT_INIT_APP:
@@ -234,7 +235,7 @@ int SDLShell::Run(int argc, char *argv[])
 		if(GLEW_OK != err)
 		{
 		    fprintf(stderr, "[ Fail ] - Error: %s\n", glewGetErrorString(err));
-		    return 0;
+			Exit(EXIT_NO_GL2_SUPPORT);
 		}
 
 		if(!GLEW_VERSION_2_0 &&
@@ -242,13 +243,13 @@ int SDLShell::Run(int argc, char *argv[])
 		     GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader))
 		{
 		    fprintf(stderr, "[ Fail ] - Shaders not supported\n");
-			return 0;
+			Exit(EXIT_NO_GL2_SUPPORT);
 		}
 
 		if(!GLEW_ARB_vertex_buffer_object)
 		{
 		    fprintf(stderr, "[ Fail ] - VBO objects are not supported\n");
-		    return 0;
+			Exit(EXIT_NO_GL2_SUPPORT);
 		}
 	}
 
