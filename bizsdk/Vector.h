@@ -14,15 +14,18 @@
 #define _VECTOR_H_
 
 #include "Extensions.h"
-#include <iostream>
 #include <math.h>
 
-using namespace std;
+// TODO: Use template metaprogramming to define these classes. 
 
+// Note that function signatures are "similar" across these classes.
+// Conceptually all Vector classes could derive from a base class defining
+// interfaces via virtual functions.
+// This is not recommended here since this would generate a virtual table that
+// would increase the size of the instances, in addition to slowing down the
+// performance
 
-/*****************************************************************************
- * Vector2 class definition
- *****************************************************************************/
+//! Class defining a vector of two elements and common inherent operations
 class Vector2
 {
 protected:
@@ -68,13 +71,10 @@ public:
 		return *this;
 	}	
 };
-
+//! Synonym for Vector2 (conceptually different)
 typedef Vector2 Point2;
 
-/*****************************************************************************
- * Vector3 class definition
- *****************************************************************************/
-
+//! Class defining a vector of three elements and common inherent operations
 class Vector3
 {
 protected:
@@ -161,18 +161,12 @@ public:
 
 	const float Length() const { return sqrt(this->dot(*this)); }
 	const Vector3 Normalize() const { return *this / Length(); }
-
-
-	friend ostream &operator<<(ostream &stream, const Vector3 &v);
-
 };
 
+//! Synonym for Vector3 (conceptually different)
 typedef Vector3 Point3;
 
-/*****************************************************************************
- * Vector4 class definition
- *****************************************************************************/
-
+//! Class defining a vector of four elements and common inherent operations
 // TODO: Add all functions as in Vector3
 class Vector4
 {
@@ -245,12 +239,10 @@ public:
 	const float Length() const { return sqrt(this->dot(*this)); }
 	const Vector4 Normalize() const { return *this / Length(); }
 
-
-	void AssignTo(float *f);
-
-	//friend ostream &operator<<(ostream &stream, const Vector4 &m);
+	//void AssignTo(float *f);
 };
 
+//! Synonym for Vector4 (conceptually different)
 typedef Vector4 Point4;
 
 #endif

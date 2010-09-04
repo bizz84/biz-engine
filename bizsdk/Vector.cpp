@@ -57,13 +57,6 @@ Vector3::Vector3(const float x, const float y, const float z)
 	s[2] = z;
 }
 
-ostream &operator<<(ostream &stream, const Vector3 &v)
-{
-	stream
-	  << v.s[0] << ' ' << v.s[1] << ' ' << v.s[2] << endl;
-	return stream;
-}
-
 
 /*****************************************************************************
  * Vector4 implementation
@@ -90,14 +83,4 @@ Vector4::Vector4(const float x, const float y, const float z, const float w)
 	*p++ = z;
 	*p++ = w;
 
-}
-
-
-void Vector4::AssignTo(float *f)
-{
-	float *p = s;
-	*f++ = *p++;
-	*f++ = *p++;
-	*f++ = *p++;
-	*f++ = *p++;
 }
