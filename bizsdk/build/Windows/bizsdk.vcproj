@@ -331,6 +331,14 @@
 				Name="Fonts"
 				>
 				<File
+					RelativePath="..\..\Fonts\FontGothic.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Fonts\FontGothic.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Fonts\FontTechno.cpp"
 					>
 				</File>
