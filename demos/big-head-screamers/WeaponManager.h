@@ -42,6 +42,7 @@ private:
 
 	// pimpl idiom
 	ptr_list<Bullet> bullets;
+	// weak container
 	list<Bullet *> pList[NumWeapons];
 
 	auto_ptr<BulletRenderer> pRenderer[NumWeapons];
