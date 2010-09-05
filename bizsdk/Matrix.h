@@ -20,6 +20,9 @@
 
 using namespace std;
 
+// TODO: Use template metaprogramming to define these classes
+
+
 /*****************************************************************************
  * Matrix3 class definition
  *****************************************************************************/
