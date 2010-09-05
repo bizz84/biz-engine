@@ -44,11 +44,11 @@ static const char *Shaders[] = {
 };
 
 static const char *TimerStrings[] = {
-	"Input",
 	"Weapons",
 	"AI",
 	"Collisions",
-	"Enemies"
+	"Enemy Renderer",
+	"Input",
 };
 
 BigHeadScreamers::BigHeadScreamers() : 
@@ -141,8 +141,8 @@ bool BigHeadScreamers::InitGL()
 	pDetector[DETECTOR_NULL] = 
 		auto_ptr<CollisionDetector>(new NullCollisionDetector(pWM.get(), pAI.get()));
 
-	//pFont = auto_ptr<FontManager>(new FontGothic("data/textures/font_gray.bmp"));
-	pFont = auto_ptr<FontManager>(new FontTechno("data/textures/FontB.bmp"));
+	pFont = auto_ptr<FontManager>(new FontGothic("data/textures/font_gray.bmp"));
+	//pFont = auto_ptr<FontManager>(new FontTechno("data/textures/FontB.bmp"));
 	if (!pFont->Init())
 		return false;
 
@@ -549,20 +549,24 @@ void BigHeadScreamers::ShowInfo() const
 			FontManager::HorzAlign horz = FontManager::LeftAlign;
 			FontManager::VertAlign vert = FontManager::TopAlign;
 
-			pFont->Render(x, y -= mscale, scale, color, horz, vert,
-				"%.2fms", timer.GetDeltaTime() * 1000.0f);
 
 			pFont->Render(x, y -= mscale, scale, color, horz, vert,
-				"B=%d", pWM->GetBullets().size());
-
-			for (unsigned int i = 0; i < NUM_TIMERS; i++)
-			{
-				pFont->Render(x, y -= mscale, scale, color, horz, vert,
-					"%s=%.2fms", TimerStrings[i], afTimeOf[i] * 1000.0f);
-			}
+				"B=%d,E=%d", pWM->GetBullets().size(), pAI->GetData().size());
 
 			pFont->Render(x, y -= mscale, scale, color, horz, vert,
 				"Detector=%d, comp=%d", eCollisionType, uiNumComparisons);
+
+			for (unsigned int i = 0; i < NUM_TIMERS; i++)
+			{
+				y -= mscale;
+				pFont->Render(x, y, scale, color, horz, vert,
+					"%.2fms", afTimeOf[i] * 1000.0f);
+				pFont->Render(-0.80f, y, scale, color, horz, vert,
+					"%s", TimerStrings[i]);
+			}
+			pFont->Render(x, y -= mscale, scale, color, horz, vert,
+				"%.2fms", timer.GetDeltaTime() * 1000.0f);
+
 			//pFont->Render(x, y -= mscale, scale, color, horz, vert,
 			//	"E * B = %d * %d = %d", pAI->GetData().size(), pWM->GetBullets().size(),
 			//	pAI->GetData().size() * pWM->GetBullets().size());

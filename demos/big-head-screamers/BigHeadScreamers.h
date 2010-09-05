@@ -63,8 +63,8 @@ class BigHeadScreamers : public SDLShell, private ProgramArray
 	float fRandomTime;
 
 	// Timers used to measure input stages
-	enum { TIME_INPUT, TIME_WEAPON, TIME_AI, TIME_COLLISIONS,
-		TIME_ENEMY_RENDERER, NUM_TIMERS };
+	enum { TIME_WEAPON, TIME_AI, TIME_COLLISIONS,
+		TIME_ENEMY_RENDERER, TIME_INPUT, NUM_TIMERS };
 	float afTimeOf[NUM_TIMERS];
 
 	// Projection matrix related variables
