@@ -14,6 +14,7 @@
 #ifndef _FONT_H_
 #define _FONT_H_
 
+// NOTE: Deprecated class
 
 #ifdef __linux__
 #include <SDL/SDL.h>
