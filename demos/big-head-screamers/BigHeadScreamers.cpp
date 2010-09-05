@@ -56,13 +56,14 @@ BigHeadScreamers::BigHeadScreamers() :
 	bReflectionFlag(false),
 	fSetTime(0.0f),
 	fRandomTime(0.0f),
-	fFOV(90.0f)
+	fFOV(90.0f),
+	eCollisionType(0),
+	uiNumComparisons(0)
 {
 	// initialize random number generator
 	Timer::InitRand();
 
 	bFeatureEnabled[F_REFLECTION] = true;
-	bFeatureEnabled[F_COLLISIONS] = true;
 	bFeatureEnabled[F_INPUT] = true;
 
 	for (unsigned int i = 0; i < NUM_TIMERS; i++)
@@ -135,6 +136,10 @@ bool BigHeadScreamers::InitGL()
 		auto_ptr<CollisionDetector>(new CPUSegmentSphereCollisionDetector(pWM.get(), pAI.get()));
 	pDetector[DETECTOR_SPHERE_SPHERE] = 
 		auto_ptr<CollisionDetector>(new CPUSphereSphereCollisionDetector(pWM.get(), pAI.get()));
+	pDetector[DETECTOR_QUAD_TREE] = 
+		auto_ptr<CollisionDetector>(new QuadTreeCollisionDetector(pWM.get(), pAI.get()));
+	pDetector[DETECTOR_NULL] = 
+		auto_ptr<CollisionDetector>(new NullCollisionDetector(pWM.get(), pAI.get()));
 
 	//pFont = auto_ptr<FontManager>(new FontGothic("data/textures/font_gray.bmp"));
 	pFont = auto_ptr<FontManager>(new FontTechno("data/textures/FontB.bmp"));
@@ -256,7 +261,8 @@ void BigHeadScreamers::Input()
 	}
 	if (KeyPressed(KEY_8))
 	{
-		bFeatureEnabled[F_COLLISIONS] = !bFeatureEnabled[F_COLLISIONS];
+		eCollisionType = Next(eCollisionType, NUM_DETECTORS);
+		//bFeatureEnabled[F_COLLISIONS] = !bFeatureEnabled[F_COLLISIONS];
 	}
 	if (KeyPressed(KEY_9))
 	{
@@ -299,14 +305,13 @@ void BigHeadScreamers::Input()
 		}
 		pSkyBoxManager->Update(t);
 
-
 		// Game input
 		Timer timer;
 		// Weapons input
 		timer.Start();
 		pWM->Input(dt, *pFPSCamera, LeftClick() || KeyPressing(KEY_SPACE));
 		afTimeOf[TIME_WEAPON] = timer.Update();		
-
+		
 		// AI input
 		timer.Start();
 		pAI->Input(t, dt, pFPSCamera->GetPosition());
@@ -314,8 +319,7 @@ void BigHeadScreamers::Input()
 
 		// Collisions
 		timer.Start();
-		if (bFeatureEnabled[F_COLLISIONS])
-			pDetector[DETECTOR_SPHERE_SPHERE]->Run();
+		uiNumComparisons = pDetector[eCollisionType]->Run();
 		afTimeOf[TIME_COLLISIONS] = timer.Update();
 
 		// Weapons update
@@ -333,12 +337,12 @@ void BigHeadScreamers::Input()
 		pER->Update(pAI->GetData(), -pFPSCamera->GetAlpha(), Settings::Instance().EnemyHeight);
 		afTimeOf[TIME_ENEMY_RENDERER] = timer.Update();
 
-		// Overlay update
-		if (iShowInfo >= 1)
-		{
-			// Graph input
-			pFPSGraph->Input(1.0f / dt, t);
-		}
+	}
+	// Overlay update
+	if (iShowInfo >= 1)
+	{
+		// Graph input
+		pFPSGraph->Input(1.0f / dt, t);
 	}
 
 	afTimeOf[TIME_INPUT] = inputTime.Update();
@@ -456,7 +460,6 @@ void BigHeadScreamers::RenderContent() const
 
 	if (!bReflectionFlag)
 		pPR->Render(pAI->GetParticles());
-
 }
 
 
@@ -557,6 +560,12 @@ void BigHeadScreamers::ShowInfo() const
 				pFont->Render(x, y -= mscale, scale, color, horz, vert,
 					"%s=%.2fms", TimerStrings[i], afTimeOf[i] * 1000.0f);
 			}
+
+			pFont->Render(x, y -= mscale, scale, color, horz, vert,
+				"Detector=%d, comp=%d", eCollisionType, uiNumComparisons);
+			//pFont->Render(x, y -= mscale, scale, color, horz, vert,
+			//	"E * B = %d * %d = %d", pAI->GetData().size(), pWM->GetBullets().size(),
+			//	pAI->GetData().size() * pWM->GetBullets().size());
 
 			pFont->Render(x, y -= mscale, scale, color, horz, vert,
 				"FOV=%.2f", fFOV);

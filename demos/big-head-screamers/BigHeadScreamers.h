@@ -47,7 +47,7 @@ class BigHeadScreamers : public SDLShell, private ProgramArray
 		NUM_PROGRAMS 
 	};	
 
-	enum { F_COLLISIONS, F_REFLECTION, F_INPUT, NUM_FEATURES };
+	enum { F_REFLECTION, F_INPUT, NUM_FEATURES };
 	bool bFeatureEnabled[NUM_FEATURES];
 
 	int iShowInfo;
@@ -84,9 +84,17 @@ class BigHeadScreamers : public SDLShell, private ProgramArray
 	auto_ptr<EnemyRenderer> pER;
 	// Contains cubemaps and skybox load, update and rendering code
 	auto_ptr<SkyBoxManager> pSkyBoxManager;
-	// Collision detectors
-	enum { DETECTOR_SEGMENT_SPHERE,	DETECTOR_SPHERE_SPHERE, NUM_DETECTORS };
+	//! Enum listing different types of collision detectors
+	enum CollisionType {
+		DETECTOR_QUAD_TREE,
+		DETECTOR_SEGMENT_SPHERE,
+		DETECTOR_SPHERE_SPHERE,
+		DETECTOR_NULL,
+		NUM_DETECTORS
+	};
 	auto_ptr<CollisionDetector> pDetector[NUM_DETECTORS];
+	unsigned int eCollisionType;
+	unsigned int uiNumComparisons;
 
 	// Game camera
 	auto_ptr<FPSCamera> pFPSCamera;
@@ -97,7 +105,10 @@ class BigHeadScreamers : public SDLShell, private ProgramArray
 
 protected:
 	// Overrides SDLShell version
-	virtual Pointer *NewPointer() { return new FPSPointer(this); }
+	virtual auto_ptr<Pointer> NewPointer()
+	{
+		return auto_ptr<Pointer>(new FPSPointer(this));
+	}
 
 	// Updates matrices and ground state
 	void GroundInput();
