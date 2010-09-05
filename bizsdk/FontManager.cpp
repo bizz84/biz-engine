@@ -34,19 +34,8 @@ bool FontManager::LoadShaders()
 			"TexCoord = gl_MultiTexCoord0.xy;" \
 		"}";
 
-	const char fragmentShader[] = \
-		"uniform sampler2D sTexture;" \
-		"uniform vec4 Color;" \
-		"varying vec2 TexCoord;" \
-		"void main()" \
-		"{" \
-			"gl_FragColor = texture2D(sTexture, TexCoord);" \
-			"gl_FragColor.a = (1.0 - gl_FragColor.a) * Color.a;" \
-			"gl_FragColor.xyz *= Color.xyz;" \
-		"}";
-		
 	GLResourceManager &loader = GLResourceManager::Instance();
-	if (!loader.LoadShaderFromMemory(vertexShader, fragmentShader, program))
+	if (!loader.LoadShaderFromMemory(vertexShader, FragmentShader(), program))
 		return false;
 	
 	glUseProgram(program);

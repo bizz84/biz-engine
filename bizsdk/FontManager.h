@@ -60,6 +60,8 @@ protected:
 	virtual float FontAspect() const { return 1.0f; }
 	bool LoadShaders();
 	bool LoadTexture();
+
+	virtual const char *FragmentShader() const = 0;
 public:
 	FontManager(const char *file, bool fixed);
 	virtual ~FontManager() { }
