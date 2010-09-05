@@ -90,7 +90,7 @@ bool EnemyRendererAttrib::Update(const ptr_vector<Enemy> &data, const float angl
 
 	// Create attribute array to be passed to GL
 	// vertices = # sprites * 4
-	size_t size = data.size() << 2;
+	//size_t size = data.size() << 2;
 
 	// Use this if # of enemies is not capped
 	//SpriteVertexData *attrib = new SpriteVertexData[size];
@@ -178,7 +178,7 @@ void EnemyRendererAttrib::Render(const ptr_vector<Enemy> &data, const float angl
 	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	// Choose program
-	GLuint program = UseProgram(P_SPRITE_ATTRIB);
+	UseProgram(P_SPRITE_ATTRIB);
 
 	// Bind regular vertex array and pass it to GL. MUST be used in the shader
 	//glVertexPointer(2, GL_FLOAT, sizeof(SpriteVertexData), &attrib->pos);
