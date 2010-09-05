@@ -149,14 +149,14 @@ void UnitTestRun()
 	};
 	Matrix4 inv = (Matrix4(pvrp) * Matrix4(pvrm)).Inverse(0.1);
 
-  double f = 3.14159;
+	/*  double f = 3.14159;
   cout.setf(0,ios::floatfield);            // floatfield not set
   cout.precision(5);
   cout << f << endl;
   cout.precision(10);
   cout << f << endl;
   cout.setf(ios::fixed,ios::floatfield);   // floatfield set to fixed
-  cout << f << endl;
+  cout << f << endl;*/
 
 
   	/*float proj[16], mview[16];
