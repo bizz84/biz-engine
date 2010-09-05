@@ -44,6 +44,8 @@ public:
 	//! Constructor
 	explicit QuadTree(const int n, ptr_vector<Enemy> &data);
 
+	void Clear();
+	void Update(ptr_vector<Enemy> &data);
 	//! returns list associated with given position, or NULL if position outside
 	//! regular area
 	list<Enemy *> *GetBin(const Point2 &pos);

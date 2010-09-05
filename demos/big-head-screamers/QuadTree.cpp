@@ -19,6 +19,21 @@
 QuadTree::QuadTree(const int n, ptr_vector<Enemy> &data)
 	: N(n), bins(boost::extents[N][N])
 {
+	Update(data);
+}
+
+void QuadTree::Clear()
+{
+	for (index r = 0; r < N; r++)
+	{
+		for (index c = 0; c < N; c++)
+		{
+			bins[r][c].clear();
+		}
+	}
+}
+void QuadTree::Update(ptr_vector<Enemy> &data)
+{
 	if (data.empty())
 		return;
 	
