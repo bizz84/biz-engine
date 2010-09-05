@@ -85,8 +85,8 @@ void LaserRenderer::Render(const list<Bullet *> &bullets) const
 
 	list<Bullet *>::const_iterator iter;
 
-	// Load uniforms
-	assert(bullets.size() <= 64);
+	
+	assert(bullets.size() <= 64); // TODO: Use multiple batches instead
 
 	// The rotation can be calculated as a Matrix3 on the CPU and passed as such,
 	// or the two angles can be passed to the GPU as uniforms and the matrix 
