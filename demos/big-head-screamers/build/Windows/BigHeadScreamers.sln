@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BigHeadScreamers", "BigHeadScreamers.vcproj", "{CC2084CC-BC30-4AA3-96BC-A36D63BB63A3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0F9D4807-8E15-4861-BFF8-B3713753B0F8} = {0F9D4807-8E15-4861-BFF8-B3713753B0F8}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bizsdk", "..\..\..\..\bizsdk\build\Windows\bizsdk.vcproj", "{0F9D4807-8E15-4861-BFF8-B3713753B0F8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CC2084CC-BC30-4AA3-96BC-A36D63BB63A3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CC2084CC-BC30-4AA3-96BC-A36D63BB63A3}.Debug|Win32.Build.0 = Debug|Win32
+		{CC2084CC-BC30-4AA3-96BC-A36D63BB63A3}.Release|Win32.ActiveCfg = Release|Win32
+		{CC2084CC-BC30-4AA3-96BC-A36D63BB63A3}.Release|Win32.Build.0 = Release|Win32
+		{0F9D4807-8E15-4861-BFF8-B3713753B0F8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0F9D4807-8E15-4861-BFF8-B3713753B0F8}.Debug|Win32.Build.0 = Debug|Win32
+		{0F9D4807-8E15-4861-BFF8-B3713753B0F8}.Release|Win32.ActiveCfg = Release|Win32
+		{0F9D4807-8E15-4861-BFF8-B3713753B0F8}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
