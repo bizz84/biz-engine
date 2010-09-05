@@ -86,8 +86,6 @@ SkyBoxManager::SkyBoxManager() :
 	if (!SkyBoxTransition::Instance().Init())
 		return;
 
-	GLResourceManager &loader = GLResourceManager::Instance();
-
 	for (unsigned int i = 0; i < NUM_CUBEMAPS; i++)
 	{
 		if (!cubemap[i].Init(Cubemaps[i]))
