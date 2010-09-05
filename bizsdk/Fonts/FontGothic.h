@@ -14,12 +14,15 @@
 #ifndef _FONT_GOTHIC_H_
 #define _FONT_GOTHIC_H_
 
-#include "FontManager.h"
+#include "../FontManager.h"
 
 class FontGothic : public FontManager
 {
 protected:
 	virtual void GenerateGlyphs();
+
+	virtual const char *FragmentShader() const;
+
 public:
 	FontGothic(const char *file) : FontManager(file, false) { }
 };

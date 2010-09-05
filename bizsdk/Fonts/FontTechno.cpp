@@ -71,7 +71,23 @@ void FontTechno::GenerateGlyphs()
 	{
 		glyph[punct2[i]] = Glyph((float)i * 0.1f + nxoff, 0.8f + yoff, nxdim, ydim);
 	}
-	glyph['.'] = Glyph(1.0f * 0.1f + 0.04f, 0.7f + yoff, 0.02f, ydim);
+	glyph['.'] = Glyph(0.1f + 0.04f, 0.7f + yoff, 0.02f, ydim);
+
+	glyph[' '] = Glyph(0.5f + 0.04f, 0.8f + yoff, 0.02f, ydim);
+}
+
+const char *FontTechno::FragmentShader() const
+{
+	return
+		"uniform sampler2D sTexture;" \
+		"uniform vec4 Color;" \
+		"varying vec2 TexCoord;" \
+		"void main()" \
+		"{" \
+			"gl_FragColor = texture2D(sTexture, TexCoord);" \
+			"gl_FragColor.a = (1.0 - gl_FragColor.a) * Color.a;" \
+			"gl_FragColor.xyz *= Color.xyz;" \
+		"}";
 }
 
 void FontTechno::TestFont()
@@ -88,3 +104,4 @@ void FontTechno::TestFont()
 	Render(0.0, -0.45, 0.12f, cyan, FontManager::CenterAlign, FontManager::MiddleAlign, "NOPQRSTUVXWYZ");
 	Render(0.0, -0.6, 0.12f, orange, FontManager::CenterAlign, FontManager::MiddleAlign, "0123456789");
 }
+

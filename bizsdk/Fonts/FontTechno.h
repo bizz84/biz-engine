@@ -21,6 +21,8 @@ class FontTechno : public FontManager
 protected:
 	virtual void GenerateGlyphs();
 	virtual float FontAspect() const { return 0.8f; }
+
+	virtual const char *FragmentShader() const;
 public:
 	FontTechno(const char *file) : FontManager(file, false) { }
 

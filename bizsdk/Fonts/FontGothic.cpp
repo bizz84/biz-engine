@@ -12,7 +12,7 @@
  *****************************************************************************/
 
 #include "FontGothic.h"
-#include "GLResourceManager.h"
+#include "../GLResourceManager.h"
 
 
 static const int MAX_GLYPHS = 96;
@@ -130,4 +130,18 @@ void FontGothic::GenerateGlyphs()
 	{
 		glyph[32 + i] = Glyph(glyphs[i][0], glyphs[i][1], glyphs[i][2], glyphs[i][3], 256, 228);
 	}
+}
+
+const char *FontGothic::FragmentShader() const
+{
+	return
+		"uniform sampler2D sTexture;" \
+		"uniform vec4 Color;" \
+		"varying vec2 TexCoord;" \
+		"void main()" \
+		"{" \
+			"gl_FragColor = texture2D(sTexture, TexCoord);" \
+			"gl_FragColor.a = 4.0 * gl_FragColor.a * Color.a;" \
+			"gl_FragColor.xyz *= Color.xyz;" \
+		"}";
 }
