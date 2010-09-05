@@ -32,6 +32,8 @@ http://www.gamedev.net/reference/programming/features/AbsPolyOpt/
 */
 
 /* Version History
+V0.1.3
+- Quad trees on collision system
 V0.1.2
 - Added laser gun
 V0.1.1
@@ -71,7 +73,7 @@ V0.0.1
 */
 
 
-const char szAppVersion[] = "0.1.2";
+const char szAppVersion[] = "0.1.3";
 const char szAppName[] = "Big Head Screamers";
 
 
