@@ -130,7 +130,6 @@ unsigned int QuadTreeCollisionDetector::Execute()
 		return 0;
 
 	// Generate tree
-	//static const unsigned int QuadTreeDivisions = 5;
 	unsigned int divisions = (unsigned int)(0.5 * sqrt((double)Settings::Instance().NumEnemies));
 	QuadTree tree(divisions, enemies);
 

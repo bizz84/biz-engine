@@ -20,7 +20,7 @@ class AIManager;
 
 // Generic collision detector
 /*!
-
+ Base class for collision detector. 
  */
 class CollisionDetector
 {
@@ -34,6 +34,8 @@ protected:
 	// Implemented by derived classes to read results after computation
 	virtual bool Read() = 0;
 
+	bool AboveHeight(float h);
+
 	WeaponManager *GetWM() { return pWM; }
 	AIManager *GetAI() { return pAI; }	
 public:
@@ -41,15 +43,10 @@ public:
 	virtual ~CollisionDetector() { }
 	
 	unsigned int Run();
-
-	bool AboveHeight(float h);
-
-	//static bool (*CollisionFn)(const Vector3 &a, const Vector3 &b,
-	//	const Vector3 &s, const float r);
 };
 
 /*!
-
+ Class not doing anything (stub)
  */
 class NullCollisionDetector : public CollisionDetector
 {
@@ -64,7 +61,7 @@ public:
 };
 
 /*!
-
+ Class providing general paradigm
  */
 class CPUCollisionDetector : public CollisionDetector
 {
@@ -112,7 +109,7 @@ public:
 };
 
 /*!
-
+ Same algorithm but using a supplementary quad tree
  */
 class QuadTreeCollisionDetector : public CollisionDetector
 {
