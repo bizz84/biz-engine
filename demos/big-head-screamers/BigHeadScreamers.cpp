@@ -22,7 +22,6 @@
 
 // App includes
 #include "EnemyRendererAttrib.h"
-#include "EnemyRendererBasic.h"
 #include "Ground.h"
 #include "AIManager.h"
 #include "WeaponManager.h"
