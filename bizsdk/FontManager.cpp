@@ -84,7 +84,6 @@ const float FontManager::Width(const char *str, float height) const
 	unsigned int i;
 	for (i = 0; i < len; i++)
 	{
-		unsigned char c = str[i];
 		const Glyph &g = glyph[GlyphIndex(str[i])];
 		width += g.Ratio(FontAspect()) * height;
 	}
@@ -97,9 +96,9 @@ void FontManager::Render(float posX, float posY, float height, float *color,
 	// format string
 	char str[1024];
 	va_list va_args;
-    va_start( va_args, text );
-    int retval = vsnprintf( str, 1024, text, va_args );
-    va_end(va_args);
+	va_start( va_args, text );
+	vsnprintf( str, 1024, text, va_args );
+	va_end(va_args);
 
 	// Adjust to aspect ratio
 	float width = Width(str, height);
