@@ -43,6 +43,11 @@ public:
 	void Insert(Enemy *enemy, const Point2 &min, const Point2 &max);
 
 	list<Enemy *> *GetBin(const Point2 &pos);
+
+	inline int Slot(float pos, const int i) const
+	{
+		return (int)(N * (pos - min[i]) / (max[i] - min[i]));
+	}
 };
 
 #endif

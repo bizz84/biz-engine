@@ -48,14 +48,12 @@ QuadTree::QuadTree(const int n, ptr_vector<Enemy> &data)
 	for (iter = data.begin(); iter != data.end(); iter++)
 	{
 		// col along x axis
-		col = (int)(N * (iter->pos[0] - min[0]) / (max[0] - min[0]));
-		//if (col == N) col = N - 1;
+		col = Slot(iter->pos[0], 0);
 		// row along z axis
-		row = (int)(N * (iter->pos[1] - min[1]) / (max[1] - min[1]));
-		//if (row == N) row = N - 1;
+		row = Slot(iter->pos[1], 1);
 
-		assert(col >= 0 && col < N);
-		assert(row >= 0 && row < N);
+		//assert(col >= 0 && col < N);
+		//assert(row >= 0 && row < N);
 
 		bins[row][col].push_back(&*iter);
 	}
@@ -63,9 +61,11 @@ QuadTree::QuadTree(const int n, ptr_vector<Enemy> &data)
 
 list<Enemy *> *QuadTree::GetBin(const Point2 &pos)
 {
-	int col = (int)(N * (pos[0] - min[0]) / (max[0] - min[0]));
-	int row = (int)(N * (pos[1] - min[1]) / (max[1] - min[1]));
-	if (col < 0 || col >= N || row < 0 || row >= N)
+	int col = Slot(pos[0], 0);
+	if (col < 0 || col >= N)
+		return NULL;
+	int row = Slot(pos[1], 1);
+	if (row < 0 || row >= N)
 		return NULL;
 	return &bins[row][col];
 }
