@@ -219,22 +219,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\FontGothic.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\FontGothic.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\FontTechno.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\FontTechno.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Ground.cpp"
 				>
 			</File>
@@ -248,6 +232,14 @@
 			</File>
 			<File
 				RelativePath="..\..\ProgramArray.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\QuadTree.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\QuadTree.h"
 				>
 			</File>
 			<File
