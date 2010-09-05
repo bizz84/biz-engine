@@ -121,16 +121,7 @@ void UnitTestRun()
 
 	cout.precision(1);
 
-	cout << rotX * y;
-	cout << rotY * z;
-	cout << rotZ * x;
-
-	x = rotY * x;
-	y = rotZ * y;
-	z = rotX * z;
-	cout << "x:" << x << "y:" << y << "z:" << z;
-	//cout.precision(5);
-
+	
 
 	//matrix = [0.55 0 0 0, 0 0.4 -0.08 0, 0 12.3 -34.32 -0.05, 0 12.19 33.35 0.05]
 	//matrxx = [0.55 0 0 0, 0 0.4 -12.3 12.2, 0 -0.08 -34.32 33.33 0 0 -0.05 0.05]
