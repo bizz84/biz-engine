@@ -109,7 +109,6 @@ void LaserRenderer::Render(const list<Bullet *> &bullets) const
 	const float s = 3.0f;
 	const float z1 = -s * 8.0f;
 	const float z2 =  s * 8.0f;
-	const float w = 1.0f;
 
 	i = 0;
 	for (iter = bullets.begin(); iter != bullets.end(); iter++, i++)
