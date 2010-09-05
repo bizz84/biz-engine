@@ -31,19 +31,24 @@ class QuadTree
 
 	//! Two dimensional array of list<Enemy *> elements
 	typedef boost::multi_array<list<Enemy *>, 2> array_type;
+	//! Index type to two dimensional array
 	typedef array_type::index index;
 
+	//! Actual array
 	array_type bins;
 
+	// Area limits 
 	Point2 min, max;
 
 public:
+	//! Constructor
 	explicit QuadTree(const int n, ptr_vector<Enemy> &data);
 
-	void Insert(Enemy *enemy, const Point2 &min, const Point2 &max);
-
+	//! returns list associated with given position, or NULL if position outside
+	//! regular area
 	list<Enemy *> *GetBin(const Point2 &pos);
 
+	//! Finds appropriate horizontal or vertical index
 	inline int Slot(float pos, const int i) const
 	{
 		return (int)(N * (pos - min[i]) / (max[i] - min[i]));

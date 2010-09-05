@@ -15,6 +15,7 @@
 
 #include "Enemy.h"
 
+// TODO: how to speed up?
 QuadTree::QuadTree(const int n, ptr_vector<Enemy> &data)
 	: N(n), bins(boost::extents[N][N])
 {
@@ -68,27 +69,4 @@ list<Enemy *> *QuadTree::GetBin(const Point2 &pos)
 	if (row < 0 || row >= N)
 		return NULL;
 	return &bins[row][col];
-}
-
-
-// QuadTree implementation
-/*void QuadTree::Clear()
-{
-	for (index i = 0; i < N; i++)
-	{
-		for (index j = 0; j < N; j++)
-		{
-			bins[i][j].clear();
-		}
-	}
-}*/
-
-void QuadTree::Insert(Enemy *enemy, const Point2 &min, const Point2 &max)
-{
-	// col along x axis
-	unsigned int col = (unsigned int)(N * (enemy->pos[0] - min[0]) / (max[0] - min[0]));
-	// row along z axis
-	unsigned int row = (unsigned int)(N * (enemy->pos[1] - min[1]) / (max[1] - min[1]));
-
-	bins[row][col].push_back(enemy);
 }
