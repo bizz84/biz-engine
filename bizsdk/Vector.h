@@ -70,6 +70,12 @@ public:
 		s[1] += v[1];
 		return *this;
 	}	
+	inline Vector2 &operator -=(const Vector2 &v)
+	{
+		s[0] -= v[0];
+		s[1] -= v[1];
+		return *this;
+	}	
 };
 //! Synonym for Vector2 (conceptually different)
 typedef Vector2 Point2;
