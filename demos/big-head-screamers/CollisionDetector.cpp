@@ -19,6 +19,7 @@
 #include "Misc.h"
 #include "Enemy.h"
 #include "Settings.h"
+#include "QuadTree.h"
 
 #include "boost/ptr_container/ptr_list.hpp"
 
@@ -36,34 +37,49 @@ Enemies whose health <= 0 are removed as well and originate instances of
 DeathAnimation.
 */
 
+bool CollisionDetector::AboveHeight(float h)
+{
+	return h > 2.0f * Settings::Instance().EnemyHeight;
+}
+
 // Actual processing
-void CollisionDetector::Run()
+unsigned int CollisionDetector::Run()
 {
 	if (Write())
 	{
-		Execute();
+		unsigned int ret = Execute();
 		Read();
+		return ret;
 	}
+	return 0;
 }
 
+#define HEIGHT_TEST
 
 
-
-void CPUCollisionDetector::Execute()
+unsigned int CPUCollisionDetector::Execute()
 {
 	ptr_list<Bullet> &bullets = (ptr_list<Bullet> &)GetWM()->GetBullets();
 	ptr_vector<Enemy> &enemies = (ptr_vector<Enemy> &)GetAI()->GetData();
-	
+
 	if (bullets.size() == 0 || enemies.size() == 0)
-		return;
+		return 0;
 		
 	ptr_list<Bullet>::iterator b;
 	ptr_vector<Enemy>::iterator e;
 
+	unsigned int comparisons = 0;
+	// TODO: Find solution cheaper than O(B * E)
 	for (b = bullets.begin(); b != bullets.end(); b++)
 	{
+#ifdef HEIGHT_TEST
+		// discard bullets that are above the enemy height
+		if (AboveHeight(b->GetPosition()[1]))
+			continue;
+#endif
 		for (e = enemies.begin(); e != enemies.end(); e++)
 		{	
+			comparisons++;
 			// Bullet has exploded already
 			if (b->Impact())
 				continue;
@@ -82,9 +98,10 @@ void CPUCollisionDetector::Execute()
 
 				e->health -= b->Damage();
 				GetAI()->AddParticles(b->GetPosition(), e->health);
-			}				
+			}
 		}
-	}	
+	}
+	return comparisons;
 }
 
 
@@ -102,6 +119,66 @@ bool CPUSphereSphereCollisionDetector::Collision(const Vector3 &a,
 	return CollisionSphereSphere(b, s, r);
 }
 
+
+
+unsigned int QuadTreeCollisionDetector::Execute()
+{
+	ptr_list<Bullet> &bullets = (ptr_list<Bullet> &)GetWM()->GetBullets();
+	ptr_vector<Enemy> &enemies = (ptr_vector<Enemy> &)GetAI()->GetData();
+
+	if (bullets.size() == 0 || enemies.size() == 0)
+		return 0;
+
+	// Generate tree
+	//static const unsigned int QuadTreeDivisions = 5;
+	unsigned int divisions = (unsigned int)(0.5 * sqrt((double)Settings::Instance().NumEnemies));
+	QuadTree tree(divisions, enemies);
+
+	ptr_list<Bullet>::iterator b;
+
+	unsigned int comparisons = 0;
+	for (b = bullets.begin(); b != bullets.end(); b++)
+	{
+		Point3 p = b->GetPosition();
+#ifdef HEIGHT_TEST
+		// discard bullets that are above the enemy height
+		if (AboveHeight(p[1]))
+			continue;
+#endif
+		Point2 pos(p[0], p[2]);
+		list<Enemy *> *bin = tree.GetBin(pos);
+		// discard bullets that are outside the enemy area
+		if (bin == NULL)
+			continue;
+
+		list<Enemy *>::iterator f;
+		for (f = bin->begin(); f != bin->end(); f++)
+		{	
+			comparisons++;
+			Enemy *e = *f;
+			// Bullet has exploded already
+			if (b->Impact())
+				continue;
+				
+			// Enemy has been killed already
+			if (e->health <= 0)
+				continue;
+
+			Point3 target3 = Point3(e->pos[0], Settings::Instance().EnemyHeight, e->pos[1]);
+				
+			//if (CollisionSphereSphere(b->GetPosition(), target3, Settings::Instance().CollisionRadius))
+			if (CollisionSegmentSphere(b->GetPrevPosition(), b->GetPosition(),
+				target3, Settings::Instance().CollisionRadius))
+			{
+				b->SetImpact();
+
+				e->health -= b->Damage();
+				GetAI()->AddParticles(b->GetPosition(), e->health);
+			}
+		}
+	}	
+	return comparisons;
+}
 
 
 /* proper write-execute-read template */
@@ -208,5 +285,40 @@ bool CPUSegmentSphereCollisionDetector::Read()
 /*void OpenCLGrenadeEnemyCollisionDetector::Execute()
 {
 
+}
+
+
+
+collision kernel
+__kernel void fountain_kern(
+        __global float3* pos1,
+        __global float3* pos2,
+        __global bool* hit1,
+		int elements,
+        __global float3* target,
+        __global bool* hit2,
+		int targets,
+	    float radius, 
+)
+{       
+    int gti = get_global_id(0);	
+    
+    if (gti >= targets)
+		return;
+		
+	for (int i = 0; i < elements; i++)
+	{
+		// Already hit
+		if (hit1[i])
+			continue;
+		if (Collision(pos1[i], pos2[i], target[gti], radius)
+		{
+			hit1[i] = true;
+			hit2[gti] = true;
+			// let others know about hit1[i]
+			barrier(CL_GLOBAL_MEM_FENCE);
+			return;
+		}
+	}
 }
 */

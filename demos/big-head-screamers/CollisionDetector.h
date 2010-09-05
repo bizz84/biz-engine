@@ -19,6 +19,9 @@ class WeaponManager;
 class AIManager;
 
 // Generic collision detector
+/*!
+
+ */
 class CollisionDetector
 {
 	WeaponManager *pWM;
@@ -27,7 +30,7 @@ protected:
 	// Implemented by derived classes to write the operand arrays before computation
 	virtual bool Write() = 0;
 	// Actual processing
-	virtual void Execute() = 0;
+	virtual unsigned int Execute() = 0;
 	// Implemented by derived classes to read results after computation
 	virtual bool Read() = 0;
 
@@ -37,34 +40,38 @@ public:
 	CollisionDetector(WeaponManager *ws, AIManager *ai) : pWM(ws), pAI(ai) { }
 	virtual ~CollisionDetector() { }
 	
-	void Run();
+	unsigned int Run();
+
+	bool AboveHeight(float h);
+
+	//static bool (*CollisionFn)(const Vector3 &a, const Vector3 &b,
+	//	const Vector3 &s, const float r);
 };
 
-/*class SegmentSphereCollisionDetector : public CollisionDetector
+/*!
+
+ */
+class NullCollisionDetector : public CollisionDetector
 {
-public:
-	
-
-};*/
-
-// Note: might be more efficient to use interleaved on cpu and 
-// non-interleaved on OpenCL -> allocate on final class
-/*class GrenadeEnemyCollisionDetector : public SegmentSphereCollisionDetector
-{
-
 protected:
-
-
+	virtual bool Write() { return true; }
+	// Actual processing
+	virtual unsigned int Execute() { return 0; }
+	// Implemented by derived classes to read results after computation
+	virtual bool Read() { return true; }
 public:
-		
-};*/
+	NullCollisionDetector(WeaponManager *ws, AIManager *ai) : CollisionDetector(ws, ai) { }
+};
 
+/*!
+
+ */
 class CPUCollisionDetector : public CollisionDetector
 {
 	
 protected:
 	virtual bool Write() { return true; }
-	virtual void Execute();
+	virtual unsigned int Execute();
 	virtual bool Read() { return true; }
 	virtual bool Collision(const Vector3 &a, const Vector3 &b,
 		const Vector3 &s, const float r) = 0;
@@ -75,6 +82,9 @@ public:
 
 };
 
+/*!
+
+ */
 class CPUSegmentSphereCollisionDetector : public CPUCollisionDetector
 {
 public:
@@ -86,6 +96,10 @@ public:
 		const Vector3 &s, const float r);
 };
 
+/*!
+
+ */
+
 class CPUSphereSphereCollisionDetector : public CPUCollisionDetector
 {
 public:
@@ -96,6 +110,23 @@ public:
 	virtual bool Collision(const Vector3 &a, const Vector3 &b,
 		const Vector3 &s, const float r);
 };
+
+/*!
+
+ */
+class QuadTreeCollisionDetector : public CollisionDetector
+{
+	
+protected:
+	virtual bool Write() { return true; }
+	virtual unsigned int Execute();
+	virtual bool Read() { return true; }
+public:
+	QuadTreeCollisionDetector(WeaponManager *ws, AIManager *ai)
+		: CollisionDetector(ws, ai)
+		{ }
+};
+
 
 /*class OpenCLGrenadeEnemyCollisionDetector : GrenadeEnemyCollisionDetector
 {
@@ -113,15 +144,5 @@ public:
 		: GrenadeEnemyCollisionDetector(ws, ws) { }
 
 };*/
-
-class CollisionDetectorFactory
-{
-public:
-	static CollisionDetector *CreateCPU(WeaponManager *ws, AIManager *ai)
-	{
-		return new CPUSegmentSphereCollisionDetector(ws, ai);
-	}
-	
-};
 
 #endif
