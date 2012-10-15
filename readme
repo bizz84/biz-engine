@@ -1,1 +1,10 @@
+This repository contains the source code for a C++ OpenGL Engine developed for Windows and Linux desktop.
+
+Projects page with videos and full descriptions is available at this link:
+http://www.bizzotto.biz/opengl-projects/
+
+To check-out the project:
+
 git clone git://github.com/bizz84/biz-engine.git
+
+Linux makefiles and Visual Studio project files are included.
